@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  name              String
+  email             String   @unique
+  passwordHash      String?
+  reputationScore   Float    @default(50.0) // execution identity metric
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  birthDetails      BirthDetails?
+  portfolios        LifePortfolio[]
+  predictions       PredictionRecord[]
+  actions           ActionUnit[]
+  accountability    AccountabilityNode[]
+}
+
+model BirthDetails {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  dateOfBirth       DateTime
+  timeOfBirth       String   // Time of Birth precise
+  latitude          Float
+  longitude         Float
+  timezone          String
+}
+
+// Data model for historical self-learning predictions
+model PredictionRecord {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type              String   // daily, decision, alert
+  domain            String   // career, finance, health, relationship, growth
+
+  prediction        String
+  predictionScore   Float    // DecisionScore
+
+  accuracyPredicted Float
+  confidence        Float
+  risk              Float
+
+  startTime         DateTime
+  endTime           DateTime
+
+  outcome           String?  // success / fail / neutral
+  outcomeScore      Float?   // actual measured result
+
+  createdAt         DateTime @default(now())
+}
+
+// The daily atomic execution unit
+model ActionUnit {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  domain                String
+  task                  String
+  priority              String   // HIGH, MEDIUM, LOW
+  energyRequired        String   // High, Medium, Low
+  
+  timingWindowStart     DateTime
+  timingWindowEnd       DateTime
+  
+  probabilityOfSuccess  Float
+  completed             Boolean  @default(false)
+  completionQuality     Int?     // 1-5 scale feedback
+
+  createdAt             DateTime @default(now())
+}
+
+// Portfolio allocation snapshot per calculation
+model LifePortfolio {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  mode              String   // AGGRESSIVE, BALANCED, DEFENSIVE
+  
+  careerAlloc       Float
+  financeAlloc      Float
+  healthAlloc       Float
+  relationshipAlloc Float
+  growthAlloc       Float
+  
+  careerRisk        Float
+  financeRisk       Float
+  healthRisk        Float
+  relationshipRisk  Float
+  growthRisk        Float
+
+  createdAt         DateTime @default(now())
+}
+
+// Social Enforcer Grid
+model AccountabilityNode {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  partnerId           String?
+  relationshipType    String   // Solo, Partner, Group, Public
+  accountabilityLevel String   // Passive, Active, Consequence
+  
+  stakeAmount         Float?   // Financial consequence constraint (e.g., 500)
+  
+  createdAt           DateTime @default(now())
+}
