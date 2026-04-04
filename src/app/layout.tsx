@@ -1,11 +1,12 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
+import { CosmicBackground } from "@/components/CosmicBackground";
 
-const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "DivyaDrishti | Quantitative Life Operating System",
-  description: "A real-time analytical engine for life decisions powered by Vedic Astrology",
+  title: "DivyaDrishti | Align Your Actions",
+  description: "Understand your timing. Align your actions. A human-centric personal guidance system.",
 };
 
 export default function RootLayout({
@@ -15,8 +16,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-black text-white antialiased`}>
-        {children}
+      <body className={`${outfit.className} antialiased selection:bg-amber-500/20 text-black/80`}>
+        <CosmicBackground>
+          {children}
+        </CosmicBackground>
       </body>
     </html>
   );
