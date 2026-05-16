@@ -16,17 +16,191 @@ model User {
   reputationScore    Float                @default(50.0)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
-  lastDecisionSignal String?
-  lastIntent         String?
-  lastTimeframe      String?
-  lastViewedAt       DateTime?
-  streakCount        Int                  @default(0)
-  accountability     AccountabilityNode[]
-  actions            ActionUnit[]
+  
+  // Relations
+  profile            UserProfile?
+  birthChart         BirthChart?
+  goals              UserGoal[]
+  habits             HabitTracking[]
+  timelineWindows    TimelineWindow[]
+  dailyInsights      DailyInsight[]
+  memories           UserMemory[]
+  
+  // Legacy/Internal (Keeping for migration safety)
   birthDetails       BirthDetails?
   portfolios         LifePortfolio[]
   predictions        PredictionRecord[]
+  accountability     AccountabilityNode[]
+  actions            ActionUnit[]
 }
+
+model UserProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  displayName       String?
+  timezone          String?
+  language          String?
+
+  onboardingDone    Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model BirthChart {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  birthDate          DateTime
+  birthTime          String
+  birthPlace         String
+
+  latitude           Float
+  longitude          Float
+
+  ayanamsa           String?
+
+  chartData          Json     // Cached computed chart - DO NOT recompute every request
+
+  createdAt          DateTime @default(now())
+}
+
+model UserGoal {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category            GoalCategory
+  title               String
+  description         String?
+
+  priority            Int      @default(3)
+  targetDate          DateTime?
+
+  currentStatus       GoalStatus @default(ACTIVE)
+
+  emotionalImportance Int?     // 1-10 scale
+  metadata            Json?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+enum GoalCategory {
+  CAREER
+  BUSINESS
+  FINANCE
+  RELATIONSHIP
+  HEALTH
+  SPIRITUALITY
+}
+
+enum GoalStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ABANDONED
+}
+
+model HabitTracking {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title              String
+  category           HabitCategory
+  
+  streak             Int      @default(0)
+  consistencyScore   Float    @default(0)
+  
+  aiGenerated        Boolean  @default(false)
+  active             Boolean  @default(true)
+
+  createdAt          DateTime @default(now())
+}
+
+enum HabitCategory {
+  DISCIPLINE
+  MEDITATION
+  HEALTH
+  LEARNING
+  SOCIAL
+}
+
+model TimelineWindow {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  startDate           DateTime
+  endDate             DateTime
+
+  category            TimelineCategory
+  intensityScore      Float    // 0-10
+
+  summary             String
+  
+  opportunities       Json     // List of potential wins
+  cautions            Json     // List of risks
+  recommendations     Json     // Action steps
+
+  generatedBy         String?  // Agent name
+
+  createdAt           DateTime @default(now())
+}
+
+enum TimelineCategory {
+  GROWTH
+  CAUTION
+  TRANSFORMATION
+  VOLATILITY
+  PRODUCTIVITY
+}
+
+model DailyInsight {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date               DateTime
+  summary            String
+
+  favorable          Json
+  cautions           Json
+  focusAreas         Json
+
+  emotionalTone      String?
+
+  generatedAt        DateTime @default(now())
+}
+
+model UserMemory {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  memoryType         MemoryType
+  content            String
+
+  embedding          Unsupported("vector")? // Vector for semantic search
+
+  importance         Float    @default(0.5)
+
+  createdAt          DateTime @default(now())
+}
+
+enum MemoryType {
+  PREFERENCE
+  FEAR
+  AMBITION
+  OBSERVATION
+  CONTEXT
+}
+
+// Legacy Models (Retained for migration context)
 
 model BirthDetails {
   id          String   @id @default(uuid())
