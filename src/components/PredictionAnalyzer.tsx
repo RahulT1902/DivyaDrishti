@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -12,26 +12,36 @@ import {
   Sparkles,
   Loader,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import PredictionChat from "./PredictionChat";
 
 type Timeframe = "today" | "this-week" | "this-month" | "this-year";
 type Domain = "career" | "finance" | "health" | "relationships" | "growth" | "mind";
+type OutputMode = "PANDIT" | "SIMPLE_ENGLISH";
+type PredictionPayload = {
+  analysis?: string;
+  narrative?: string;
+  detailedReport?: Record<string, { title?: string; content?: string }>;
+  keyPoints?: string[];
+};
 
 export default function PredictionAnalyzer() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("today");
   const [selectedDomain, setSelectedDomain] = useState<Domain>("career");
+  const [selectedMode, setSelectedMode] = useState<OutputMode>("PANDIT");
   const [loading, setLoading] = useState(false);
-  const [predictions, setPredictions] = useState<any>(null);
+  const [modeLoading, setModeLoading] = useState(false);
+  const [predictions, setPredictions] = useState<PredictionPayload | null>(null);
   const [showChat, setShowChat] = useState(false);
 
-  const timeframes: { id: Timeframe; label: string; icon: any }[] = [
+  const timeframes: { id: Timeframe; label: string; icon: LucideIcon }[] = [
     { id: "today", label: "Today", icon: Calendar },
     { id: "this-week", label: "This Week", icon: Calendar },
     { id: "this-month", label: "This Month", icon: Calendar },
     { id: "this-year", label: "This Year", icon: Calendar },
   ];
 
-  const domains: { id: Domain; label: string; icon: any; color: string }[] = [
+  const domains: { id: Domain; label: string; icon: LucideIcon; color: string }[] = [
     { id: "career", label: "Career", icon: Briefcase, color: "from-blue-500 to-cyan-500" },
     { id: "finance", label: "Finance", icon: DollarSign, color: "from-green-500 to-emerald-500" },
     { id: "health", label: "Health", icon: Activity, color: "from-red-500 to-pink-500" },
@@ -45,15 +55,23 @@ export default function PredictionAnalyzer() {
     { id: "mind", label: "Mind & Peace", icon: Brain, color: "from-indigo-500 to-purple-500" },
   ];
 
+  const fetchPredictions = async (mode: OutputMode) => {
+    const res = await fetch(
+      `/api/predictions/analyze?timeframe=${selectedTimeframe}&domain=${selectedDomain}&mode=${mode}`
+    );
+    const data = await res.json();
+    if (data.success) {
+      setPredictions(data.predictions);
+      return true;
+    }
+    return false;
+  };
+
   const handleAnalyze = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/predictions/analyze?timeframe=${selectedTimeframe}&domain=${selectedDomain}`
-      );
-      const data = await res.json();
-      if (data.success) {
-        setPredictions(data.predictions);
+      const ok = await fetchPredictions(selectedMode);
+      if (ok) {
         setShowChat(true);
       }
     } catch (err) {
@@ -63,12 +81,29 @@ export default function PredictionAnalyzer() {
     }
   };
 
+  const handleModeChange = async (mode: OutputMode) => {
+    if (mode === selectedMode) return;
+    setSelectedMode(mode);
+    if (!showChat) return;
+    setModeLoading(true);
+    try {
+      await fetchPredictions(mode);
+    } catch (err) {
+      console.error("Failed to switch mode:", err);
+    } finally {
+      setModeLoading(false);
+    }
+  };
+
   if (showChat && predictions) {
     return (
       <PredictionChat
         predictions={predictions}
         timeframe={selectedTimeframe}
         domain={selectedDomain}
+        outputMode={selectedMode}
+        modeLoading={modeLoading}
+        onModeChange={handleModeChange}
         onBack={() => setShowChat(false)}
       />
     );
@@ -85,6 +120,24 @@ export default function PredictionAnalyzer() {
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-white mb-2">Prediction Analysis</h1>
           <p className="text-slate-400">Select a timeframe and area to receive detailed guidance</p>
+          <div className="mt-4 inline-flex rounded-lg border border-purple-500/30 bg-slate-900/50 p-1">
+            <button
+              onClick={() => handleModeChange("PANDIT")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
+                selectedMode === "PANDIT" ? "bg-purple-500 text-white" : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Hindi
+            </button>
+            <button
+              onClick={() => handleModeChange("SIMPLE_ENGLISH")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
+                selectedMode === "SIMPLE_ENGLISH" ? "bg-purple-500 text-white" : "text-slate-300 hover:text-white"
+              }`}
+            >
+              English
+            </button>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">

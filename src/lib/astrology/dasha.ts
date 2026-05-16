@@ -90,7 +90,29 @@ export function buildAntardasha(md: Period): Period[] {
 }
 
 /**
- * Identify the current Dasha phase for a given date
+ * Sub-divide an Antardasha into 9 Pratyantardashas
+ */
+export function buildPratyantardasha(ad: Period): Period[] {
+  const adTotalMs = ad.end.getTime() - ad.start.getTime();
+  const pds: Period[] = [];
+  let cursor = new Date(ad.start);
+
+  // PD sequence starts with the AD lord itself
+  const startIndex = DASHA_SEQUENCE.indexOf(ad.planet as any);
+  for (let i = 0; i < 9; i++) {
+    const p = DASHA_SEQUENCE[(startIndex + i) % 9];
+    const fraction = DASHA_YEARS[p] / 120; // AD * PD / 120
+    const durMs = adTotalMs * fraction;
+    const end = new Date(cursor.getTime() + durMs);
+    pds.push({ planet: p, start: cursor, end });
+    cursor = new Date(end);
+  }
+
+  return pds;
+}
+
+/**
+ * Identify the current Dasha phase (MD, AD, PD) for a given date
  */
 export function getCurrentDasha(timeline: Period[], now: Date) {
   const md = timeline.find(p => now >= p.start && now < p.end);
@@ -98,12 +120,59 @@ export function getCurrentDasha(timeline: Period[], now: Date) {
 
   const ads = buildAntardasha(md);
   const ad = ads.find(p => now >= p.start && now < p.end);
+  if (!ad) return { md, ad: null, pd: null, nextAd: null };
+
+  const pds = buildPratyantardasha(ad);
+  const pd = pds.find(p => now >= p.start && now < p.end);
   
   // Find "Next" Antardasha
   const adIndex = ads.findIndex(p => p === ad);
   const nextAd = ads[adIndex + 1] || null;
 
-  return { md, ad, nextAd };
+  return { md, ad, pd, nextAd };
+}
+
+/**
+ * Get full context for a specific date (supports Hysteresis and Benchmark requirements)
+ */
+export function getDashaContext(timeline: Period[], targetDate: Date) {
+  const dasha = getCurrentDasha(timeline, targetDate);
+  if (!dasha) return null;
+
+  const { md, ad, pd, nextAd } = dasha;
+
+  // Time Pressure Logic
+  const totalMs = ad.end.getTime() - ad.start.getTime();
+  const elapsedMs = targetDate.getTime() - ad.start.getTime();
+  const remainingMs = ad.end.getTime() - targetDate.getTime();
+  const progress = elapsedMs / totalMs;
+
+  const monthsRemaining = Math.floor(remainingMs / (30.44 * 24 * 60 * 60 * 1000));
+  const yearsRemaining = Math.floor(monthsRemaining / 12);
+  const remStr = yearsRemaining > 0 
+    ? `${yearsRemaining}y ${monthsRemaining % 12}m` 
+    : `${monthsRemaining}m`;
+
+  let pressureLabel = "Standard";
+  if (progress > 0.85) pressureLabel = "Short";
+  else if (progress > 0.4) pressureLabel = "Medium";
+  else pressureLabel = "Long";
+
+  return {
+    stack: {
+      mahadasha: md.planet,
+      antardasha: ad.planet,
+      pratyantar: pd?.planet || null,
+      nextAntardasha: nextAd?.planet || null
+    },
+    timing: {
+      startsAt: ad.start,
+      endsAt: ad.end,
+      remaining: remStr,
+      pressure: pressureLabel,
+      isNearBoundary: progress > 0.9
+    }
+  };
 }
 
 /**

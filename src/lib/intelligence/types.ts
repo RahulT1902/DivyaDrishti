@@ -1,6 +1,24 @@
 export type DecisionSignal = "ACT" | "WAIT" | "AVOID" | "OBSERVE";
 
-export type Intent = "career" | "finance" | "health" | "relationships" | "general" | "mind";
+export type IntentDomain = "career" | "finance" | "relationship" | "health" | "general" | "mind";
+export type IntentType = "decision" | "problem" | "timing" | "general";
+
+export interface Intent {
+  domain: IntentDomain;
+  type: IntentType;
+  confidence: number;
+  timeframe?: string;
+}
+
+export interface ChatResponse {
+  answer: string;
+  followUp: string;
+  confidence: "high" | "medium" | "low";
+  intent: {
+    domain: IntentDomain;
+    type: IntentType;
+  };
+}
 
 export type Timeframe = "today" | "this-week" | "this-month" | "quarter" | "year";
 
@@ -30,35 +48,55 @@ export interface CategorizedInsight {
   netEffect?: string;
 }
 
+export type AstroEvidence = {
+  factor: string;
+  category: "dasha" | "transit" | "natal" | "divisional";
+  impact: "supportive" | "restrictive" | "mixed";
+  strength: number; // 1-10
+  explanation: string;
+};
+
+export type StructuralTension = {
+  support: string;
+  friction: string;
+  synthesis: string;
+};
+
+export type TimePhase = {
+  startDate: string;
+  endDate: string;
+  title: string;
+  astroTriggers: string[];
+  externalManifestation: string;
+  internalState: string;
+  opportunities: string[];
+  cautions: string[];
+  confidence: number;
+};
+
+export type ConfidenceLayer = {
+  timing: number;
+  manifestation: number;
+  volatility: number;
+};
+
+export type DashaContext = {
+  mahadasha: string;
+  antardasha: string;
+  pratyantar: string;
+  transitAnchors: string[];
+};
+
 export interface DeepInsight {
-  dashaContext: {
-    mahadasha: string;
-    antardasha: string;
-    pratyantar: string;
-    transitAnchors: string[];
-  };
-  bigPicture: string; // "Unstable inflow, hidden outflow..."
-  themeBanner: {
-    title: string;
-    subtitle: string;
-    focusPoints: string[];
-  };
-  translation: string;
-  phases: Phase[];
-  categorizedInsights: CategorizedInsight[];
-  specifics: {
-    label: string;
-    value: string;
-    isNegative?: boolean;
-    isPositive?: boolean;
-    isNeutral?: boolean;
-  }[];
-  verdictMatrix: {
-    avoid: string[];
-    favor: string[];
-    caution: string[];
-  };
-  straightTalk: string;
+  heroInsight: string;
+  dashaContext: DashaContext;
+  theme: string;
+  realityTranslation: string;
+  evidence: AstroEvidence[];
+  tensions: StructuralTension[];
+  phases: TimePhase[];
+  specifics: any; // Can be typed further if needed
+  confidence: ConfidenceLayer;
   verdict: string;
 }
 

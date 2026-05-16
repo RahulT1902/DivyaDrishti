@@ -10,13 +10,7 @@ export type ErrorType = "NETWORK_ERROR" | "DATA_MALFORMATION" | "ENGINE_FAILURE"
 export function buildSuccessResponse(data: any) {
   return NextResponse.json({
     success: true,
-    data: {
-      report: data.report,
-      user: data.user,
-      chart: data.chart,
-      temporal: data.temporal,
-      guidance: data.guidance
-    }
+    data
   });
 }
 

@@ -63,7 +63,7 @@ export function generateKundaliReport(chart: any, temporal: any, timeframe: stri
       lagna,
       rashi,
       nakshatra: "Purvashadha", 
-      dashaAtBirth: `${temporal.current.mahadasha} (Seed phase)`
+      dashaAtBirth: `${temporal?.stack?.mahadasha || "Unknown"} (Seed phase)`
     },
     nature: {
       core: coreNature,
@@ -89,8 +89,12 @@ export function generateKundaliReport(chart: any, temporal: any, timeframe: stri
 
 // --- Deep Intelligence Phasing Logic ---
 
-function solveDeepGuidance(intent: Intent, chart: any, temporal: any, timeframe: string): DeepInsight {
+function solveDeepGuidance(intentOrDomain: Intent | string, chart: any, temporal: any, timeframe: string): DeepInsight {
   const lagnaSign = chart.lagna.sign;
+  
+  const intentObj: Intent = typeof intentOrDomain === "string"
+    ? { domain: intentOrDomain as any, type: "general", confidence: 1, timeframe }
+    : intentOrDomain;
   
   // 1. Calculate Planet-House Placements for Transits (Environmental Layer)
   // This is how we get "Rahu in 10th", "Saturn in 9th", etc.
@@ -104,19 +108,27 @@ function solveDeepGuidance(intent: Intent, chart: any, temporal: any, timeframe:
   });
 
   // 2. Delegate to Narrative Engine for Structured Content
-  return generateNarrative(intent as Intent, timeframe as Timeframe, chart, temporal, transitPositions);
+  return generateNarrative(intentObj, timeframe as Timeframe, chart, temporal, transitPositions);
 }
 
 // --- Hardened Hero Generation ---
 
 function generateHeroInsight(chart: any, temporal: any, timeframe: string): KundaliReport['hero'] {
-  const currentDasha = temporal.current.antardasha;
+  if (!temporal || !temporal.stack) {
+    return {
+      decisionState: "OBSERVE" as DecisionSignal,
+      insight: getFallbackInsight(timeframe, "OBSERVE" as DecisionSignal),
+      timeAnchor: getTimeAnchorLabel(timeframe),
+      why: "Celestial phase data is currently recalibrating."
+    };
+  }
+  const currentDasha = temporal.stack.antardasha;
   const decisionState: DecisionSignal = calculateDecisionState(currentDasha, chart);
   
   let rawInsight = "";
   let why = "";
 
-  if (currentDasha === "Jupiter" && temporal.current.mahadasha === "Saturn") {
+  if (currentDasha === "Jupiter" && temporal.stack.mahadasha === "Saturn") {
     rawInsight = "Controlled expansion is favored; maintain balance between growth and discipline.";
     why = "Expansion and restriction are currently auditing your path.";
   } else if (currentDasha === "Mars") {

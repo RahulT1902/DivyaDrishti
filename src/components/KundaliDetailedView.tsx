@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import KundaliChart from "./KundaliChart";
 import { Moon, ChevronDown, Globe, Clock, Calendar } from "lucide-react";
 
-export default function KundaliDetailedView({ chartData, user }: any) {
+export default function KundaliDetailedView({ chartData, user, onNavigate }: any) {
   const [expandedSection, setExpandedSection] = useState<string | null>("chart");
 
   if (!chartData || !chartData.planets) {
@@ -16,14 +16,14 @@ export default function KundaliDetailedView({ chartData, user }: any) {
     );
   }
 
-  const lagnaSign = chartData.lagna || 1;
+  const lagnaSign = (chartData.lagna?.sign ?? chartData.lagna ?? 1) as number;
   const planets = chartData.planets || [];
 
   // Format planet display
   const planetDetails = planets.map((p: any) => ({
     ...p,
     signed: p.sign || 1,
-    degree: Math.floor(p.degree || 0),
+    degree: Math.floor(p.degree ?? p.positionInSign ?? 0),
   }));
 
   return (
@@ -107,12 +107,13 @@ export default function KundaliDetailedView({ chartData, user }: any) {
               <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
               <div className="space-y-2">
                 {[
-                  { label: "Transit Planets", href: "#transit" },
-                  { label: "Dasha Timeline", href: "#dasha" },
-                  { label: "Predictions", href: "#predictions" },
+                  { label: "Transit Planets", tab: "transit" },
+                  { label: "Dasha Timeline", tab: "dasha" },
+                  { label: "Predictions", tab: "predictions" },
                 ].map((link) => (
                   <button
                     key={link.label}
+                    onClick={() => onNavigate?.(link.tab)}
                     className="w-full text-left px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg text-purple-300 transition-all"
                   >
                     {link.label} →

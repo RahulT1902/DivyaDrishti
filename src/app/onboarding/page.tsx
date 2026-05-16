@@ -31,7 +31,9 @@ export default function OnboardingRitual() {
   const handleSubmit = async () => {
     setLoading(true);
     const formData = new FormData();
+    const email = typeof window !== "undefined" ? window.localStorage.getItem("divya:userEmail") : null;
     formData.append("name", data.name);
+    if (email) formData.append("email", email);
     formData.append("date", data.date);
     formData.append("time", data.time);
     formData.append("latitude", data.city.lat.toString());
@@ -40,6 +42,7 @@ export default function OnboardingRitual() {
 
     const res = await registerUser(formData);
     if (res.success) {
+      window.localStorage.setItem("divya:loggedIn", "true");
       router.push("/dashboard");
     } else {
       setLoading(false);
@@ -61,8 +64,8 @@ export default function OnboardingRitual() {
           {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
-              className={`h-1 rounded-full transition-all duration-500 ${
-                s <= step ? "w-8 bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]" : "w-4 bg-white/10"
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                s <= step ? "w-10 bg-cyan-600 shadow-[0_0_12px_rgba(8,145,178,0.3)]" : "w-4 bg-zinc-200"
               }`}
             />
           ))}
@@ -83,8 +86,8 @@ export default function OnboardingRitual() {
                 <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
                   <Sparkles className="w-4 h-4" /> The Beginning
                 </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-white leading-tight">
-                  Let's align your <br /><span className="text-gradient font-medium">cosmic blueprint.</span>
+                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
+                  Let's align your <br /><span className="text-vibrant-gradient font-medium italic">cosmic blueprint.</span>
                 </h1>
               </div>
 
@@ -94,16 +97,16 @@ export default function OnboardingRitual() {
                   placeholder="What is your name?"
                   value={data.name}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
-                  className="w-full h-16 bg-transparent border-b border-white/20 text-3xl font-light text-white outline-none focus:border-cyan-500 transition-colors placeholder:text-white/10 px-2"
+                  className="w-full h-16 bg-transparent border-b border-zinc-200 text-3xl font-light text-zinc-900 outline-none focus:border-cyan-500 transition-colors placeholder:text-zinc-200 px-2"
                   autoFocus
                 />
-                <User className="absolute right-2 top-1/2 -translate-y-1/2 text-white/10 w-8 h-8" />
+                <User className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-200 w-8 h-8" />
               </div>
 
               <button
                 disabled={!data.name}
                 onClick={nextStep}
-                className="group flex items-center gap-3 text-white/50 hover:text-white transition-all disabled:opacity-0"
+                className="group flex items-center gap-3 text-zinc-400 hover:text-zinc-900 transition-all disabled:opacity-30"
               >
                 Continue <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
@@ -124,8 +127,8 @@ export default function OnboardingRitual() {
                 <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
                   <Calendar className="w-4 h-4" /> Earthly Arrival
                 </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-white leading-tight">
-                  When were you <br /><span className="text-gradient font-medium">born into this world?</span>
+                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
+                  When were you <br /><span className="text-vibrant-gradient font-medium italic">born into this world?</span>
                 </h1>
               </div>
 
@@ -134,7 +137,7 @@ export default function OnboardingRitual() {
                   type="date"
                   value={data.date}
                   onChange={(e) => setData({ ...data, date: e.target.value })}
-                  className="w-full h-16 bg-transparent border-b border-white/20 text-3xl font-light text-white outline-none focus:border-cyan-500 transition-colors [color-scheme:dark] px-2"
+                  className="w-full h-16 bg-transparent border-b border-zinc-200 text-3xl font-light text-zinc-900 outline-none focus:border-cyan-500 transition-colors [color-scheme:light] px-2"
                   autoFocus
                 />
               </div>
@@ -142,14 +145,14 @@ export default function OnboardingRitual() {
               <div className="flex gap-8">
                 <button
                   onClick={prevStep}
-                  className="text-white/30 hover:text-white transition-all text-sm uppercase tracking-widest"
+                  className="text-zinc-300 hover:text-zinc-900 transition-all text-sm uppercase tracking-widest"
                 >
                   Back
                 </button>
                 <button
                   disabled={!data.date}
                   onClick={nextStep}
-                  className="group flex items-center gap-3 text-white/50 hover:text-white transition-all disabled:opacity-0"
+                  className="group flex items-center gap-3 text-zinc-400 hover:text-zinc-900 transition-all disabled:opacity-30"
                 >
                   Next Alignment <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -171,8 +174,8 @@ export default function OnboardingRitual() {
                 <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
                   <Clock className="w-4 h-4" /> Universal Time
                 </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-white leading-tight">
-                  The exact moment <br /><span className="text-gradient font-medium">of your alignment.</span>
+                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
+                  The exact moment <br /><span className="text-vibrant-gradient font-medium italic">of your alignment.</span>
                 </h1>
               </div>
 
@@ -182,7 +185,7 @@ export default function OnboardingRitual() {
                   step="60"
                   value={data.time}
                   onChange={(e) => setData({ ...data, time: e.target.value })}
-                  className="w-full h-16 bg-transparent border-b border-white/20 text-4xl font-light text-white outline-none focus:border-cyan-500 transition-colors [color-scheme:dark] px-2"
+                  className="w-full h-16 bg-transparent border-b border-zinc-200 text-4xl font-light text-zinc-900 outline-none focus:border-cyan-500 transition-colors [color-scheme:light] px-2"
                   autoFocus
                 />
               </div>
@@ -190,14 +193,14 @@ export default function OnboardingRitual() {
               <div className="flex gap-8">
                 <button
                   onClick={prevStep}
-                  className="text-white/30 hover:text-white transition-all text-sm uppercase tracking-widest"
+                  className="text-zinc-300 hover:text-zinc-900 transition-all text-sm uppercase tracking-widest"
                 >
                   Back
                 </button>
                 <button
                   disabled={!data.time}
                   onClick={nextStep}
-                  className="group flex items-center gap-3 text-white/50 hover:text-white transition-all disabled:opacity-0"
+                  className="group flex items-center gap-3 text-zinc-400 hover:text-zinc-900 transition-all disabled:opacity-30"
                 >
                   Final Calibration <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -219,8 +222,8 @@ export default function OnboardingRitual() {
                 <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
                   <MapPin className="w-4 h-4" /> Sacred Location
                 </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-white leading-tight">
-                  Where did you <br /><span className="text-gradient font-medium">first draw breath?</span>
+                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
+                  Where did you <br /><span className="text-vibrant-gradient font-medium italic">first draw breath?</span>
                 </h1>
               </div>
 
@@ -232,14 +235,14 @@ export default function OnboardingRitual() {
                 <button
                   disabled={loading}
                   onClick={prevStep}
-                  className="text-white/30 hover:text-white transition-all text-sm uppercase tracking-widest"
+                  className="text-zinc-300 hover:text-zinc-900 transition-all text-sm uppercase tracking-widest"
                 >
                   Back
                 </button>
                 <button
                   disabled={!data.city || loading}
                   onClick={handleSubmit}
-                  className="h-14 px-8 rounded-full bg-white text-black font-medium hover:bg-cyan-400 transition-all flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-white"
+                  className="h-14 px-8 rounded-full bg-zinc-900 text-white font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-zinc-900 shadow-xl shadow-zinc-200"
                 >
                   {loading ? (
                     <motion.div

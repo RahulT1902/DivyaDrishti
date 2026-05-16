@@ -30,18 +30,60 @@ export interface ChartParams {
   timezone?: string; // e.g. "Asia/Kolkata"
 }
 
+function toUtcFromZonedDateTime(date: string, time: string, timezone: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+
+  // Initial UTC guess, then corrected against the timezone-formatted wall clock.
+  let utcMs = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  const getParts = (ms: number) => {
+    const parts = formatter.formatToParts(new Date(ms));
+    const lookup = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? "0");
+    return {
+      year: lookup("year"),
+      month: lookup("month"),
+      day: lookup("day"),
+      hour: lookup("hour"),
+      minute: lookup("minute"),
+      second: lookup("second"),
+    };
+  };
+
+  // Two iterations are enough for timezone/DST correction.
+  for (let i = 0; i < 2; i++) {
+    const local = getParts(utcMs);
+    const desiredAsUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0);
+    const observedAsUtcMs = Date.UTC(
+      local.year,
+      local.month - 1,
+      local.day,
+      local.hour,
+      local.minute,
+      local.second
+    );
+    utcMs += desiredAsUtcMs - observedAsUtcMs;
+  }
+
+  return new Date(utcMs);
+}
+
 export async function calculateLagnaChart(params: ChartParams) {
   const eph = await getEngine();
   
-  // 1. Prepare Time (UT) - Hardened conversion
-  // Default to India (+5:30) for Phase 1/2 if no timezone provided
+  // 1. Prepare Time (UT) from timezone-aware local birth time
   const timezone = params.timezone || "Asia/Kolkata";
-  const birthIso = `${params.date}T${params.time}:00`;
-  
-  // Create date object and force UTC offset handling
-  // For India, we subtract 5.5 hours to get UT
-  const localDate = new Date(birthIso);
-  const utDate = new Date(localDate.getTime() - (5.5 * 60 * 60 * 1000));
+  const utDate = toUtcFromZonedDateTime(params.date, params.time, timezone);
   
   const year = utDate.getUTCFullYear();
   const month = utDate.getUTCMonth() + 1;

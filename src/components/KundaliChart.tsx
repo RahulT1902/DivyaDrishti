@@ -58,19 +58,26 @@ export default function KundaliChart({
   const housePlanets: any[][] = Array.from({ length: 12 }, () => []);
 
   planets.forEach((p) => {
-    const houseIndex = (p.sign - lagnaSign + 12) % 12;
-    const abbr = planetAbbr[p.name] || p.name.slice(0, 2);
-    
-    // Calculate display degree (integer)
-    const displayDegree = p.degree !== undefined 
-      ? Math.floor(p.degree) 
-      : p.positionInSign !== undefined 
-        ? Math.floor(p.positionInSign) 
-        : 0;
+    const signNum = typeof p.sign === "string" ? Number.parseInt(p.sign, 10) : p.sign;
+    if (!Number.isFinite(signNum) || signNum < 1 || signNum > 12) {
+      console.warn("Skipping planet with invalid sign:", p);
+      return;
+    }
+
+    const houseIndex = ((signNum - lagnaSign + 12) % 12 + 12) % 12;
+    if (!housePlanets[houseIndex]) {
+      console.warn("Invalid house index calculated:", houseIndex, p, lagnaSign);
+      return;
+    }
+
+    const abbr = planetAbbr[p.name] || (p.name ? String(p.name).slice(0, 2) : "??");
+    const rawDegree = p.degree !== undefined ? p.degree : (p.positionInSign ?? 0);
+    const normalizedDegree = Number.isFinite(rawDegree) ? Math.floor(rawDegree) : null;
+    const degreeLabel = normalizedDegree !== null ? String(normalizedDegree).padStart(2, "0") : "--";
 
     housePlanets[houseIndex].push({
       abbr,
-      degree: displayDegree,
+      degree: degreeLabel,
       retro: p.isRetrograde,
       combust: p.isCombust,
       vargottama: p.isVargottama,
@@ -79,7 +86,7 @@ export default function KundaliChart({
     });
   });
 
-  const getSignForHouse = (hIdx: number) => ((lagnaSign + hIdx - 1) % 12) + 1;
+  const getHouseNumber = (hIdx: number) => hIdx + 1;
 
   const isDark = variant === "dark";
   const colorLines = "#E6C200"; // Pure Gold
@@ -117,7 +124,7 @@ export default function KundaliChart({
               className="text-[12px] font-bold select-none italic" 
               textAnchor="middle"
             >
-              {getSignForHouse(i)}
+              {getHouseNumber(i)}
             </text>
             
             {/* Planet Stack - Vertical Slot Logic */}

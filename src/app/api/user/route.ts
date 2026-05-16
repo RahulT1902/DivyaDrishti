@@ -1,10 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const emailParam = req.nextUrl.searchParams.get("email");
+    const emailHeader = req.headers.get("x-user-email");
+    const email = (emailParam || emailHeader || "").trim().toLowerCase();
+
     const user = await prisma.user.findFirst({
-      orderBy: { createdAt: "desc" },
+      where: email ? { email } : undefined,
+      orderBy: email ? undefined : { createdAt: "desc" },
       include: { birthDetails: true },
     });
 
@@ -22,13 +27,13 @@ export async function GET() {
         name: user.name,
         email: user.email,
         birthDetails: user.birthDetails,
-        streakCount: (user as any).streakCount || 0,
+        streakCount: user.streakCount || 0,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching user:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: error instanceof Error ? error.message : "Error fetching user" },
       { status: 500 }
     );
   }

@@ -47,7 +47,7 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     overflow-x: hidden;
-    font-family: 'Outfit', sans-serif;
+    font-family: "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, sans-serif;
     letter-spacing: -0.01em;
     /* Prabhat Sunrise Layered Background */
     background: 

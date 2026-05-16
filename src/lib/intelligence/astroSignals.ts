@@ -22,78 +22,81 @@ export function extractAstroSignals(
   const signals: AstroSignal[] = [];
 
   // 1. Analyze Dasha Lords (Highest Priority)
-  if (dasha && dasha.md) {
-    const mdPlanet = dasha.md.planet;
-    const { strength, score } = getPlanetStrength(mdPlanet, natalChart);
-    signals.push({
-      planet: mdPlanet,
-      strength,
-      strengthScore: score,
-      nature: strength === "weak" ? "challenging" : "supportive",
-      area: ["general", "long-term"],
-      reason: `Primary Mahadasha lord governing this major life chapter.`
-    });
-  }
+  if (dasha) {
+    const mdPlanet = dasha.mahadasha;
+    if (mdPlanet) {
+      const { strength, score } = getPlanetStrength(mdPlanet, natalChart);
+      signals.push({
+        planet: mdPlanet,
+        strength,
+        strengthScore: score,
+        nature: strength === "weak" ? "challenging" : "supportive",
+        area: ["general", "long-term", "major"],
+        reason: `Primary Mahadasha lord governing this major life chapter.`
+      });
+    }
 
-  if (dasha && dasha.ad) {
-    const adPlanet = dasha.ad.planet;
-    const { strength, score } = getPlanetStrength(adPlanet, natalChart);
-    signals.push({
-      planet: adPlanet,
-      strength,
-      strengthScore: score,
-      nature: strength === "weak" ? "challenging" : "supportive",
-      area: ["focus", "current-phase"],
-      reason: `Antardasha lord triggering immediate events and mental focus.`
-    });
+    const adPlanet = dasha.antardasha;
+    if (adPlanet) {
+      const { strength, score } = getPlanetStrength(adPlanet, natalChart);
+      signals.push({
+        planet: adPlanet,
+        strength,
+        strengthScore: score,
+        nature: strength === "weak" ? "challenging" : "supportive",
+        area: ["focus", "current-phase"],
+        reason: `Antardasha lord triggering immediate events and mental focus.`
+      });
+    }
   }
 
   // 2. Analyze Transit Triggers
   const lagnaSign = natalChart.lagna.sign;
   
-  currentTransits.forEach((tp: any) => {
-    const house = (tp.sign - lagnaSign + 12) % 12 + 1;
-    const isStrongTrigger = tp.name === "Saturn" || tp.name === "Mars" || tp.name === "Rahu";
-    
-    // Saturn (Restriction/Hard Work)
-    if (tp.name === "Saturn") {
-       signals.push({
-         planet: "Saturn",
-         strength: "strong",
-         strengthScore: 80,
-         nature: "challenging",
-         area: getAreaForHouse(house),
-         isStrongTransit: true,
-         reason: `Saturn transiting your ${house} house calls for discipline and review.`
-       });
-    }
+  if (Array.isArray(currentTransits)) {
+    currentTransits.forEach((tp: any) => {
+      const house = (tp.sign - lagnaSign + 12) % 12 + 1;
+      
+      // Saturn (Restriction/Hard Work)
+      if (tp.name === "Saturn") {
+         signals.push({
+           planet: "Saturn",
+           strength: "strong",
+           strengthScore: 80,
+           nature: "challenging",
+           area: getAreaForHouse(house),
+           isStrongTransit: true,
+           reason: `Saturn transiting your ${house} house calls for discipline and review.`
+         });
+      }
 
-    // Jupiter (Expansion/Blessing)
-    if (tp.name === "Jupiter") {
-      signals.push({
-        planet: "Jupiter",
-        strength: "strong",
-        strengthScore: 90,
-        nature: "supportive",
-        area: getAreaForHouse(house),
-        isStrongTransit: false,
-        reason: `Jupiter transiting your ${house} house brings growth and perspective.`
-      });
-    }
+      // Jupiter (Expansion/Blessing)
+      if (tp.name === "Jupiter") {
+        signals.push({
+          planet: "Jupiter",
+          strength: "strong",
+          strengthScore: 90,
+          nature: "supportive",
+          area: getAreaForHouse(house),
+          isStrongTransit: false,
+          reason: `Jupiter transiting your ${house} house brings growth and perspective.`
+        });
+      }
 
-    // Mars (Energy/Conflict)
-    if (tp.name === "Mars") {
-      signals.push({
-        planet: "Mars",
-        strength: "neutral",
-        strengthScore: 60,
-        nature: "mixed",
-        area: getAreaForHouse(house),
-        isStrongTransit: true,
-        reason: `Mars in your ${house} house brings a surge of energy and potential friction.`
-      });
-    }
-  });
+      // Mars (Energy/Conflict)
+      if (tp.name === "Mars") {
+        signals.push({
+          planet: "Mars",
+          strength: "neutral",
+          strengthScore: 60,
+          nature: "mixed",
+          area: getAreaForHouse(house),
+          isStrongTransit: true,
+          reason: `Mars in your ${house} house brings a surge of energy and potential friction.`
+        });
+      }
+    });
+  }
 
   return signals;
 }
@@ -109,7 +112,10 @@ function getPlanetStrength(planet: string, chart: any): { strength: "strong" | "
     Sun: [5], Moon: [4], Mars: [1, 8], Mercury: [3, 6], Jupiter: [9, 12], Venus: [2, 7], Saturn: [10, 11]
   };
 
-  if (ownSigns[planet]?.includes(pData.sign)) return { strength: "strong", score: 85 };
+  // Safe check for sign ownership (Rahu/Ketu have no own signs in this model)
+  if (ownSigns[planet] && ownSigns[planet].includes(pData.sign)) {
+    return { strength: "strong", score: 85 };
+  }
 
   return { strength: "neutral", score: 50 };
 }

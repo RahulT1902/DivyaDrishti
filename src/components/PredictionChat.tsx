@@ -11,22 +11,50 @@ interface Message {
   timestamp: Date;
 }
 
+interface DetailedSection {
+  title?: string;
+  content?: string;
+}
+
+interface PredictionPayload {
+  analysis?: string;
+  narrative?: string;
+  detailedReport?: Record<string, DetailedSection>;
+  keyPoints?: string[];
+}
+
+type OutputMode = "PANDIT" | "SIMPLE_ENGLISH";
+
+function buildInitialAssistantContent(predictions: PredictionPayload, timeframe: string, domain: string): string {
+  return predictions.narrative
+    ? predictions.narrative
+    : predictions.detailedReport
+      ? generateDetailedReportContent(predictions)
+      : `I'm analyzing your ${domain} predictions for ${timeframe}. Based on the current celestial positions, here's what I found:\n\n${predictions.analysis || "Loading analysis..."}`;
+}
+
 export default function PredictionChat({
   predictions,
   timeframe,
   domain,
+  outputMode,
+  modeLoading,
+  onModeChange,
   onBack,
 }: {
-  predictions: any;
+  predictions: PredictionPayload;
   timeframe: string;
   domain: string;
+  outputMode: OutputMode;
+  modeLoading: boolean;
+  onModeChange: (mode: OutputMode) => void;
   onBack: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
-      content: `I'm analyzing your ${domain} predictions for ${timeframe}. Based on the current celestial positions, here's what I found:\n\n${predictions.analysis || "Loading analysis..."}`,
+      content: buildInitialAssistantContent(predictions, timeframe, domain),
       timestamp: new Date(),
     },
   ]);
@@ -41,6 +69,17 @@ export default function PredictionChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    setMessages([
+      {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: buildInitialAssistantContent(predictions, timeframe, domain),
+        timestamp: new Date(),
+      },
+    ]);
+  }, [predictions, timeframe, domain]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,6 +153,26 @@ export default function PredictionChat({
                 Timeframe: <span className="capitalize text-purple-300">{timeframe}</span>
               </p>
             </div>
+          </div>
+          <div className="inline-flex rounded-lg border border-purple-500/30 bg-slate-900/50 p-1">
+            <button
+              onClick={() => onModeChange("PANDIT")}
+              disabled={modeLoading}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
+                outputMode === "PANDIT" ? "bg-purple-500 text-white" : "text-slate-300 hover:text-white"
+              } ${modeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              Hindi
+            </button>
+            <button
+              onClick={() => onModeChange("SIMPLE_ENGLISH")}
+              disabled={modeLoading}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
+                outputMode === "SIMPLE_ENGLISH" ? "bg-purple-500 text-white" : "text-slate-300 hover:text-white"
+              } ${modeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              English
+            </button>
           </div>
         </div>
       </div>
@@ -207,3 +266,25 @@ export default function PredictionChat({
     </div>
   );
 }
+
+function generateDetailedReportContent(predictions: PredictionPayload): string {
+  const report = predictions.detailedReport;
+  if (!report) return predictions.analysis || "Loading analysis...";
+
+  let content = `${predictions.analysis || ""}\n\n`;
+
+  // Add each section as flowing narrative (no explicit section headers)
+  Object.values(report).forEach((section) => {
+    if (section.content) {
+      content += `${section.content}\n\n`;
+    }
+  });
+
+  // Add key points
+  if (predictions.keyPoints?.length) {
+    content += `Practical takeaway:\n${predictions.keyPoints.map((point: string) => `- ${point}`).join('\n')}`;
+  }
+
+  return content;
+}
+

@@ -1,8 +1,5 @@
 import "./globals.css";
-import { Outfit } from "next/font/google";
 import { CosmicBackground } from "@/components/CosmicBackground";
-
-const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata = {
   title: "DivyaDrishti | Align Your Actions",
@@ -16,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${outfit.className} antialiased selection:bg-amber-500/20 text-black/80`}>
+      <body className="antialiased selection:bg-amber-500/20 text-black/80">
         <CosmicBackground>
           {children}
         </CosmicBackground>

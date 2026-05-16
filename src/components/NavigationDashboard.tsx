@@ -11,14 +11,17 @@ import {
   MessageSquare,
   Home,
   Settings,
+  LogOut,
 } from "lucide-react";
 
 export default function NavigationDashboard({
   tab,
   setTab,
+  onLogout,
 }: {
   tab: string;
   setTab: (t: string) => void;
+  onLogout?: () => void;
 }) {
   const tabs = [
     { id: "home", label: "Home", icon: Home },
@@ -37,9 +40,20 @@ export default function NavigationDashboard({
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             DivyaDrishti
           </h1>
-          <button className="p-2 hover:bg-slate-800 rounded-lg transition-all">
-            <Settings className="w-5 h-5 text-slate-400" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="p-2 hover:bg-slate-800 rounded-lg transition-all">
+              <Settings className="w-5 h-5 text-slate-400" />
+            </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-slate-800/80 text-slate-200 rounded-lg text-xs uppercase tracking-[0.15em] hover:bg-slate-700 transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
