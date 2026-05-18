@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       prompt: user,
       maxTokens: safeMaxTokens,
       temperature: temperature ?? 0.4,
-    });
+    } as any);
 
     return NextResponse.json({ success: true, narrative: text });
   } catch (error: any) {

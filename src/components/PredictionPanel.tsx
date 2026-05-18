@@ -17,7 +17,7 @@ import {
   Plus
 } from "lucide-react";
 import ContextualChat from "./ContextualChat";
-import { Intent, Timeframe } from "../lib/intelligence/types";
+import { IntentDomain, Timeframe } from "../lib/intelligence/types";
 
 type ViewState = "period" | "category" | "result";
 
@@ -31,7 +31,7 @@ interface PredictionPanelProps {
 export default function PredictionPanel({ chart, dasha, transits, guidance }: PredictionPanelProps) {
   const [viewState, setViewState] = useState<ViewState>("period");
   const [period, setPeriod] = useState<Timeframe>("today");
-  const [category, setCategory] = useState<Intent>("general");
+  const [category, setCategory] = useState<IntentDomain>("general");
 
   const periods: { id: Timeframe; label: string }[] = [
     { id: "today", label: "Today" },
@@ -40,7 +40,7 @@ export default function PredictionPanel({ chart, dasha, transits, guidance }: Pr
     { id: "year", label: "Yearly" },
   ];
 
-  const categories: { id: Intent; label: string; icon: any; sub: string }[] = [
+  const categories: { id: IntentDomain; label: string; icon: any; sub: string }[] = [
     { id: "career", label: "Career", icon: Briefcase, sub: "Work & Ambition" },
     { id: "finance", label: "Finance", icon: Wallet, sub: "Wealth & Stability" },
     { id: "health", label: "Health", icon: Activity, sub: "Vitality & Energy" },
@@ -155,9 +155,8 @@ export default function PredictionPanel({ chart, dasha, transits, guidance }: Pr
                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#E6C200]/50 to-transparent opacity-50" />
                <ContextualChat 
                  variant="dark"
-                 intent={category} 
+                 intent={{ domain: category, type: "general", confidence: 0.8 }} 
                  timeframe={period} 
-                 guidance={guidance}
                  initialMessage={`**${period.toUpperCase()} ${category.toUpperCase()} OUTLOOK**\n\n${guidance?.oneLineTruth || "Aligning with current planetary energies..."}\n\n${guidance?.currentSituation || "The current transits suggest a focus on disciplined action."}\n\n**Guidance:** ${guidance?.whatToDo?.[0] || "Maintain focus on long-term stability."}\n\nHow can I help you explore this specific alignment further?`}
                />
             </div>
