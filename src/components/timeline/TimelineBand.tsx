@@ -21,7 +21,10 @@ const categoryConfig: Record<string, { bg: string; border: string; badge: string
 
 export default function TimelineBand({ windows, activeId, onSelect }: Props) {
   return (
-    <div className="w-0 min-w-full overflow-x-auto no-scrollbar snap-x snap-mandatory py-2">
+    <div 
+      className="no-scrollbar snap-x snap-mandatory py-2"
+      style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}
+    >
       <div className="flex gap-4 min-w-max px-1">
         {windows.map((window, idx) => {
           const isActive = window.id === activeId;
