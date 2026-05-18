@@ -22,7 +22,7 @@ const categoryConfig: Record<string, { bg: string; border: string; badge: string
 export default function TimelineBand({ windows, activeId, onSelect }: Props) {
   return (
     <div 
-      className="no-scrollbar snap-x snap-mandatory py-2"
+      className="snap-x snap-mandatory py-2 scroll-smooth custom-scrollbar"
       style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}
     >
       <div className="flex gap-4 min-w-max px-1">
