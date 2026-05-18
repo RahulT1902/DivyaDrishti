@@ -25,7 +25,7 @@ const aiModel = useDeepSeek ? "deepseek-chat" : "gpt-4o";
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, timeframe, domain, conversationHistory } = await req.json();
+    const { message, timeframe, domain, conversationHistory, email: bodyEmail } = await req.json();
 
     if (!message || !domain || !timeframe) {
       return NextResponse.json(
@@ -35,8 +35,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Get user context
+    const emailHeader = req.headers.get("x-user-email") || "";
+    const userEmail = (bodyEmail || emailHeader).trim().toLowerCase();
+
     const user = await prisma.user.findFirst({
-      orderBy: { createdAt: "desc" },
+      where: userEmail ? { email: userEmail } : undefined,
+      orderBy: userEmail ? undefined : { createdAt: "desc" },
       include: { birthDetails: true },
     });
 

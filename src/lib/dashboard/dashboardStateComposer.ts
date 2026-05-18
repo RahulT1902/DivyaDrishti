@@ -9,6 +9,7 @@ export interface DashboardUIState {
     executionMode: string;
     focus: string[];
     avoid: string[];
+    dominantTone: string;
   };
   
   momentum: {
@@ -69,7 +70,7 @@ export class DashboardStateComposer {
       label: nextWindow ? `Next: ${nextWindow.category}` : "Stable Cycle",
       daysRemaining: nextWindow ? differenceInDays(new Date(nextWindow.startDate), new Date()) : 0,
       from: lifeState.overallState.title.split(":")[0],
-      to: nextWindow?.category || "Unknown",
+      to: nextWindow ? nextWindow.title : "Unknown",
       intensity: nextWindow?.intensity || 5
     };
 
@@ -79,7 +80,8 @@ export class DashboardStateComposer {
         summary: lifeState.overallState.summary,
         executionMode: lifeState.metadata.dominantPlanetaryDrivers.includes("Saturn") ? "ARCHITECT" : "WARRIOR",
         focus: lifeState.behavioralGuidance.recommendedBehaviors,
-        avoid: lifeState.behavioralGuidance.avoidBehaviors
+        avoid: lifeState.behavioralGuidance.avoidBehaviors,
+        dominantTone: lifeState.emotionalState.dominantTone
       },
       momentum,
       nextTransition,

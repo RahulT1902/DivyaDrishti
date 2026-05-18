@@ -1,9 +1,9 @@
 import { NatalChart, DashaContext } from "../types";
 import { TransitIntelligence } from "../transit/types";
-import { DomainIntelligence, DomainSignal } from "./types";
-import { resolveTensions } from "./tensionResolver";
+import { DomainIntelligence, DomainSignal } from "../domain/types";
+import { resolveTensions } from "../resolvers/tensionResolver";
 import { getLordOfDomain } from "../../astrology/houseLords";
-import { calculateNormalizedScore, calculatePressureLevel, calculateOpportunityLevel } from "../SignalScore";
+import { calculateNormalizedScore, calculatePressureLevel, calculateOpportunityLevel } from "../../scoring/signalWeights";
 import { AgentSignal } from "../agents/types";
 
 export function synthesizeCareer(
@@ -12,6 +12,11 @@ export function synthesizeCareer(
   transits: TransitIntelligence[]
 ): DomainIntelligence {
   const agentSignals: AgentSignal[] = [];
+
+  // Guard: natal lagna required for house lord logic
+  if (!natal?.lagna?.sign) {
+    return buildCareerFallback(dasha);
+  }
 
   // 1. Natal Foundation (The "Promise")
   const careerLords = getLordOfDomain("career", natal.lagna.sign);
@@ -114,5 +119,28 @@ export function synthesizeCareer(
       pressure > 7 ? "Adopt a defensive stance; prioritize stability over expansion." : "Favorable window for calculated professional pivots."
     ],
     confidence: 0.85
+  };
+}
+
+function buildCareerFallback(dasha: DashaContext): DomainIntelligence {
+  return {
+    domain: "career",
+    dominantTheme: "Structured Progress",
+    supportingFactors: [`Dasha: ${dasha?.mahadasha || "Saturn"}`],
+    restrictiveFactors: [],
+    synthesis: "Career conditions appear moderately stable. Disciplined, structured execution tends to outperform reactive pivots in this phase.",
+    pressureLevel: 4,
+    opportunityLevel: 6,
+    stabilityLevel: 7,
+    manifestations: {
+      external: ["Gradual career progress", "Increased structural responsibilities"],
+      internal: ["Growing need for focus", "Long-term orientation"]
+    },
+    timelineState: { improving: true, accelerating: false, unstable: false },
+    recommendations: [
+      "Prioritize systematic execution over rapid expansion.",
+      "Build long-term professional foundations."
+    ],
+    confidence: 0.5
   };
 }

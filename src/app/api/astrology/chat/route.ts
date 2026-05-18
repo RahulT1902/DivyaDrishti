@@ -21,14 +21,18 @@ const aiModel = useDeepSeek ? "deepseek-chat" : "gpt-4o";
 
 export async function POST(req: NextRequest) {
   try {
-    const { question } = await req.json();
+    const { question, domain: forcedDomain, timeframe: forcedTimeframe, email: bodyEmail } = await req.json();
     if (!question || typeof question !== "string") {
       return buildErrorResponse("DATA_MALFORMATION", "Please provide a valid question.", 400);
     }
 
     // 1. Get User Context
+    const emailHeader = req.headers.get("x-user-email") || "";
+    const userEmail = (bodyEmail || emailHeader).trim().toLowerCase();
+
     const user = await prisma.user.findFirst({
-      orderBy: { createdAt: "desc" },
+      where: userEmail ? { email: userEmail } : undefined,
+      orderBy: userEmail ? undefined : { createdAt: "desc" },
       include: { birthDetails: true },
     });
 
@@ -39,12 +43,16 @@ export async function POST(req: NextRequest) {
     // 2. Intent Extraction
     const extractedIntent = extractIntent(question);
     
+    // Determine forced domain & timeframe to constrain the chat scope
+    const targetDomain = forcedDomain || extractedIntent.domain || "general";
+    const targetTimeframe = forcedTimeframe || "this-week";
+
     // Ensure intent is passed as an object
     const intent = {
-      domain: extractedIntent.domain,
+      domain: targetDomain,
       type: extractedIntent.type || "general",
       confidence: extractedIntent.confidence,
-      timeframe: "this-week"
+      timeframe: targetTimeframe
     };
 
     // 3. Astrology Engine (Standard Setup)
@@ -67,7 +75,7 @@ export async function POST(req: NextRequest) {
     const currentTransits = await calculateCurrentTransits();
     
     // 4. Intelligence Logic
-    const narrative = generateNarrative(intent as any, "this-week" as any, chart, temporal);
+    const narrative = generateNarrative(intent as any, targetTimeframe as any, chart, temporal);
 
     // 5. LLM Agentic Layer
     let answerText = "";
@@ -86,6 +94,9 @@ Provide your response in EXACTLY 2 or 3 short paragraphs.
 - End with a separate punchy Verdict sentence.
 NEVER use jargon like "Rahu", "Ketu", "Dasha", or "House".
 Speak plainly, authoritatively, and empirically.
+
+IMPORTANT: You are strictly constrained to discussing only the domain: "${targetDomain}" and timeframe: "${targetTimeframe}". 
+If the user asks questions or raises topics outside this focus area (e.g. asking about health or relationships when the topic is career), politely redirect them back to the active topic, remind them of the active focus boundary, and decline to answer unrelated topics.
 
 DeepInsight JSON:
 ${JSON.stringify(narrative, null, 2)}`;

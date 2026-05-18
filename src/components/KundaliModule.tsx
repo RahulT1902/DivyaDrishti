@@ -38,7 +38,7 @@ interface KundaliModuleProps {
   chart: any;
   temporal: any;
   report: KundaliReport;
-  intent?: Intent;
+  intent?: string;
 }
 
 export default function KundaliModule({ chart, temporal, report, intent = "general" }: KundaliModuleProps) {
@@ -320,7 +320,7 @@ export default function KundaliModule({ chart, temporal, report, intent = "gener
 // --- Deep Intelligence View Component ---
 
 function DeepReportView({ area, report, temporal }: { area: string, report: KundaliReport, temporal: any }) {
-  const data = (report?.lifeAreas as any)?.[area]?.deepIntelligence as DeepInsight;
+  const data = (report?.lifeAreas as any)?.[area]?.deepIntelligence as any;
   if (!data) return <div className="text-black/30 italic">No deep intelligence available for this horizon.</div>;
 
   return (
@@ -356,7 +356,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
                 <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-black/20">Transit Anchors</h4>
              </div>
              <div className="space-y-4">
-                {data.dashaContext.transitAnchors.map((anchor, i) => (
+                {data.dashaContext.transitAnchors.map((anchor: any, i: number) => (
                   <div key={i} className="flex gap-4 items-start group">
                      <div className="w-1.5 h-1.5 rounded-full bg-black/10 mt-1.5 group-hover:bg-amber-500 transition-colors" />
                      <span className="text-[12px] text-black/60 font-medium leading-tight">{anchor}</span>
@@ -392,7 +392,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
                       </div>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                         {data.themeBanner.focusPoints.map((point, i) => (
+                         {data.themeBanner.focusPoints.map((point: string, i: number) => (
                            <div key={i} className="flex items-center gap-3">
                               <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                               <span className="text-[11px] uppercase tracking-widest font-black text-white/60">{point}</span>
@@ -414,7 +414,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
              </div>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {data.categorizedInsights.map((insight, i) => (
+                {data.categorizedInsights.map((insight: any, i: number) => (
                   <div key={i} className="p-8 rounded-[2.5rem] bg-white border border-black/[0.03] shadow-sm space-y-6 hover:shadow-xl transition-all group">
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -435,7 +435,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
                      <div className="space-y-4">
                         <p className="text-[11px] font-black uppercase tracking-widest text-black/20">{insight.title}</p>
                         <div className="space-y-3">
-                           {insight.points.map((p, j) => (
+                           {insight.points.map((p: string, j: number) => (
                              <div key={j} className="flex gap-3 items-start">
                                 <ArrowRight className="w-3.5 h-3.5 mt-0.5 text-black/10 group-hover:text-amber-500 transition-colors" />
                                 <span className="text-[13px] text-black/60 font-bold leading-snug tracking-tight">{p}</span>
@@ -468,7 +468,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
              </div>
              
              <div className="space-y-10">
-                {data.phases.map((phase, i) => (
+                {data.phases.map((phase: any, i: number) => (
                    <div key={i} className="flex gap-10">
                       <div className="shrink-0 w-16 pt-2">
                          <span className="text-[10px] font-black uppercase tracking-widest text-black/20 transform -rotate-90 block origin-left translate-x-4">
@@ -482,7 +482,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
                             <p className="text-xs text-black/30 font-medium italic">{phase.astroReason}</p>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {phase.detailBullets?.map((bullet, j) => (
+                            {phase.detailBullets?.map((bullet: string, j: number) => (
                                <div key={j} className="flex items-center gap-3 p-4 bg-black/[0.01] rounded-2xl border border-black/[0.03]">
                                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500/40" />
                                   <span className="text-[12px] font-bold text-black/60 tracking-tight">{bullet}</span>
@@ -515,7 +515,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
                       <XCircle className="w-4 h-4 text-amber-500/40" />
                    </div>
                    <div className="space-y-3">
-                      {data.verdictMatrix.avoid.map((item, i) => (
+                      {data.verdictMatrix.avoid.map((item: string, i: number) => (
                         <p key={i} className="text-[13px] font-bold text-black/70 italic tracking-tight underline decoration-amber-500/20 underline-offset-4">{item}</p>
                       ))}
                    </div>
@@ -527,7 +527,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
                       <CheckCircle2 className="w-4 h-4 text-emerald-500/40" />
                    </div>
                    <div className="space-y-3">
-                      {data.verdictMatrix.favor.map((item, i) => (
+                      {data.verdictMatrix.favor.map((item: string, i: number) => (
                         <p key={i} className="text-[13px] font-bold text-black/70 italic tracking-tight underline decoration-emerald-500/20 underline-offset-4">{item}</p>
                       ))}
                    </div>
@@ -539,7 +539,7 @@ function DeepReportView({ area, report, temporal }: { area: string, report: Kund
                       <AlertTriangle className="w-4 h-4 text-black/20" />
                    </div>
                    <div className="space-y-3">
-                      {data.verdictMatrix.caution.map((item, i) => (
+                      {data.verdictMatrix.caution.map((item: string, i: number) => (
                         <p key={i} className="text-[13px] font-bold text-black/40 italic tracking-tight">{item}</p>
                       ))}
                    </div>

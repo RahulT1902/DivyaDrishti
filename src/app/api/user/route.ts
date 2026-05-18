@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         name: user.name,
         email: user.email,
         birthDetails: user.birthDetails,
-        streakCount: user.streakCount || 0,
+        streakCount: (user as any).streakCount || 0,
       },
     });
   } catch (error: unknown) {

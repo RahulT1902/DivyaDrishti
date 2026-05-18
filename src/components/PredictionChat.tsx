@@ -101,6 +101,7 @@ export default function PredictionChat({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          email: typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "",
           message: input,
           timeframe,
           domain,

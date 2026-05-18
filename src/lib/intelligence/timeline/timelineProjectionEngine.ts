@@ -59,7 +59,7 @@ export class TimelineProjectionEngine {
       direction: transit.intensity > 7 ? "VOLATILE" : "STABLE",
       momentumScore: 10 - transit.intensity,
       volatilityScore: transit.intensity,
-      clarityScore: dasha.confidence * 10
+      clarityScore: (dasha.confidence ?? 0.8) * 10
     };
 
     return {
@@ -70,7 +70,7 @@ export class TimelineProjectionEngine {
       keyTransitions: [], // To be implemented by TransitionDetector
       strategicHighlights: [],
       dominantThemes: dasha.longTermThemes,
-      confidenceScore: (dasha.confidence + transit.confidence) / 2
+      confidenceScore: ((dasha.confidence ?? 0.8) + (transit.confidence ?? 0.8)) / 2
     };
   }
 }

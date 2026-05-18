@@ -31,8 +31,12 @@ export class DashaAgent {
 
   async process(timeline: Period[], now: Date): Promise<AgentResult<DashaAgentOutput>> {
     const context = getDashaContext(timeline, now);
+
+    // ── Graceful Fallback ──────────────────────────────────────────────────────
+    // When timeline is empty (e.g. MVP mock, missing birth data), return a
+    // stable deterministic fallback rather than crashing the entire pipeline.
     if (!context) {
-      throw new Error("Could not calculate Dasha context");
+      return this.buildFallback();
     }
 
     const md = context.stack.mahadasha;
@@ -87,6 +91,38 @@ export class DashaAgent {
         `Time pressure: ${context.timing.pressure}`,
         `Remaining: ${context.timing.remaining}`
       ]
+    };
+  }  // end process()
+
+  private buildFallback(): AgentResult<DashaAgentOutput> {
+    const md = "Saturn";
+    const ad = "Mercury";
+    const now = new Date();
+
+    const data: DashaAgentOutput = {
+      currentNarrative: `Operating in a structured, disciplined phase. Long-term planning and systematic execution tend to yield the best outcomes now.`,
+      primaryArchetype: ARCHETYPES[md],  // "The Architect"
+      longTermThemes: [...THEMES[md], ...THEMES[ad]],
+      timingAnchors: [
+        {
+          startDate: now.toISOString(),
+          endDate: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          title: `${md} Phase — Structured Foundation`,
+          astroTriggers: [md, ad],
+          externalManifestation: "Gradual, measurable progress in structured domains.",
+          internalState: "A heightened need for discipline and long-term thinking.",
+          opportunities: THEMES[md].slice(0, 2),
+          cautions: ["Excessive rigidity", "Neglecting emotional needs"],
+          confidence: 0.5
+        }
+      ]
+    };
+
+    return {
+      data,
+      signals: [],
+      confidence: 0.5,   // Low confidence signals this is fallback, not computed
+      reasoning: ["Timeline unavailable — using Saturn archetype fallback."]
     };
   }
 }

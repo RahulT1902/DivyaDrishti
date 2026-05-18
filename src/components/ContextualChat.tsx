@@ -41,13 +41,15 @@ export default function ContextualChat({ intent, timeframe, initialMessage, vari
     setLoading(true);
 
     try {
+      const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
       const response = await fetch("/api/predictions/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMsg,
           timeframe,
-          domain: intent.domain
+          domain: intent.domain,
+          email: userEmail
         })
       });
 

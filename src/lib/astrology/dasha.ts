@@ -137,8 +137,7 @@ export function getCurrentDasha(timeline: Period[], now: Date) {
  */
 export function getDashaContext(timeline: Period[], targetDate: Date) {
   const dasha = getCurrentDasha(timeline, targetDate);
-  if (!dasha) return null;
-
+  if (!dasha || !dasha.ad) return null;
   const { md, ad, pd, nextAd } = dasha;
 
   // Time Pressure Logic

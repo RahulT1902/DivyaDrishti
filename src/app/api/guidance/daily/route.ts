@@ -14,9 +14,15 @@ import { GoalContextMapper } from "@/lib/intelligence/goals/goalContextMapper";
  */
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const emailParam = searchParams.get("email") || "";
+    const emailHeader = req.headers.get("x-user-email") || "";
+    const userEmail = (emailParam || emailHeader).trim().toLowerCase();
+
     // ── 1. Load User Context ────────────────────────────────────────────────
     const user = await prisma.user.findFirst({
-      orderBy: { createdAt: "desc" },
+      where: userEmail ? { email: userEmail } : undefined,
+      orderBy: userEmail ? undefined : { createdAt: "desc" },
       include: {
         memories: { orderBy: { createdAt: "desc" }, take: 20 },
         goals: { where: { currentStatus: "ACTIVE" }, take: 10 },

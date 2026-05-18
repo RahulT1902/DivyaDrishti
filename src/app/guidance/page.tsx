@@ -13,7 +13,8 @@ export default function GuidancePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/guidance/daily")
+    const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
+    fetch(`/api/guidance/daily?email=${encodeURIComponent(userEmail)}`)
       .then(r => r.json())
       .then(data => {
         if (data.success) {

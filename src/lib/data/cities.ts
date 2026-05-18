@@ -267,5 +267,6 @@ export const cities = [
   { name: "Wayanad", state: "Kerala", lat: 11.6854, lng: 76.132, timezone: "Asia/Kolkata" },
   { name: "Idukki", state: "Kerala", lat: 9.9189, lng: 77.1025, timezone: "Asia/Kolkata" },
   { name: "Pathanamthitta", state: "Kerala", lat: 9.2648, lng: 76.787, timezone: "Asia/Kolkata" },
-  { name: "Ernakulam", state: "Kerala", lat: 9.9816, lng: 76.2999, timezone: "Asia/Kolkata" }
+  { name: "Ernakulam", state: "Kerala", lat: 9.9816, lng: 76.2999, timezone: "Asia/Kolkata" },
+  { name: "Kumta", state: "Karnataka", lat: 14.43, lng: 74.40, timezone: "Asia/Kolkata" }
 ] as const;

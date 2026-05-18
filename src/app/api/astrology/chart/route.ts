@@ -49,9 +49,14 @@ export async function GET(req: NextRequest) {
     };
     const timeframe = timeframeParam as Timeframe;
 
-    // 1. Get User
+    const emailParam = searchParams.get("email") || "";
+    const emailHeader = req.headers.get("x-user-email") || "";
+    const userEmail = (emailParam || emailHeader).trim().toLowerCase();
+
+    // 1. Get User by email (or fall back to most recent for backward compat)
     const user = await prisma.user.findFirst({
-      orderBy: { createdAt: "desc" },
+      where: userEmail ? { email: userEmail } : undefined,
+      orderBy: userEmail ? undefined : { createdAt: "desc" },
       include: { birthDetails: true },
     });
 
@@ -100,7 +105,13 @@ export async function GET(req: NextRequest) {
     const narrative = generateNarrative(intent, timeframe, chart, temporal, signals);
     const report = generateKundaliReport(chart, temporal, timeframe);
     const transitIntelligence = generateTransitIntelligence(currentTransits.positions, chart.planets, chart.lagna.sign);
-    const domainIntelligence = synthesizeLifeDomains(chart, temporal, transitIntelligence);
+    const dashaCtx = {
+      mahadasha: temporal?.stack?.mahadasha || "Saturn",
+      antardasha: temporal?.stack?.antardasha || "Jupiter",
+      pratyantar: temporal?.stack?.pratyantar || "Unknown",
+      transitAnchors: []
+    };
+    const domainIntelligence = synthesizeLifeDomains(chart, dashaCtx as any, transitIntelligence);
 
     // Safely extract insight values with fallbacks
     const primaryInsight = narrative.heroInsight || "Your life chapters are being calibrated.";
@@ -123,6 +134,7 @@ export async function GET(req: NextRequest) {
       },
       chart,
       temporal,
+      timeline,
       transitIntelligence,
       domainIntelligence,
       meta: {

@@ -14,7 +14,7 @@ export function mapAstroToMeaning(
   
   // 1. Filter signals relevant to the current intent
   const relevantSignals = signals.filter(s => 
-    s.area.includes(intent) || s.area.includes("general") || s.area.includes("focus")
+    s.area.includes(intent.domain) || s.area.includes("general") || s.area.includes("focus")
   );
 
   // 2. Deterministic Confidence Score (Adaptive Weighting)

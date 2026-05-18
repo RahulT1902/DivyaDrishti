@@ -1,4 +1,4 @@
-import { AgentSignal } from "./agents/types";
+import { AgentSignal } from "../intelligence/agents/types";
 
 /**
  * SignalScore System

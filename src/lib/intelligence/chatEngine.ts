@@ -62,7 +62,7 @@ export function buildChatResponse(
   return {
     answer: cleanAnswer,
     followUp: generateFollowUp(intent, timeframe),
-    confidence: insight.specifics.find(s => s.label === "Clarity Level")?.value.toLowerCase() as any || "medium",
+    confidence: insight.specifics.find((s: any) => s.label === "Clarity Level")?.value.toLowerCase() as any || "medium",
     intent: {
       domain: intent.domain,
       type: intent.type
@@ -71,7 +71,7 @@ export function buildChatResponse(
 }
 
 function getStance(intent: Intent, insight: DeepInsight, timeframe: string): string {
-  const isPositive = insight.phases[0]?.verdict.includes("Proceed") || insight.verdict.toLowerCase().includes("clear");
+  const isPositive = insight.phases[0]?.verdict?.includes("Proceed") || insight.verdict.toLowerCase().includes("clear");
   const isCautious = insight.verdict.toLowerCase().includes("discipline") || insight.verdict.toLowerCase().includes("slow") || insight.verdict.toLowerCase().includes("caution");
 
   const timeMarker = timeframe === "week" ? "this week " : timeframe === "month" ? "this month " : "";
@@ -124,7 +124,7 @@ function getPhysicalSignalsText(insight: DeepInsight): string {
 }
 
 function getReasoning(insight: DeepInsight, timeframe: string): string {
-  const base = insight.bigPicture;
+  const base = insight.bigPicture || "";
   if (timeframe === "week") {
     return `${base} In the short term, you may notice slight fluctuations in your energy or pace.`;
   }
@@ -165,8 +165,8 @@ function getDomainGuidance(intent: Intent, insight: DeepInsight, timeframe: stri
   };
 
   const domainGuidance = guidanceMap[intent.domain] || {
-    do: insight.verdictMatrix.favor,
-    avoid: insight.verdictMatrix.avoid
+    do: insight.verdictMatrix?.favor || [],
+    avoid: insight.verdictMatrix?.avoid || []
   };
 
   let primaryDo = "";
@@ -254,8 +254,8 @@ function replaceJargon(text: string): string {
 }
 
 function maybeSignature(insight: DeepInsight): string {
-  const clarity = insight.specifics.find(s => s.label === "Clarity Level")?.value;
-  if (clarity === "High" && insight.verdictMatrix.caution.length > 0) {
+  const clarity = insight.specifics.find((s: any) => s.label === "Clarity Level")?.value;
+  if (clarity === "High" && (insight.verdictMatrix?.caution?.length || 0) > 0) {
     return "This phase is not stopping you—it is shaping you.";
   }
   return "";
@@ -275,7 +275,7 @@ function generateFollowUp(intent: Intent, timeframe: string): string {
 export function generateGeneralTimingResponse(insight: DeepInsight): string {
   return [
     "This is a phase for consolidation rather than big moves.",
-    insight.bigPicture,
+    insight.bigPicture || "",
     "You may be experiencing slower movement, which is natural for this cycle.",
     "Stay disciplined and focus on your foundations. This is a time for preparation.",
     insight.verdict

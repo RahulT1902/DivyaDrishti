@@ -1,4 +1,4 @@
-import { AgentResult, RealityValidationResult, AgentSignal } from "./types";
+import { AgentResult, RealityValidationResult, AgentSignal } from "../agents/types";
 
 /**
  * RealityValidatorAgent: Prevents fear-based or irrational predictions.

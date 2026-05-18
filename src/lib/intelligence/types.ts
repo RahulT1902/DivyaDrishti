@@ -72,6 +72,7 @@ export type TimePhase = {
   opportunities: string[];
   cautions: string[];
   confidence: number;
+  verdict?: string;
 };
 
 export type ConfidenceLayer = {
@@ -98,6 +99,15 @@ export interface DeepInsight {
   specifics: any; // Can be typed further if needed
   confidence: ConfidenceLayer;
   verdict: string;
+  bigPicture?: string;
+  verdictMatrix?: {
+    favor: string[];
+    avoid: string[];
+    caution: string[];
+  };
+  physicalSignals?: string[];
+  reassurance?: string;
+  domainAnchor?: string;
 }
 
 export interface ReportSection {

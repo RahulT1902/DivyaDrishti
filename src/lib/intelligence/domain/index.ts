@@ -1,8 +1,8 @@
 import { NatalChart, DashaContext } from "../types";
 import { CompleteTransitReport } from "../transit/types";
 import { DomainIntelligence } from "./types";
-import { synthesizeCareer } from "./careerSynthesizer";
-import { synthesizeFinance } from "./financeSynthesizer";
+import { synthesizeCareer } from "../synthesizers/careerSynthesizer";
+import { synthesizeFinance } from "../synthesizers/financeSynthesizer";
 
 export function synthesizeLifeDomains(
   natal: NatalChart,

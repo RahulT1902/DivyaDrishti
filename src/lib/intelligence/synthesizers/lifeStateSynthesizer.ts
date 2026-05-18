@@ -71,8 +71,24 @@ export class LifeStateSynthesizer {
       primaryThemes: dashaResult.data.longTermThemes.slice(0, 3),
 
       activeDomains: {
-        career: career as unknown as DomainState,
-        finance: finance as unknown as DomainState,
+        career: {
+          score: career.opportunityLevel * 10,
+          momentum: career.timelineState.accelerating ? 2 : (career.timelineState.improving ? 1 : -1),
+          status: career.dominantTheme,
+          summary: career.synthesis,
+          primaryFocus: career.recommendations[0] || "Strategic growth",
+          manifestations: career.manifestations,
+          recommendations: career.recommendations
+        },
+        finance: {
+          score: finance.opportunityLevel * 10,
+          momentum: finance.timelineState.accelerating ? 2 : (finance.timelineState.improving ? 1 : -1),
+          status: finance.dominantTheme,
+          summary: finance.synthesis,
+          primaryFocus: finance.recommendations[0] || "Asset protection",
+          manifestations: finance.manifestations,
+          recommendations: finance.recommendations
+        },
         relationships: {
           score: 50,
           momentum: 0,

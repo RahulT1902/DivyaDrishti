@@ -9,50 +9,51 @@ interface Props {
   onSelect?: (id: string) => void;
 }
 
-const categoryColors: Record<string, string> = {
-  EXPANSION: "from-emerald-900/40 to-emerald-800/20 border-emerald-500/30",
-  DISCIPLINE: "from-blue-900/40 to-blue-800/20 border-blue-500/30",
-  VOLATILITY: "from-indigo-900/40 to-indigo-800/20 border-indigo-500/30",
-  RECOVERY: "from-purple-900/40 to-purple-800/20 border-purple-500/30",
-  TRANSFORMATION: "from-rose-900/40 to-rose-800/20 border-rose-500/30",
-  VISIBILITY: "from-amber-900/40 to-amber-800/20 border-amber-500/30",
+const categoryConfig: Record<string, { bg: string; border: string; badge: string; label: string }> = {
+  EXPANSION:           { bg: "bg-emerald-50",  border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-700", label: "Jupiter Growth Phase" },
+  DISCIPLINE:          { bg: "bg-indigo-50",   border: "border-indigo-200",  badge: "bg-indigo-100 text-indigo-700",  label: "Saturn Discipline Cycle" },
+  VOLATILITY:          { bg: "bg-orange-50",   border: "border-orange-200",  badge: "bg-orange-100 text-orange-700",  label: "Mars Volatility Period" },
+  RECOVERY:            { bg: "bg-purple-50",   border: "border-purple-200",  badge: "bg-purple-100 text-purple-700",  label: "Ketu Recovery Phase" },
+  TRANSFORMATION:      { bg: "bg-rose-50",     border: "border-rose-200",    badge: "bg-rose-100 text-rose-700",      label: "Rahu Transformation" },
+  VISIBILITY:          { bg: "bg-amber-50",    border: "border-amber-200",   badge: "bg-amber-100 text-amber-700",    label: "Sun Visibility Phase" },
+  EMOTIONAL_PROCESSING:{ bg: "bg-sky-50",      border: "border-sky-200",     badge: "bg-sky-100 text-sky-700",        label: "Moon Emotional Cycle" },
 };
 
 export default function TimelineBand({ windows, activeId, onSelect }: Props) {
   return (
-    <div className="w-full overflow-x-auto no-scrollbar snap-x snap-mandatory py-4">
-      <div className="flex gap-4 min-w-max px-8">
+    <div className="w-full overflow-x-auto no-scrollbar snap-x snap-mandatory py-2">
+      <div className="flex gap-4 min-w-max px-1">
         {windows.map((window, idx) => {
           const isActive = window.id === activeId;
-          const colorClass = categoryColors[window.category] || categoryColors.DISCIPLINE;
-          
+          const cfg = categoryConfig[window.category] || categoryConfig.DISCIPLINE;
+
           return (
             <motion.button
               key={window.id}
               onClick={() => onSelect?.(window.id)}
-              whileHover={{ y: -4 }}
+              whileHover={{ y: -3 }}
               className={`
-                snap-start flex flex-col justify-between w-64 h-32 p-4 rounded-2xl border backdrop-blur-md transition-all
-                bg-gradient-to-br ${colorClass}
-                ${isActive ? 'ring-2 ring-white/50 border-white/40' : 'border-slate-800 hover:border-slate-700'}
+                snap-start flex flex-col justify-between w-56 h-32 p-4 rounded-2xl border shadow-sm transition-all
+                ${cfg.bg} ${cfg.border}
+                ${isActive ? "ring-2 ring-amber-500 border-amber-400" : "hover:border-amber-300"}
               `}
             >
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                <p className="text-[9px] font-bold text-amber-700/50 uppercase tracking-widest mb-1">
                   {format(new Date(window.startDate), "MMM d")} — {format(new Date(window.endDate), "MMM d")}
                 </p>
-                <h4 className="text-sm font-semibold text-white truncate">{window.title}</h4>
+                <h4 className="text-sm font-semibold text-amber-900 text-left leading-snug">{window.title}</h4>
               </div>
-              
+
               <div className="flex justify-between items-end">
-                <span className="text-[10px] font-medium text-slate-300 bg-black/30 px-2 py-0.5 rounded-full">
-                  {window.category}
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>
+                  {cfg.label}
                 </span>
-                <div className="flex gap-1">
+                <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`w-1 h-3 rounded-full ${i < window.intensity / 2 ? 'bg-white/60' : 'bg-white/10'}`} 
+                    <div
+                      key={i}
+                      className={`w-1 h-2.5 rounded-full ${i < window.intensity / 2 ? "bg-amber-500" : "bg-amber-100"}`}
                     />
                   ))}
                 </div>

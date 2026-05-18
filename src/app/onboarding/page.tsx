@@ -5,28 +5,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import CitySearch from "@/components/CitySearch";
 import { registerUser } from "@/app/actions";
-import { ArrowRight, Sparkles, Calendar, Clock, MapPin, User } from "lucide-react";
+import { ArrowRight, Sparkles, Calendar, Clock, MapPin, User, Loader2 } from "lucide-react";
 
-type OnboardingData = {
-  name: string;
-  date: string;
-  time: string;
-  city: any;
-};
+type OnboardingData = { name: string; date: string; time: string; city: any };
+
+const STEPS = [
+  { num: 1, icon: User,     label: "Who you are" },
+  { num: 2, icon: Calendar, label: "Date of birth" },
+  { num: 3, icon: Clock,    label: "Birth time" },
+  { num: 4, icon: MapPin,   label: "Birth place" },
+];
 
 export default function OnboardingRitual() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<OnboardingData>({
-    name: "",
-    date: "",
-    time: "",
-    city: null,
-  });
+  const [data, setData] = useState<OnboardingData>({ name: "", date: "", time: "", city: null });
 
-  const nextStep = () => setStep((s) => s + 1);
-  const prevStep = () => setStep((s) => s - 1);
+  const nextStep = () => setStep(s => s + 1);
+  const prevStep = () => setStep(s => s - 1);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -39,219 +36,159 @@ export default function OnboardingRitual() {
     formData.append("latitude", data.city.lat.toString());
     formData.append("longitude", data.city.lng.toString());
     formData.append("timezone", data.city.timezone);
-
     const res = await registerUser(formData);
     if (res.success) {
       window.localStorage.setItem("divya:loggedIn", "true");
       router.push("/dashboard");
     } else {
       setLoading(false);
-      alert("Calibration failed. Please try again.");
+      alert("Could not save your details. Please try again.");
     }
   };
 
   const variants = {
-    initial: { opacity: 0, x: 20 },
+    initial: { opacity: 0, x: 24 },
     animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -20 },
+    exit:    { opacity: 0, x: -24 },
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-xl">
-        {/* Progress Bar */}
-        <div className="flex gap-2 mb-12 justify-center">
-          {[1, 2, 3, 4].map((s) => (
-            <div
-              key={s}
-              className={`h-1.5 rounded-full transition-all duration-500 ${
-                s <= step ? "w-10 bg-cyan-600 shadow-[0_0_12px_rgba(8,145,178,0.3)]" : "w-4 bg-zinc-200"
-              }`}
-            />
-          ))}
+    <div className="min-h-screen bg-[#F8F5EF] flex flex-col items-center justify-center px-6 py-12">
+      {/* Soft background glow */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-amber-200/20 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="relative w-full max-w-lg">
+
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md shadow-amber-200 mx-auto mb-3">
+            <span className="text-white text-xl font-bold">ॐ</span>
+          </div>
+          <p className="text-xs font-bold text-amber-600/50 uppercase tracking-widest">DivyaDrishti · Birth Details</p>
         </div>
 
+        {/* Step Progress */}
+        <div className="flex items-center gap-2 mb-12">
+          {STEPS.map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <React.Fragment key={s.num}>
+                <div className={`flex flex-col items-center gap-1 ${step >= s.num ? "opacity-100" : "opacity-30"}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${step === s.num ? "bg-amber-600 text-white" : step > s.num ? "bg-emerald-500 text-white" : "bg-amber-100 text-amber-400"}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className={`flex-1 h-px transition-all ${step > s.num ? "bg-emerald-400" : "bg-amber-200"}`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* Step Content */}
         <AnimatePresence mode="wait">
           {step === 1 && (
-            <motion.div
-              key="step1"
-              variants={variants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              <div className="space-y-2">
-                <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" /> The Beginning
-                </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
-                  Let's align your <br /><span className="text-vibrant-gradient font-medium italic">cosmic blueprint.</span>
+            <motion.div key="s1" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
+              <div>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2">Step 1 of 4</p>
+                <h1 className="text-3xl md:text-4xl font-serif font-light text-amber-900 leading-snug">
+                  Let's align your <br /><span className="font-semibold text-amber-600 italic">cosmic blueprint.</span>
                 </h1>
               </div>
-
-              <div className="relative">
+              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm">
+                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest mb-3">Your Name</label>
                 <input
-                  type="text"
-                  placeholder="What is your name?"
-                  value={data.name}
-                  onChange={(e) => setData({ ...data, name: e.target.value })}
-                  className="w-full h-16 bg-transparent border-b border-zinc-200 text-3xl font-light text-zinc-900 outline-none focus:border-cyan-500 transition-colors placeholder:text-zinc-200 px-2"
+                  type="text" placeholder="e.g. Rahul Sharma"
+                  value={data.name} onChange={e => setData({ ...data, name: e.target.value })}
+                  className="w-full text-2xl font-serif font-light text-amber-900 bg-transparent border-b-2 border-amber-200 focus:border-amber-500 outline-none pb-2 placeholder-amber-200 transition-colors"
                   autoFocus
                 />
-                <User className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-200 w-8 h-8" />
               </div>
-
-              <button
-                disabled={!data.name}
-                onClick={nextStep}
-                className="group flex items-center gap-3 text-zinc-400 hover:text-zinc-900 transition-all disabled:opacity-30"
-              >
-                Continue <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <button disabled={!data.name} onClick={nextStep}
+                className="flex items-center gap-3 text-amber-700 font-medium hover:text-amber-900 disabled:opacity-30 transition-all group">
+                Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
           )}
 
           {step === 2 && (
-            <motion.div
-              key="step2"
-              variants={variants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              <div className="space-y-2">
-                <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
-                  <Calendar className="w-4 h-4" /> Earthly Arrival
-                </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
-                  When were you <br /><span className="text-vibrant-gradient font-medium italic">born into this world?</span>
+            <motion.div key="s2" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
+              <div>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2">Step 2 of 4</p>
+                <h1 className="text-3xl md:text-4xl font-serif font-light text-amber-900 leading-snug">
+                  When were you <br /><span className="font-semibold text-amber-600 italic">born into this world?</span>
                 </h1>
               </div>
-
-              <div className="relative">
+              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm">
+                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest mb-3">Date of Birth</label>
                 <input
-                  type="date"
-                  value={data.date}
-                  onChange={(e) => setData({ ...data, date: e.target.value })}
-                  className="w-full h-16 bg-transparent border-b border-zinc-200 text-3xl font-light text-zinc-900 outline-none focus:border-cyan-500 transition-colors [color-scheme:light] px-2"
+                  type="date" value={data.date} onChange={e => setData({ ...data, date: e.target.value })}
+                  className="w-full text-2xl font-serif font-light text-amber-900 bg-transparent border-b-2 border-amber-200 focus:border-amber-500 outline-none pb-2 [color-scheme:light] transition-colors"
                   autoFocus
                 />
               </div>
-
-              <div className="flex gap-8">
-                <button
-                  onClick={prevStep}
-                  className="text-zinc-300 hover:text-zinc-900 transition-all text-sm uppercase tracking-widest"
-                >
-                  Back
-                </button>
-                <button
-                  disabled={!data.date}
-                  onClick={nextStep}
-                  className="group flex items-center gap-3 text-zinc-400 hover:text-zinc-900 transition-all disabled:opacity-30"
-                >
-                  Next Alignment <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <div className="flex gap-6">
+                <button onClick={prevStep} className="text-sm text-amber-600/50 hover:text-amber-800 uppercase tracking-widest transition-colors">← Back</button>
+                <button disabled={!data.date} onClick={nextStep}
+                  className="flex items-center gap-3 text-amber-700 font-medium hover:text-amber-900 disabled:opacity-30 transition-all group">
+                  Next <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </motion.div>
           )}
 
           {step === 3 && (
-            <motion.div
-              key="step3"
-              variants={variants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              <div className="space-y-2">
-                <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
-                  <Clock className="w-4 h-4" /> Universal Time
-                </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
-                  The exact moment <br /><span className="text-vibrant-gradient font-medium italic">of your alignment.</span>
+            <motion.div key="s3" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
+              <div>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2">Step 3 of 4</p>
+                <h1 className="text-3xl md:text-4xl font-serif font-light text-amber-900 leading-snug">
+                  The exact moment <br /><span className="font-semibold text-amber-600 italic">of your alignment.</span>
                 </h1>
+                <p className="text-xs text-amber-700/40 mt-2">As accurate as possible — even approximate helps your Lagna calculation.</p>
               </div>
-
-              <div className="relative">
+              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm">
+                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest mb-3">Birth Time</label>
                 <input
-                  type="time"
-                  step="60"
-                  value={data.time}
-                  onChange={(e) => setData({ ...data, time: e.target.value })}
-                  className="w-full h-16 bg-transparent border-b border-zinc-200 text-4xl font-light text-zinc-900 outline-none focus:border-cyan-500 transition-colors [color-scheme:light] px-2"
+                  type="time" step="60" value={data.time} onChange={e => setData({ ...data, time: e.target.value })}
+                  className="w-full text-3xl font-serif font-light text-amber-900 bg-transparent border-b-2 border-amber-200 focus:border-amber-500 outline-none pb-2 [color-scheme:light] transition-colors"
                   autoFocus
                 />
               </div>
-
-              <div className="flex gap-8">
-                <button
-                  onClick={prevStep}
-                  className="text-zinc-300 hover:text-zinc-900 transition-all text-sm uppercase tracking-widest"
-                >
-                  Back
-                </button>
-                <button
-                  disabled={!data.time}
-                  onClick={nextStep}
-                  className="group flex items-center gap-3 text-zinc-400 hover:text-zinc-900 transition-all disabled:opacity-30"
-                >
-                  Final Calibration <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <div className="flex gap-6">
+                <button onClick={prevStep} className="text-sm text-amber-600/50 hover:text-amber-800 uppercase tracking-widest transition-colors">← Back</button>
+                <button disabled={!data.time} onClick={nextStep}
+                  className="flex items-center gap-3 text-amber-700 font-medium hover:text-amber-900 disabled:opacity-30 transition-all group">
+                  Final Step <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </motion.div>
           )}
 
           {step === 4 && (
-            <motion.div
-              key="step4"
-              variants={variants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              <div className="space-y-2">
-                <h2 className="text-sm uppercase tracking-[0.3em] text-cyan-500 font-medium flex items-center gap-2">
-                  <MapPin className="w-4 h-4" /> Sacred Location
-                </h2>
-                <h1 className="text-4xl md:text-5xl font-light text-zinc-900 leading-tight">
-                  Where did you <br /><span className="text-vibrant-gradient font-medium italic">first draw breath?</span>
+            <motion.div key="s4" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
+              <div>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2">Step 4 of 4</p>
+                <h1 className="text-3xl md:text-4xl font-serif font-light text-amber-900 leading-snug">
+                  Where did you <br /><span className="font-semibold text-amber-600 italic">first draw breath?</span>
                 </h1>
               </div>
-
-              <div className="pt-4">
-                <CitySearch onSelect={(city) => setData({ ...data, city })} />
+              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm">
+                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest mb-3">Birth City</label>
+                <CitySearch onSelect={city => setData({ ...data, city })} />
               </div>
-
-              <div className="flex gap-8 items-center pt-8">
+              <div className="flex gap-6 items-center pt-2">
+                <button disabled={loading} onClick={prevStep} className="text-sm text-amber-600/50 hover:text-amber-800 uppercase tracking-widest transition-colors">← Back</button>
                 <button
-                  disabled={loading}
-                  onClick={prevStep}
-                  className="text-zinc-300 hover:text-zinc-900 transition-all text-sm uppercase tracking-widest"
-                >
-                  Back
-                </button>
-                <button
-                  disabled={!data.city || loading}
-                  onClick={handleSubmit}
-                  className="h-14 px-8 rounded-full bg-zinc-900 text-white font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-zinc-900 shadow-xl shadow-zinc-200"
+                  disabled={!data.city || loading} onClick={handleSubmit}
+                  className="flex items-center gap-3 px-8 py-3.5 rounded-full bg-amber-600 text-white font-bold text-sm hover:bg-amber-700 disabled:opacity-40 transition-all shadow-sm shadow-amber-200"
                 >
                   {loading ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full"
-                    />
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Aligning your chart...</>
                   ) : (
-                    <>Align My Path <Sparkles className="w-4 h-4 fill-black" /></>
+                    <>Reveal My Chart <Sparkles className="w-4 h-4" /></>
                   )}
                 </button>
               </div>

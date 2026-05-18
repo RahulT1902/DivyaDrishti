@@ -1,9 +1,9 @@
 import { NatalChart, DashaContext } from "../types";
 import { TransitIntelligence } from "../transit/types";
-import { DomainIntelligence, DomainSignal } from "./types";
-import { resolveTensions } from "./tensionResolver";
+import { DomainIntelligence, DomainSignal } from "../domain/types";
+import { resolveTensions } from "../resolvers/tensionResolver";
 import { getLordOfDomain } from "../../astrology/houseLords";
-import { calculateNormalizedScore, calculatePressureLevel, calculateOpportunityLevel } from "../SignalScore";
+import { calculateNormalizedScore, calculatePressureLevel, calculateOpportunityLevel } from "../../scoring/signalWeights";
 import { AgentSignal } from "../agents/types";
 
 export function synthesizeFinance(
@@ -12,6 +12,11 @@ export function synthesizeFinance(
   transits: TransitIntelligence[]
 ): DomainIntelligence {
   const agentSignals: AgentSignal[] = [];
+
+  // Guard: natal lagna required for house lord logic
+  if (!natal?.lagna?.sign) {
+    return buildFinanceFallback(dasha);
+  }
 
   // 1. Natal Foundation
   const financeLords = getLordOfDomain("finance", natal.lagna.sign);
@@ -115,5 +120,28 @@ export function synthesizeFinance(
       pressure > 6 ? "Avoid speculative risks; focus on debt reduction and conservation." : "A favorable period for strategic investments."
     ],
     confidence: 0.82
+  };
+}
+
+function buildFinanceFallback(dasha: DashaContext): DomainIntelligence {
+  return {
+    domain: "finance",
+    dominantTheme: "Stable Consolidation",
+    supportingFactors: [`Dasha: ${dasha?.mahadasha || "Saturn"}`],
+    restrictiveFactors: [],
+    synthesis: "Financial conditions are in a consolidation phase. Building long-term stability tends to outperform speculative plays in this environment.",
+    pressureLevel: 3,
+    opportunityLevel: 5,
+    stabilityLevel: 7,
+    manifestations: {
+      external: ["Steady cash flow", "Reduced financial volatility"],
+      internal: ["Conservative mindset", "Long-term asset focus"]
+    },
+    timelineState: { improving: false, accelerating: false, unstable: false },
+    recommendations: [
+      "Focus on liquidity management and debt reduction.",
+      "Avoid speculative investments during consolidation phases."
+    ],
+    confidence: 0.5
   };
 }

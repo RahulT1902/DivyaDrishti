@@ -14,10 +14,10 @@ export class TemporalSmoother {
     for (let i = 1; i < windows.length; i++) {
       const next = windows[i];
       
-      // If categories are the same, or transition is too brief, merge
-      const durationDays = (new Date(next.startDate).getTime() - new Date(current.endDate).getTime()) / (1000 * 60 * 60 * 24);
+      // If categories are the same, or the current phase is too brief (less than 7 days), merge
+      const currentDuration = (new Date(current.endDate).getTime() - new Date(current.startDate).getTime()) / (1000 * 60 * 60 * 24);
 
-      if (current.category === next.category || durationDays < 7) {
+      if (current.category === next.category || currentDuration < 7) {
         current.endDate = next.endDate;
         current.intensity = Math.round((current.intensity + next.intensity) / 2);
       } else {

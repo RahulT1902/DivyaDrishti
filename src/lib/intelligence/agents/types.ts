@@ -20,6 +20,7 @@ export interface TransitAgentOutput {
     external: string[];
     internal: string[];
   };
+  confidence?: number;
 }
 
 export interface DashaAgentOutput {
@@ -27,6 +28,7 @@ export interface DashaAgentOutput {
   primaryArchetype: string;
   longTermThemes: string[];
   timingAnchors: TimePhase[];
+  confidence?: number;
 }
 
 export interface RealityValidationResult {

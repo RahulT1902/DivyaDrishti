@@ -43,10 +43,11 @@ export default function PunditChatView() {
     setLoading(true);
 
     try {
+      const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
       const res = await fetch("/api/astrology/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text }),
+        body: JSON.stringify({ question: text, email: userEmail }),
       });
       const result = await res.json();
 
@@ -82,22 +83,22 @@ export default function PunditChatView() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto h-[80vh] flex flex-col bg-indigo-950/20 border border-indigo-500/10 rounded-[3rem] overflow-hidden backdrop-blur-2xl shadow-2xl">
+    <div className="max-w-4xl mx-auto h-[80vh] flex flex-col bg-white border border-[#F1E7D0] rounded-3xl overflow-hidden shadow-md">
       
       {/* Header */}
-      <div className="p-6 border-b border-indigo-500/10 flex items-center justify-between bg-indigo-950/40">
+      <div className="p-5 border-b border-[#F1E7D0] flex items-center justify-between bg-amber-50">
          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-sm">
                <Compass className="w-5 h-5 text-white" />
             </div>
             <div>
-               <h3 className="text-sm font-bold tracking-widest text-amber-500 uppercase">Chat Pundit</h3>
-               <p className="text-[10px] text-indigo-300/60 uppercase tracking-widest">Diagnostic Consult</p>
+               <h3 className="text-sm font-bold tracking-widest text-amber-800 uppercase">Chat Pundit</h3>
+               <p className="text-[10px] text-amber-700/50 uppercase tracking-widest">Diagnostic Consult</p>
             </div>
          </div>
-         <div className="flex items-center gap-2 px-4 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+         <div className="flex items-center gap-2 px-4 py-1 bg-emerald-100 border border-emerald-200 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Active Engine</span>
+            <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest">Active Engine</span>
          </div>
       </div>
 
@@ -115,10 +116,10 @@ export default function PunditChatView() {
               className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div className={`max-w-[85%] space-y-4 ${m.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`p-6 rounded-[2rem] ${
-                  m.role === "user" 
-                    ? "bg-indigo-600/20 border border-indigo-400/30 text-indigo-50" 
-                    : "bg-indigo-950/40 border border-indigo-500/20"
+                <div className={`p-5 rounded-2xl ${
+                  m.role === "user"
+                    ? "bg-amber-100 border border-amber-200 text-amber-900"
+                    : "bg-amber-50 border border-[#F1E7D0]"
                 }`}>
                   {m.role === "pundit" ? (
                     <PunditResponse content={m.content} />
@@ -150,9 +151,9 @@ export default function PunditChatView() {
           ))}
           {loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-               <div className="p-6 rounded-[2rem] bg-indigo-950/40 border border-indigo-500/20 flex items-center gap-3">
-                  <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
-                  <span className="text-xs text-indigo-400 font-medium tracking-widest uppercase">Pundit is reflecting...</span>
+               <div className="p-5 rounded-2xl bg-amber-50 border border-[#F1E7D0] flex items-center gap-3">
+                  <Loader2 className="w-4 h-4 text-amber-600 animate-spin" />
+                  <span className="text-xs text-amber-700/60 font-medium tracking-widest uppercase">Pundit is reflecting...</span>
                </div>
             </motion.div>
           )}
@@ -160,32 +161,32 @@ export default function PunditChatView() {
       </div>
 
       {/* Input Area */}
-      <div className="p-6 bg-indigo-950/40 border-t border-indigo-500/10">
-         <form 
+      <div className="p-5 bg-amber-50 border-t border-[#F1E7D0]">
+         <form
            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-           className="relative flex items-center gap-4"
+           className="relative flex items-center gap-3"
          >
             <div className="relative flex-1">
                <input
                  ref={inputRef}
                  value={input}
                  onChange={(e) => setInput(e.target.value)}
-                 placeholder="How should I handle my current career situation?"
-                 className="w-full bg-indigo-950/60 border border-indigo-500/30 rounded-full py-4 pl-6 pr-14 text-sm text-white placeholder-indigo-500/50 outline-none focus:border-amber-500/50 transition-all"
+                 placeholder="Ask about career, timing, relationships..."
+                 className="w-full bg-white border border-[#F1E7D0] rounded-full py-3.5 pl-5 pr-12 text-sm text-amber-900 placeholder-amber-400/60 outline-none focus:border-amber-400 transition-all"
                />
                <div className="absolute right-3 top-1/2 -translate-y-1/2 p-2">
-                  <Sparkles className="w-4 h-4 text-indigo-500/40" />
+                  <Sparkles className="w-4 h-4 text-amber-400/40" />
                </div>
             </div>
-            <button 
+            <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale transition-all"
+              className="w-11 h-11 rounded-full bg-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-200 hover:bg-amber-700 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:grayscale transition-all"
             >
-               <Send className="w-5 h-5" />
+               <Send className="w-4 h-4" />
             </button>
          </form>
-         <p className="text-[9px] text-indigo-500/40 text-center mt-4 uppercase tracking-[0.3em]">
+         <p className="text-[9px] text-amber-700/30 text-center mt-3 uppercase tracking-[0.3em]">
            Ask about Career, Money, Relationships, or Timing
          </p>
       </div>
@@ -196,27 +197,24 @@ export default function PunditChatView() {
 
 function PunditResponse({ content }: { content: string }) {
   const parts = content.split("\n\n");
-  
+
   return (
     <div className="space-y-4">
       {parts.map((part, i) => {
-        // First part is the Direct Answer (Stance)
         if (i === 0) return (
-          <p key={i} className="text-lg font-serif font-medium text-white border-l-2 border-amber-500 pl-4 py-1 leading-snug">
-            {part}
-          </p>
-        );
-        
-        // Final part is the Verdict/Closing punch line
-        if (i === parts.length - 1) return (
-          <p key={i} className="text-xs font-bold text-amber-500 border-t border-indigo-500/10 pt-4 tracking-wide">
+          <p key={i} className="text-base font-serif font-medium text-amber-900 border-l-2 border-amber-500 pl-4 py-1 leading-snug">
             {part}
           </p>
         );
 
-        // Standard reasoning/mirror layers
+        if (i === parts.length - 1) return (
+          <p key={i} className="text-xs font-bold text-amber-600 border-t border-amber-100 pt-3 tracking-wide">
+            {part}
+          </p>
+        );
+
         return (
-          <p key={i} className="text-sm text-indigo-100/70 font-light leading-relaxed whitespace-pre-wrap">
+          <p key={i} className="text-sm text-amber-800/60 font-light leading-relaxed whitespace-pre-wrap">
             {part}
           </p>
         );
