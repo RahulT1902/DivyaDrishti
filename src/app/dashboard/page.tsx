@@ -231,7 +231,7 @@ export default function DashboardPage() {
               <CurrentPhaseHero state={state} />
 
               {/* Timeline Section */}
-              <section className="space-y-5">
+              <section className="space-y-5 w-full max-w-full overflow-hidden">
                 <div className="flex justify-between items-end">
                   <div>
                     <h3 className="text-xl font-serif font-semibold text-amber-900">Planetary Timeline</h3>
