@@ -14,8 +14,6 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user) {
-
-    if (!user) {
       return NextResponse.json(
         { success: false, error: "User not found" },
         { status: 404 }
