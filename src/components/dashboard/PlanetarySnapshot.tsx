@@ -59,17 +59,17 @@ const letterMap = {
 
 export default function PlanetarySnapshot({ chartData }: { chartData?: any }) {
   // If chartData has transit signals, map them
-  const rawSignals = chartData?.transitIntelligence?.signals || [];
+  const liveTransits = chartData?.transitIntelligence?.transits || [];
   
-  const displayTransits: TransitEffect[] = rawSignals.length > 0 
-    ? rawSignals.slice(0, 6).map((t: any) => {
-        const isSupportive = t.nature === "supportive" || t.nature?.toLowerCase() === "supportive";
-        const isChallenging = t.nature === "challenging" || t.nature?.toLowerCase() === "challenging";
+  const displayTransits: TransitEffect[] = liveTransits.length > 0 
+    ? liveTransits.slice(0, 6).map((t: any) => {
+        const isSupportive = t.nature?.toLowerCase().includes("supportive") || t.nature?.toLowerCase().includes("benefic") || t.nature?.toLowerCase().includes("expansion");
+        const isChallenging = t.nature?.toLowerCase().includes("sensitive") || t.nature?.toLowerCase().includes("friction") || t.nature?.toLowerCase().includes("pressure") || t.nature?.toLowerCase().includes("volatile") || t.nature?.toLowerCase().includes("challenging");
         
         return {
           planet: t.planet,
-          status: isSupportive ? "Supporting" : isChallenging ? "Challenging" : "Active cycle",
-          influence: t.reason || `${t.planet} transiting your ${t.area?.[0] || 'life'} area.`,
+          status: isSupportive ? "Supporting" : isChallenging ? "Challenging" : "Active Cycle",
+          influence: t.whyItMatters?.[0] || `${t.planet} transiting your ${t.houseFromLagna} house.`,
           color: isSupportive ? "amber" : isChallenging ? "rose" : "indigo"
         };
       })
@@ -79,7 +79,7 @@ export default function PlanetarySnapshot({ chartData }: { chartData?: any }) {
     <div className="space-y-4">
       <div>
         <h3 className="text-xl font-serif font-semibold text-amber-900">Planetary Snapshot</h3>
-        <p className="text-xs text-amber-700/50">Current transit effects on your chart</p>
+        <p className="text-xs text-amber-700">Current transit effects on your chart</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

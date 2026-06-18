@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { calculateLagnaChart } from "@/lib/astrology/engine";
+import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
+import { calculateCurrentTransits } from "@/lib/astrology/transit";
+import { generateTransitIntelligence } from "@/lib/intelligence/transit";
+import { LifeStateSynthesizer } from "@/lib/intelligence/synthesizers/lifeStateSynthesizer";
+import { TimelineProjectionEngine } from "@/lib/intelligence/timeline/timelineProjectionEngine";
 import { DashboardStateComposer } from "@/lib/dashboard/dashboardStateComposer";
-import { DailyGuidanceSynthesizer } from "@/lib/guidance/dailyGuidanceSynthesizer";
 import { GoalContextMapper } from "@/lib/intelligence/goals/goalContextMapper";
+import { DailyGuidanceSynthesizer } from "@/lib/guidance/dailyGuidanceSynthesizer";
 
-/**
- * GET /api/guidance/daily
- * 
- * Runs the complete Daily Guidance pipeline server-side.
- * Returns a fully deterministic + humanized DailyBriefing payload.
- * 
- * No raw astrological data is exposed in the response.
- */
+function getMidnightUTC(date?: Date): Date {
+  const d = date ? new Date(date) : new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -19,11 +23,18 @@ export async function GET(req: NextRequest) {
     const emailHeader = req.headers.get("x-user-email") || "";
     const userEmail = (emailParam || emailHeader).trim().toLowerCase();
 
-    // ── 1. Load User Context ────────────────────────────────────────────────
-    const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+    if (!userEmail) {
+      return NextResponse.json(
+        { success: false, error: "Authentication email required." },
+        { status: 400 }
+      );
+    }
+
+    // ── 1. Load User with Context ───────────────────────────────────────────
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
       include: {
+        birthDetails: true,
         memories: { orderBy: { createdAt: "desc" }, take: 20 },
         goals: { where: { currentStatus: "ACTIVE" }, take: 10 },
       },
@@ -36,67 +47,172 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // ── 2. Load Cached Dashboard State ─────────────────────────────────────
-    // In production: load from a cached LifeState record (e.g., Redis or DailyInsight)
-    // For MVP: we return a deterministic fallback briefing
-    const mockDashboardState = {
-      currentPhase: {
-        title: "Structured Expansion Phase",
-        summary: "A phase that rewards steady, disciplined progress.",
-        executionMode: "ARCHITECT",
-        focus: ["Strategic planning", "Structured communication", "Long-term documentation"],
-        avoid: ["Reactive decisions", "Impulsive scaling"],
-      },
-      momentum: [
-        { label: "Career Momentum", score: 72, trend: "up", color: "purple" },
-        { label: "Financial Stability", score: 65, trend: "stable", color: "emerald" },
-        { label: "Emotional Load", score: 45, trend: "down", color: "rose" },
-      ],
-      nextTransition: {
-        label: "Next: EXPANSION",
-        daysRemaining: 12,
-        from: "Structured Expansion",
-        to: "EXPANSION",
-        intensity: 7,
-      },
-      timeline: {
-        overallTrajectory: { direction: "ASCENDING", momentumScore: 7, volatilityScore: 4, clarityScore: 7.5 },
-        windows: [],
-        confidenceScore: 0.82,
-      } as any,
-      lifeScores: { stability: 68, clarity: 75, volatility: 40 },
-    } as any;
+    if (!user.birthDetails) {
+      return NextResponse.json(
+        { success: false, onboardingNeeded: true, error: "Birth profile details not set." },
+        { status: 200 }
+      );
+    }
 
-    // ── 3. Map Goals to GoalAlignedState ───────────────────────────────────
-    const goalMapper = new GoalContextMapper();
-    const goalAlignments = await Promise.all(
-      user.goals.slice(0, 3).map(g => goalMapper.mapGoalToState(g as any, {} as any))
+    const { birthDetails } = user;
+    const targetDate = getMidnightUTC();
+
+    // ── 2. Check Database Cache for Today's Insight ─────────────────────────
+    const cachedInsight = await prisma.dailyInsight.findFirst({
+      where: {
+        userId: user.id,
+        date: targetDate,
+      },
+    });
+
+    if (cachedInsight) {
+      const focus = cachedInsight.focusAreas as any;
+      const briefing = {
+        date: cachedInsight.date.toISOString(),
+        executionMode: focus.executionMode || "ARCHITECT",
+        headline: cachedInsight.summary,
+        priorities: cachedInsight.favorable as string[],
+        avoid: cachedInsight.cautions as string[],
+        memoryInfluence: focus.memoryInfluence,
+        transitionAlert: focus.transitionAlert,
+        confidenceScore: focus.confidenceScore ?? 0.8,
+      };
+
+      return NextResponse.json({
+        success: true,
+        briefing,
+        humanizedHeadline: briefing.headline,
+        userName: user.name,
+      });
+    }
+
+    // ── 3. Run Astrological Calculation Engines ─────────────────────────────
+    const chart = await calculateLagnaChart({
+      date: birthDetails.dateOfBirth.toISOString().split("T")[0],
+      time: birthDetails.timeOfBirth,
+      latitude: birthDetails.latitude,
+      longitude: birthDetails.longitude,
+      timezone: birthDetails.timezone,
+    });
+
+    const moon = chart.planets.find((p) => p.name === "Moon");
+    if (!moon) {
+      throw new Error("Unable to retrieve lunar position for user birth details.");
+    }
+
+    const nakshatra = getNakshatra(moon.longitude);
+    const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
+    const timeline = buildMahadashaTimeline(birthDetails.dateOfBirth, nakshatra.lord, balance);
+
+    const temporal = getDashaContext(timeline, new Date());
+    const currentTransits = await calculateCurrentTransits();
+    const transitIntelligence = generateTransitIntelligence(
+      currentTransits.positions,
+      chart.planets,
+      chart.lagna.sign
     );
 
-    // ── 4. Run Daily Guidance Synthesizer ──────────────────────────────────
-    const synthesizer = new DailyGuidanceSynthesizer();
-    const output = await synthesizer.synthesize(
-      mockDashboardState,
-      {} as any,          // LifeState — will be replaced with real cached state
+    const realDashaCtx = {
+      currentMahadasha: temporal?.stack?.mahadasha,
+      currentAntardasha: temporal?.stack?.antardasha,
+    };
+    const realTransits = transitIntelligence?.transits || [];
+    const realTimeline = timeline.map((p: any) => ({
+      planet: p.planet,
+      start: new Date(p.start),
+      end: new Date(p.end),
+    }));
+
+    // ── 4. Synthesize Rich LifeState and Temporal Projection ────────────────
+    const lifeSynthesizer = new LifeStateSynthesizer();
+    const lifeState = await lifeSynthesizer.synthesize(
+      chart,
+      realDashaCtx as any,
+      realTimeline,
+      realTransits,
+      user.goals,
+      user.memories
+    );
+
+    const projectionEngine = new TimelineProjectionEngine();
+    const projection = await projectionEngine.project(
+      "30D",
+      {
+        primaryArchetype: dashaArchetype(realDashaCtx.currentMahadasha || "Saturn"),
+        longTermThemes: lifeState.primaryThemes,
+        confidence: lifeState.confidenceScore,
+      } as any,
+      {
+        intensity: lifeState.overallState.volatilityScore,
+        confidence: lifeState.confidenceScore,
+        activeTriggers: [],
+      } as any
+    );
+
+    const composer = new DashboardStateComposer();
+    const dashboardState = composer.compose(lifeState, projection);
+
+    // ── 5. Map Goals to Aligned Context ─────────────────────────────────────
+    const goalMapper = new GoalContextMapper();
+    const goalAlignments = await Promise.all(
+      user.goals.slice(0, 3).map((g) => goalMapper.mapGoalToState(g as any, lifeState))
+    );
+
+    // ── 6. Synthesize Unified Daily Briefing ────────────────────────────────
+    const dailySynthesizer = new DailyGuidanceSynthesizer();
+    const output = await dailySynthesizer.synthesize(
+      dashboardState,
+      lifeState,
       goalAlignments,
       user.memories as any
     );
 
-    // ── 5. Persist as DailyInsight for history ─────────────────────────────
-    // Skipping prisma write for MVP — can be added once schema is migrated
+    const briefing = output.briefing;
+
+    // ── 7. Cache in Database as DailyInsight ────────────────────────────────
+    await prisma.dailyInsight.create({
+      data: {
+        userId: user.id,
+        date: targetDate,
+        summary: briefing.headline,
+        favorable: briefing.priorities,
+        cautions: briefing.avoid,
+        focusAreas: {
+          executionMode: briefing.executionMode,
+          memoryInfluence: briefing.memoryInfluence,
+          transitionAlert: briefing.transitionAlert,
+          confidenceScore: briefing.confidenceScore,
+        },
+        emotionalTone: lifeState.emotionalState.dominantTone,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      briefing: output.briefing,
-      humanizedHeadline: output.humanizedHeadline,
-      meta: output.source,
+      briefing,
+      humanizedHeadline: briefing.headline,
       userName: user.name,
     });
   } catch (error: any) {
-    console.error("[Guidance API]", error?.message);
+    console.error("[Guidance API Error]", error?.message || error);
     return NextResponse.json(
-      { success: false, error: "Failed to generate daily guidance." },
+      { success: false, error: "Failed to synthesize daily guidance payload." },
       { status: 500 }
     );
   }
+}
+
+function dashaArchetype(planet: string): string {
+  const archetypes: Record<string, string> = {
+    Sun: "Vitalizer",
+    Moon: "Nurturer",
+    Mars: "Warrior",
+    Mercury: "Communicator",
+    Jupiter: "Teacher",
+    Venus: "Harmonizer",
+    Saturn: "Builder",
+    Rahu: "Amplifier",
+    Ketu: "Disruptor",
+  };
+  return archetypes[planet] || "Teacher";
 }

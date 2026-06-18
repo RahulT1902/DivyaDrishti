@@ -133,4 +133,14 @@ Prohibited patterns are codified in `narrativeGuardrails.ts`:
 
 ---
 
+## INVARIANT 11 — Canonical House-Sign Mappings
+
+> **All house lordship, sign ownership, and bhava mapping must derive exclusively from canonical HouseMappingResolver.**
+
+- Never let the UI, prediction engine, dashboard, narrative layer, or chat resolve house-sign mappings independently.
+- The `resolveHouseMappings` and `resolveHouseSignAndLord` functions in `src/lib/astrology/houseResolver.ts` serve as the absolute single source of truth.
+- This ensures deterministic baseline alignment (e.g. Gemini Ascendant = House 1 Gemini/Mercury, House 2 Cancer/Moon, etc.) across all touchpoints.
+
+---
+
 *These invariants are the architectural constitution of DivyaDrishti. Protect them.*

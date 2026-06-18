@@ -25,6 +25,10 @@ model User {
   timelineWindows    TimelineWindow[]
   dailyInsights      DailyInsight[]
   memories           UserMemory[]
+  reflections        DailyReflection[]
+  lifeInsightFeedbacks          LifeInsightFeedback[]
+  lifeInsightAnalytics          LifeInsightAnalytics[]
+  lifeInsightPredictionJournals LifeInsightPredictionJournal[]
   
   // Legacy/Internal (Keeping for migration safety)
   birthDetails       BirthDetails?
@@ -202,6 +206,35 @@ enum MemoryType {
 
 // Legacy Models (Retained for migration context)
 
+model DailyReflection {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  date        DateTime    // Truncated to midnight UTC
+  energy      EnergyLevel
+  stress      StressLevel
+  notes       String?     @db.Text
+  source      String?     // e.g., "MANUAL" or "AUTO_IMPORT"
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@unique([userId, date])
+}
+
+enum EnergyLevel {
+  HIGH
+  NEUTRAL
+  LOW
+}
+
+enum StressLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model BirthDetails {
   id          String   @id @default(uuid())
   userId      String   @unique
@@ -274,4 +307,50 @@ model AccountabilityNode {
   stakeAmount         Float?
   createdAt           DateTime @default(now())
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LifeInsightFeedback {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodStart       DateTime
+  periodEnd         DateTime
+  theme             String
+  eventName         String
+  feedback          String   // "HAPPENED" | "PARTIALLY_HAPPENED" | "DID_NOT_HAPPEN" | "NOT_SURE"
+  predictionVersion String   @default("2.0")
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LifeInsightAnalytics {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType         String   // "PAGE_VISIT" | "VIEW_CATEGORY" | "FEEDBACK_SUBMIT" | "ENGAGEMENT"
+  category          String?  // "career" | "finance" | "relationships" | "health" | "priority"
+  engagementTimeMs  Int?
+  metadata          Json?
+  predictionVersion String   @default("2.0")
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LifeInsightPredictionJournal {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                 String
+  domain                String   // "career" | "finance" | "relationships" | "health"
+  predictionText        String
+  targetMonth           String   // e.g. "September 2026"
+  status                String   // "UPCOMING" | "HAPPENED" | "PARTIALLY_HAPPENED" | "DID_NOT_HAPPEN"
+  confidenceScore       Int      // 0-100
+  confidenceContributors Json     // Contributors list with weights
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
 }

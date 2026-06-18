@@ -1,5 +1,6 @@
 import "./globals.css";
 import { CosmicBackground } from "@/components/CosmicBackground";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 export const metadata = {
   title: "DivyaDrishti | Align Your Actions",
@@ -14,9 +15,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased selection:bg-amber-500/20 text-black/80">
-        <CosmicBackground>
-          {children}
-        </CosmicBackground>
+        <LanguageProvider>
+          <CosmicBackground>
+            {children}
+          </CosmicBackground>
+        </LanguageProvider>
       </body>
     </html>
   );

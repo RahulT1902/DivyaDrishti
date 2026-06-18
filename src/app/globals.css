@@ -54,6 +54,24 @@
       radial-gradient(circle at 20% 10%, rgba(245,158,11,0.12), transparent 40%),
       linear-gradient(180deg, #FFF8E7 0%, #FDFDFD 40%, #F7F9FC 100%);
     background-attachment: fixed;
+    /* Global readability: ensure body text is always full-weight */
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Enforce readable body text — prevent opacity-washed text */
+  p, li, span, div {
+    /* Do not inherit opacity from parent color modifiers on readable text */
+  }
+
+  /* Global readability — every paragraph must be clearly readable */
+  p {
+    font-weight: 400;
+  }
+
+  li {
+    font-weight: 400;
   }
 }
 

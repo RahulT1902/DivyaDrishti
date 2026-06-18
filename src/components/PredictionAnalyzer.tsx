@@ -56,8 +56,9 @@ export default function PredictionAnalyzer() {
   ];
 
   const fetchPredictions = async (mode: OutputMode) => {
+    const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
     const res = await fetch(
-      `/api/predictions/analyze?timeframe=${selectedTimeframe}&domain=${selectedDomain}&mode=${mode}`
+      `/api/predictions/analyze?timeframe=${selectedTimeframe}&domain=${selectedDomain}&mode=${mode}&email=${encodeURIComponent(userEmail)}`
     );
     const data = await res.json();
     if (data.success) {

@@ -10,6 +10,37 @@ import { NatalChart, DashaContext } from "../types";
 import { TransitIntelligence } from "../transit/types";
 import { Period } from "../../astrology/dasha";
 
+const DAY_OF_WEEK_BEHAVIORS: Record<number, { recommended: string[]; avoid: string[] }> = {
+  0: { // Sunday (Sun)
+    recommended: ["Leadership focus", "Goal alignment"],
+    avoid: ["Ego clashes", "Over-demanding stances"]
+  },
+  1: { // Monday (Moon)
+    recommended: ["Emotional grounding", "Intuitive decisions"],
+    avoid: ["Restlessness", "Mood-driven choices"]
+  },
+  2: { // Tuesday (Mars)
+    recommended: ["Decisive action", "Physical discipline"],
+    avoid: ["Aggressive arguments", "Impulsive commitments"]
+  },
+  3: { // Wednesday (Mercury)
+    recommended: ["Detailed research", "Active listening"],
+    avoid: ["Scattered focus", "Reactionary emails"]
+  },
+  4: { // Thursday (Jupiter)
+    recommended: ["Wisdom seeking", "Strategic mentoring"],
+    avoid: ["Preachiness", "Neglecting small details"]
+  },
+  5: { // Friday (Venus)
+    recommended: ["Creative brainstorming", "Diplomatic compromise"],
+    avoid: ["Extravagant spending", "Pleasing others blindly"]
+  },
+  6: { // Saturday (Saturn)
+    recommended: ["Structured planning", "Disciplined consolidation"],
+    avoid: ["Shortcuts", "Unplanned spending"]
+  }
+};
+
 /**
  * LifeStateSynthesizer: The "Governor" of DivyaDrishti.
  * Responsibility: Orchestrates all specialized agents and produces the canonical LifeState.
@@ -151,10 +182,20 @@ export class LifeStateSynthesizer {
 
       recommendedFocus: career.recommendations,
 
-      behavioralGuidance: {
-        recommendedBehaviors: ["Structured planning", "Active listening"],
-        avoidBehaviors: ["Reactionary emails", "Unplanned spending"]
-      },
+      behavioralGuidance: (() => {
+        const dayOfWeek = new Date().getDay();
+        const dailyBase = DAY_OF_WEEK_BEHAVIORS[dayOfWeek] || DAY_OF_WEEK_BEHAVIORS[6];
+        return {
+          recommendedBehaviors: [
+            ...dailyBase.recommended,
+            ...(career.recommendations?.[0] ? [career.recommendations[0]] : [])
+          ],
+          avoidBehaviors: [
+            ...dailyBase.avoid,
+            ...(finance.pressureLevel > 6 ? ["Speculative investments"] : [])
+          ]
+        };
+      })(),
 
       emotionalState: {
         dominantTone: validatedCareer.suggestedTone,

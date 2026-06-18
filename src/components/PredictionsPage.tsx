@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Target, Briefcase, Wallet, Heart, Activity, Sparkles, ArrowRight, ArrowLeft, Loader2, Shield, Zap, ChevronDown, ChevronUp, Send } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 type Timeframe = "today" | "this-week" | "this-month" | "year";
 type Domain = "career" | "finance" | "health" | "relationships" | "general";
@@ -77,6 +78,7 @@ const MOCK_PREDICTIONS: Record<Domain, Record<Timeframe, { headline: string; sum
 };
 
 export default function PredictionsPage({ chartData }: { chartData?: any }) {
+  const { isHindi, mode: globalMode } = useLanguage();
   const [step, setStep] = useState<"period" | "domain" | "result">("period");
   const [period, setPeriod] = useState<Timeframe | null>(null);
   const [domain, setDomain] = useState<Domain | null>(null);
@@ -87,6 +89,19 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
   const [detailedLoading, setDetailedLoading] = useState(false);
   const [detailedData, setDetailedData] = useState<DetailedPayload | null>(null);
   const [mode, setMode] = useState<"PANDIT" | "SIMPLE_ENGLISH">("PANDIT");
+
+  React.useEffect(() => {
+    if (globalMode) {
+      setMode(globalMode);
+    }
+  }, [globalMode]);
+
+  // Re-fetch prediction narrative when global language/mode changes
+  React.useEffect(() => {
+    if (period && domain && step === "result") {
+      fetchDetailedPrediction(mode);
+    }
+  }, [mode]);
 
   // Bounded Chat States
   const [chatOpen, setChatOpen] = useState(false);
@@ -110,7 +125,8 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
       const tf = period === "year" ? "this-year" : period;
       const dm = d === "general" ? "growth" : d;
       const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
-      const res = await fetch(`/api/predictions/analyze?timeframe=${tf}&domain=${dm}&mode=${mode}&email=${encodeURIComponent(userEmail)}`);
+      const fetchUrl = `/api/predictions/analyze?timeframe=${tf}&domain=${dm}&mode=${globalMode}&email=${encodeURIComponent(userEmail)}`;
+      const res = await fetch(fetchUrl);
       const data = await res.json();
       if (data.success) {
         setDetailedData(data.predictions);
@@ -126,10 +142,15 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
   const toggleChat = () => {
     if (!chatOpen && chatMessages.length === 0 && period && domain) {
       const displayPeriod = period === "this-week" ? "THIS WEEK" : period === "this-month" ? "THIS MONTH" : period.toUpperCase();
+      
+      const defaultMsg = isHindi
+        ? `प्रणाम। आइए, आपके इस समय के लिए ${domain === "career" ? "आजीविका" : domain === "finance" ? "वित्त" : domain === "health" ? "स्वास्थ्य" : domain === "relationships" ? "संबंध" : "सामान्य"} चक्र से संबंधित शंकाओं का निवारण करें। आप इस मार्गदर्शन के किस पहलू को अधिक स्पष्टता से समझना चाहते हैं?`
+        : `Pranam. Let's clarify your doubts regarding your ${domain.toUpperCase()} guidance for ${displayPeriod}. What specific aspect of this guidance would you like to understand better?`;
+
       setChatMessages([
         {
           role: "pundit",
-          content: `Pranam. Let's clarify your doubts regarding your ${domain.toUpperCase()} guidance for ${displayPeriod}. What specific aspect of this guidance would you like to understand better?`
+          content: defaultMsg
         }
       ]);
     }
@@ -388,19 +409,23 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
   return (
     <div className="max-w-3xl mx-auto pt-4 space-y-8">
       <div>
-        <h2 className="text-2xl font-serif font-semibold text-amber-900">Predictions</h2>
-        <p className="text-sm text-amber-700/50">Select a timeframe and life area to receive your personalised guidance</p>
+        <h2 className={`text-2xl font-serif font-semibold text-amber-900 ${isHindi ? 'tracking-normal' : ''}`}>
+          {isHindi ? "राशिफल एवं भविष्यफल" : "Predictions"}
+        </h2>
+        <p className="text-sm text-amber-700/50">
+          {isHindi ? "व्यक्तिगत मार्गदर्शन प्राप्त करने के लिए समय-सीमा और जीवन का आयाम चुनें" : "Select a timeframe and life area to receive your personalised guidance"}
+        </p>
       </div>
 
       {/* Step Indicator */}
       <div className="flex items-center gap-3">
         {["period", "domain", "result"].map((s, i) => (
           <React.Fragment key={s}>
-            <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${step === s ? "text-amber-700" : i < ["period","domain","result"].indexOf(step) ? "text-emerald-600" : "text-amber-700/40"}`}>
+            <div className={`flex items-center gap-2 text-[10px] font-bold uppercase ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'} ${step === s ? "text-amber-700" : i < ["period","domain","result"].indexOf(step) ? "text-emerald-600" : "text-amber-700/40"}`}>
               <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${step === s ? "bg-amber-600 text-white" : i < ["period","domain","result"].indexOf(step) ? "bg-emerald-500 text-white" : "bg-amber-100 text-amber-700/60"}`}>
                 {i + 1}
               </div>
-              {s === "period" ? "Timeframe" : s === "domain" ? "Life Area" : "Guidance"}
+              {s === "period" ? (isHindi ? "समय-सीमा" : "Timeframe") : s === "domain" ? (isHindi ? "जीवन आयाम" : "Life Area") : (isHindi ? "मार्गदर्शन" : "Guidance")}
             </div>
             {i < 2 && <div className={`flex-1 h-px ${i < ["period","domain","result"].indexOf(step) ? "bg-emerald-300" : "bg-amber-100"}`} />}
           </React.Fragment>
@@ -415,8 +440,12 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
               <button key={p.id} onClick={() => selectPeriod(p.id)}
                 className="p-6 bg-white border border-[#F1E7D0] rounded-2xl text-left hover:border-amber-400 hover:shadow-md transition-all group shadow-sm">
                 <span className="text-3xl mb-3 block">{p.icon}</span>
-                <p className="text-[10px] font-bold text-amber-600/50 uppercase tracking-widest mb-1">{p.sub}</p>
-                <p className="text-xl font-serif font-semibold text-amber-900 group-hover:text-amber-700">{p.label}</p>
+                <p className={`text-[10px] font-bold text-amber-600/50 uppercase mb-1 ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
+                  {isHindi ? (p.id === "today" ? "दैनिक मार्गदर्शन" : p.id === "this-week" ? "7 दिवसीय विश्लेषण" : p.id === "this-month" ? "30 दिवसीय प्रवाह" : "वार्षिक खाका") : p.sub}
+                </p>
+                <p className="text-xl font-serif font-semibold text-amber-900 group-hover:text-amber-700">
+                  {isHindi ? (p.id === "today" ? "आज" : p.id === "this-week" ? "यह सप्ताह" : p.id === "this-month" ? "मासिक" : "वार्षिक") : p.label}
+                </p>
               </button>
             ))}
           </motion.div>
@@ -425,11 +454,17 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
         {/* Step 2: Domain */}
         {step === "domain" && (
           <motion.div key="domain" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="space-y-3">
-            <button onClick={() => setStep("period")} className="flex items-center gap-2 text-[10px] text-amber-600 uppercase tracking-widest font-bold hover:text-amber-800 transition-colors">
-              <ArrowLeft className="w-3 h-3" /> Change Period ({period?.toUpperCase()})
+            <button onClick={() => setStep("period")} className={`flex items-center gap-2 text-[10px] text-amber-600 uppercase font-bold hover:text-amber-800 transition-colors ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
+              <ArrowLeft className="w-3 h-3" /> {isHindi ? `समय-सीमा बदलें (${period === "this-week" ? "यह सप्ताह" : period === "this-month" ? "मासिक" : period === "today" ? "आज" : "वार्षिक"})` : `Change Period (${period?.toUpperCase()})`}
             </button>
             {DOMAINS.map(d => {
               const Icon = d.icon;
+              const domainLabel = isHindi 
+                ? (d.id === "career" ? "कर्म एवं आजीविका" : d.id === "finance" ? "धन एवं समृद्धि" : d.id === "health" ? "स्वास्थ्य एवं ऊर्जा" : d.id === "relationships" ? "पारस्परिक संबंध" : "सामान्य जीवन प्रवाह") 
+                : d.label;
+              const domainSub = isHindi 
+                ? (d.id === "career" ? "कार्यक्षेत्र एवं महत्वाकांक्षा" : d.id === "finance" ? "वैभव एवं स्थिरता" : d.id === "health" ? "दैहिक जुड़ाव एवं प्राण" : d.id === "relationships" ? "स्नेह एवं पारिवारिक संबंध" : "जीवन का समग्र प्रवाह") 
+                : d.sub;
               return (
                 <button key={d.id} onClick={() => selectDomain(d.id)}
                   className="w-full p-5 bg-white border border-[#F1E7D0] rounded-2xl flex items-center justify-between hover:border-amber-400 hover:shadow-md transition-all group shadow-sm">
@@ -438,8 +473,8 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                       <Icon className="w-5 h-5 text-amber-600" />
                     </div>
                     <div className="text-left">
-                      <p className="text-base font-serif font-semibold text-amber-900">{d.label}</p>
-                      <p className="text-[10px] text-amber-700/40 uppercase tracking-widest">{d.sub}</p>
+                      <p className="text-base font-serif font-semibold text-amber-900">{domainLabel}</p>
+                      <p className={`text-[10px] text-amber-700/40 uppercase ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>{domainSub}</p>
                     </div>
                   </div>
                   <ArrowRight className="w-4 h-4 text-amber-300 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" />
@@ -453,7 +488,9 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
         {loading && (
           <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-20 flex flex-col items-center gap-4">
             <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-            <p className="text-xs text-amber-700/50 uppercase tracking-widest font-serif italic">Consulting the celestial cycles & birth transits...</p>
+            <p className={`text-xs text-amber-700/50 uppercase font-serif italic ${isHindi ? 'tracking-normal text-sm' : 'tracking-widest'}`}>
+              {isHindi ? "ग्रहीय चक्रों और जन्म गोचर का सूक्ष्म अध्ययन किया जा रहा है..." : "Consulting the celestial cycles & birth transits..."}
+            </p>
           </motion.div>
         )}
 
@@ -463,12 +500,16 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
             
             {/* Top Navigation */}
             <div className="flex items-center justify-between">
-              <button onClick={() => setStep("domain")} className="flex items-center gap-2 text-[10px] text-amber-600 uppercase tracking-widest font-bold hover:text-amber-800 transition-colors">
-                <ArrowLeft className="w-3 h-3" /> Back
+              <button onClick={() => setStep("domain")} className={`flex items-center gap-2 text-[10px] text-amber-600 uppercase font-bold hover:text-amber-800 transition-colors ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
+                <ArrowLeft className="w-3 h-3" /> {isHindi ? "पीछे" : "Back"}
               </button>
               <div className="flex gap-2">
-                <span className="px-3 py-1 rounded-full bg-amber-100 border border-amber-200 text-[9px] font-bold uppercase text-amber-700">{period}</span>
-                <span className="px-3 py-1 rounded-full bg-orange-100 border border-orange-200 text-[9px] font-bold uppercase text-orange-700">{domain}</span>
+                <span className="px-3 py-1 rounded-full bg-amber-100 border border-amber-200 text-[9px] font-bold uppercase text-amber-700">
+                  {isHindi ? (period === "today" ? "आज" : period === "this-week" ? "सप्ताह" : period === "this-month" ? "मासिक" : "वार्षिक") : period}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-orange-100 border border-orange-200 text-[9px] font-bold uppercase text-orange-700">
+                  {isHindi ? (domain === "career" ? "आजीविका" : domain === "finance" ? "वित्त" : domain === "health" ? "स्वास्थ्य" : domain === "relationships" ? "संबंध" : "सामान्य") : domain}
+                </span>
               </div>
             </div>
 
@@ -477,14 +518,14 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
             {/* Hero / Quick Summary Card */}
             <div className="bg-white border border-[#F1E7D0] rounded-3xl p-8 shadow-sm text-left relative overflow-hidden">
               <div className="absolute right-4 top-4 text-6xl text-amber-500/5 select-none font-serif font-bold">ॐ</div>
-              <p className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+              <p className={`text-[10px] font-bold text-amber-600/60 uppercase mb-3 flex items-center gap-1.5 ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                🪔 {isPandit ? "दैनिक मार्गदर्शन" : "Daily Guidance"}
+                🪔 {isHindi ? "दैनिक मार्गदर्शन" : "Daily Guidance"}
               </p>
 
               {/* Softer Scoring Level Badge */}
               <div className="mb-5 flex flex-wrap items-center gap-2">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs ${
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border shadow-xs ${isHindi ? 'tracking-normal' : 'tracking-wider'} ${
                   scoreLevel === "supportive" 
                     ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
                     : scoreLevel === "sensitive" 
@@ -494,7 +535,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                   {softScoreLabel}
                 </span>
                 <span className="text-[11px] text-amber-700/50 italic">
-                  {isPandit ? "वर्तमान ऊर्जा संरेखण" : "Current Energy Balance"}
+                  {isHindi ? "वर्तमान ऊर्जा संरेखण" : "Current Energy Balance"}
                 </span>
               </div>
 
@@ -512,8 +553,8 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
             {/* Visual Timing Flow / Energy Curve */}
             {period === "today" && timing && (
               <div className="bg-white border border-[#F1E7D0] rounded-3xl p-6 shadow-sm text-left">
-                <p className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mb-5 flex items-center gap-1.5">
-                  ⚡ {isPandit ? "दैनिक ऊर्जा प्रवाह (Energy Flow)" : "Daily Energy Flow"}
+                <p className={`text-[10px] font-bold text-amber-600/60 uppercase mb-5 flex items-center gap-1.5 ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
+                  ⚡ {isHindi ? "दैनिक ऊर्जा प्रवाह" : "Daily Energy Flow"}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
                   {/* Connecting Line (desktop only) */}
@@ -524,8 +565,8 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                     <div className="w-10 h-10 rounded-full bg-orange-50 border border-orange-200/60 flex items-center justify-center text-lg mb-2 relative z-10">
                       🌅
                     </div>
-                    <span className="text-xs font-serif font-bold text-amber-900 mb-0.5">{isPandit ? "सुबह (Morning)" : "Morning"}</span>
-                    <span className="text-[9px] text-amber-600/60 font-bold uppercase tracking-wider mb-2">{isPandit ? "धीमी शुरुआत" : "Gentle Awake"}</span>
+                    <span className="text-xs font-serif font-bold text-amber-900 mb-0.5">{isHindi ? "प्रातःकाल (Morning)" : "Morning"}</span>
+                    <span className="text-[9px] text-amber-600/60 font-bold uppercase tracking-wider mb-2">{isHindi ? "धीमी शुरुआत" : "Gentle Awake"}</span>
                     <p className="text-[11px] text-amber-800/80 leading-relaxed font-light">
                       {timing.morning}
                     </p>
@@ -536,8 +577,8 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                     <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200/60 flex items-center justify-center text-lg mb-2 relative z-10">
                       ☀️
                     </div>
-                    <span className="text-xs font-serif font-bold text-amber-900 mb-0.5">{isPandit ? "दोपहर (Afternoon)" : "Afternoon"}</span>
-                    <span className="text-[9px] text-emerald-700 font-bold uppercase tracking-wider mb-2">{isPandit ? "सक्रिय कार्य" : "Peak Execution"}</span>
+                    <span className="text-xs font-serif font-bold text-amber-900 mb-0.5">{isHindi ? "मध्याह्न (Afternoon)" : "Afternoon"}</span>
+                    <span className="text-[9px] text-emerald-700 font-bold uppercase tracking-wider mb-2">{isHindi ? "सक्रिय कार्य" : "Peak Execution"}</span>
                     <p className="text-[11px] text-amber-800/80 leading-relaxed font-light">
                       {timing.afternoon}
                     </p>
@@ -548,8 +589,8 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                     <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200/60 flex items-center justify-center text-lg mb-2 relative z-10">
                       🌙
                     </div>
-                    <span className="text-xs font-serif font-bold text-amber-900 mb-0.5">{isPandit ? "शाम (Evening)" : "Evening"}</span>
-                    <span className="text-[9px] text-rose-700 font-bold uppercase tracking-wider mb-2">{isPandit ? "विश्राम / संवार" : "Recovery Mode"}</span>
+                    <span className="text-xs font-serif font-bold text-amber-900 mb-0.5">{isHindi ? "सायंकाल (Evening)" : "Evening"}</span>
+                    <span className="text-[9px] text-rose-700 font-bold uppercase tracking-wider mb-2">{isHindi ? "विश्राम एवं आत्म-अवलोकन" : "Recovery Mode"}</span>
                     <p className="text-[11px] text-amber-800/80 leading-relaxed font-light">
                       {timing.evening}
                     </p>
@@ -561,28 +602,28 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
             {/* Timeframe timelines for longer periods */}
             {period !== "today" && (
               <div className="bg-white border border-[#F1E7D0] rounded-3xl p-6 shadow-sm text-left">
-                <p className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mb-4 flex items-center gap-1.5">
-                  📅 {isPandit ? "समय-सारणी प्रवाह (Timeline Flow)" : "Timeline Flow"}
+                <p className={`text-[10px] font-bold text-amber-600/60 uppercase mb-4 flex items-center gap-1.5 ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
+                  📅 {isHindi ? "समय-सारणी प्रवाह" : "Timeline Flow"}
                 </p>
                 <div className="space-y-4">
                   {period === "this-week" && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-amber-50/30 border border-amber-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 mb-1 block">📅 {isPandit ? "शुरुआती चरण (Days 1-2)" : "Days 1-2"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 mb-1 block">📅 {isHindi ? "शुरुआती चरण (प्रथम-द्वितीय दिवस)" : "Days 1-2"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "प्राथमिकताएं तय करें और काम का ढांचा बनाएं।" : "Setup clear priorities and lock initial tasks."}
+                          {isHindi ? "प्राथमिकताएं तय करें और आवश्यक लक्ष्यों का ढांचा बनाएं।" : "Setup clear priorities and lock initial tasks."}
                         </p>
                       </div>
                       <div className="bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 mb-1 block">⚡ {isPandit ? "मुख्य सक्रिय दिन (Days 3-5)" : "Days 3-5 (Peak)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 mb-1 block">⚡ {isHindi ? "सक्रिय चरण (तृतीय से पंचम दिवस)" : "Days 3-5 (Peak)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "सबसे मजबूत कार्य करने का समय। मुख्य फोकस रखें।" : "Strongest execution window. Focus on quality."}
+                          {isHindi ? "सबसे मजबूत कार्य करने का समय। मुख्य फोकस बनाए रखें।" : "Strongest execution window. Focus on quality."}
                         </p>
                       </div>
                       <div className="bg-rose-50/30 border border-rose-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-700 mb-1 block">🌙 {isPandit ? "समीक्षा और विश्राम (Days 6-7)" : "Days 6-7 (Review)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-700 mb-1 block">🌙 {isHindi ? "समीक्षा एवं विश्राम (षष्ठ-सप्तम दिवस)" : "Days 6-7 (Review)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "किए गए कार्यों को समेटें और अगले चक्र की योजना बनाएं।" : "Consolidate your gains and plan the next cycle."}
+                          {isHindi ? "किए गए कार्यों को समेटें और अगले चक्र की शांत योजना बनाएं।" : "Consolidate your gains and plan the next cycle."}
                         </p>
                       </div>
                     </div>
@@ -590,21 +631,21 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                   {period === "this-month" && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-amber-50/30 border border-amber-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 mb-1 block">📅 {isPandit ? "सप्ताह 1 (Week 1)" : "Week 1 (Stabilize)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 mb-1 block">📅 {isHindi ? "सप्ताह 1 (स्थिरता)" : "Week 1 (Stabilize)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "अपनी दिनचर्या को स्थिर करें और रुकावटों को दूर करें।" : "Stabilize daily routines and clear backlogs."}
+                          {isHindi ? "अपनी दैनिक दिनचर्या को स्थिर करें और रुके कार्यों को पूरा करें।" : "Stabilize daily routines and clear backlogs."}
                         </p>
                       </div>
                       <div className="bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 mb-1 block">⚡ {isPandit ? "सप्ताह 2-3 (Weeks 2-3)" : "Weeks 2-3 (Build)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 mb-1 block">⚡ {isHindi ? "सप्ताह 2-3 (विकास प्रवाह)" : "Weeks 2-3 (Build)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "मुख्य निर्माण और बड़े कार्यों को गति देने का समय।" : "Peak productivity. Move your high-leverage goals."}
+                          {isHindi ? "सक्रिय निर्माण और बड़े कार्यों को गति देने का सर्वोत्तम समय।" : "Peak productivity. Move your high-leverage goals."}
                         </p>
                       </div>
                       <div className="bg-rose-50/30 border border-rose-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-700 mb-1 block">🌙 {isPandit ? "सप्ताह 4 (Week 4)" : "Week 4 (Audit)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-700 mb-1 block">🌙 {isHindi ? "सप्ताह 4 (समीक्षा एवं सुदृढ़ीकरण)" : "Week 4 (Audit)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "अधूरी चीजों को पूरा करें, परिणाम देखें और समीक्षा करें।" : "Audit outcomes, tie up loose ends, and prepare next."}
+                          {isHindi ? "अधूरी चीजों को पूरा करें, परिणाम देखें और समीक्षा करें।" : "Audit outcomes, tie up loose ends, and prepare next."}
                         </p>
                       </div>
                     </div>
@@ -612,21 +653,21 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                   {period === "year" && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-amber-50/30 border border-amber-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 mb-1 block">📅 {isPandit ? "तिमाही 1 (Q1)" : "Q1 (Foundation)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 mb-1 block">📅 {isHindi ? "प्रथम चरण (दीर्घकालिक योजना)" : "Q1 (Foundation)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "मजबूत नींव, कार्य प्रणाली और नई आदतों का निर्माण।" : "Build solid foundations and long-term systems."}
+                          {isHindi ? "मजबूत नींव, कार्य प्रणाली और नई आदतों का निर्माण।" : "Build solid foundations and long-term systems."}
                         </p>
                       </div>
                       <div className="bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 mb-1 block">⚡ {isPandit ? "तिमाही 2-3 (Q2-Q3)" : "Q2-Q3 (Compounding)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 mb-1 block">⚡ {isHindi ? "द्वितीय चरण (सघन कर्म प्रवाह)" : "Q2-Q3 (Compounding)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "निरंतर प्रयास से स्पष्ट और स्थायी लाभ प्राप्त करने का समय।" : "Consistency phase. Watch your effort compound."}
+                          {isHindi ? "निरंतर प्रयास से स्पष्ट और स्थायी लाभ प्राप्त करने का समय।" : "Consistency phase. Watch your effort compound."}
                         </p>
                       </div>
                       <div className="bg-rose-50/30 border border-rose-100/50 rounded-2xl p-4 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-700 mb-1 block">🌙 {isPandit ? "तिमाही 4 (Q4)" : "Q4 (Consolidation)"}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-700 mb-1 block">🌙 {isHindi ? "तृतीय चरण (परिणामों को सहेजना)" : "Q4 (Consolidation)"}</span>
                         <p className="text-xs text-amber-900 leading-relaxed font-light">
-                          {isPandit ? "परिणामों को सुरक्षित करें और भविष्य की नई रूपरेखा बनाएं।" : "Secure assets, audit results, and align next cycle."}
+                          {isHindi ? "परिणामों को सुरक्षित करें और भविष्य की नई रूपरेखा बनाएं।" : "Secure assets, audit results, and align next cycle."}
                         </p>
                       </div>
                     </div>
@@ -638,13 +679,13 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
             {/* Do / Don't Side-by-Side (Progressively simplified to 3 bullets max) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
               <div className="bg-emerald-50/40 border border-emerald-100/60 rounded-3xl p-6 shadow-xs">
-                <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <p className={`text-[10px] font-bold text-emerald-700 uppercase mb-3 flex items-center gap-1.5 ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {isPandit ? "✅ आज इन पर ध्यान दें" : "✅ Focus Today"}
+                  {isHindi ? "✅ इन पर ध्यान केंद्रित करें" : "✅ Focus Areas"}
                 </p>
                 <ul className="space-y-2">
                   {focusList.map((d: string, i: number) => (
-                    <li key={i} className="text-xs text-emerald-950/80 flex items-start gap-2 leading-relaxed font-light">
+                    <li key={i} className="text-xs text-emerald-950/80 flex items-start gap-2 leading-relaxed font-light font-sans">
                       <span className="text-emerald-500 mt-0.5 shrink-0">•</span> {d}
                     </li>
                   ))}
@@ -652,13 +693,13 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
               </div>
 
               <div className="bg-rose-50/40 border border-rose-100/60 rounded-3xl p-6 shadow-xs">
-                <p className="text-[10px] font-bold text-rose-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <p className={`text-[10px] font-bold text-rose-700 uppercase mb-3 flex items-center gap-1.5 ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  {isPandit ? "⚠️ आज इनसे बचें" : "⚠️ Avoid Today"}
+                  {isHindi ? "⚠️ सजग रहें और बचें" : "⚠️ Practices to Avoid"}
                 </p>
                 <ul className="space-y-2">
                   {avoidList.map((d: string, i: number) => (
-                    <li key={i} className="text-xs text-rose-950/80 flex items-start gap-2 leading-relaxed font-light">
+                    <li key={i} className="text-xs text-rose-950/80 flex items-start gap-2 leading-relaxed font-light font-sans">
                       <span className="text-rose-400 mt-0.5 shrink-0">•</span> {d}
                     </li>
                   ))}
@@ -668,18 +709,19 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
 
             {/* Suggested Remedy Card (Vedic Actionable) */}
             {remedyObj && (
-              <div className="bg-amber-50/30 border border-amber-200/50 rounded-3xl p-6 flex items-start gap-4 shadow-sm text-left">
+              <div className="bg-amber-50/30 border border-amber-200/50 rounded-3xl p-6 flex items-start gap-4 shadow-sm text-left font-serif">
                 <span className="text-3xl shrink-0">{remedyObj.icon}</span>
                 <div>
-                  <p className="text-[10px] font-bold text-amber-700/60 uppercase tracking-widest mb-1">
-                    {remedyObj.title}
+                  <p className={`text-[10px] font-bold text-amber-700/60 uppercase mb-1 ${isHindi ? 'tracking-normal text-xs font-sans' : 'tracking-widest'}`}>
+                    {isHindi ? (remedyObj.title === "Remedy" || remedyObj.title === "Discipline Remedy" || remedyObj.title === "Abundance Remedy" || remedyObj.title === "Prana Remedy" || remedyObj.title === "Harmony Remedy" || remedyObj.title === "Clarity Remedy" ? "उपाय" : remedyObj.title) : remedyObj.title}
                   </p>
-                  <p className="text-xs font-serif font-medium text-amber-900 leading-relaxed">
+                  <p className="text-xs font-medium text-amber-900 leading-relaxed font-sans">
                     {remedyObj.content}
                   </p>
                 </div>
               </div>
             )}
+
 
             {/* ─── LAYER 2: EXPANDABLE ASTROLOGICAL ANCHORS ─── */}
 
@@ -690,11 +732,11 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
               >
                 <div className="flex items-center gap-2">
                   <span>📜</span>
-                  <span>{isPandit ? "गहन ज्योतिषीय विश्लेषण (Why This Is Happening)" : "View Deep Astrological Analysis"}</span>
+                  <span>{isHindi ? "गहन ज्योतिषीय विश्लेषण (वशिष्ठ तकनीक)" : "View Deep Astrological Analysis"}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 text-[9px] font-sans font-bold uppercase rounded bg-amber-100 text-amber-800 border border-amber-200">
-                    Vedic Technicals
+                    {isHindi ? "वैदिक संकेतक" : "Vedic Technicals"}
                   </span>
                   {showDetailed ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </div>
@@ -703,15 +745,15 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
               <AnimatePresence>
                 {showDetailed && (
                   <motion.div 
-                    initial={{ opacity: 0, height: 0 }} 
-                    animate={{ opacity: 1, height: "auto" }} 
-                    exit={{ opacity: 0, height: 0 }}
-                    className="bg-[#FCFBF8] p-6 space-y-6 text-left border-t border-[#F1E7D0] overflow-hidden"
+                     initial={{ opacity: 0, height: 0 }} 
+                     animate={{ opacity: 1, height: "auto" }} 
+                     exit={{ opacity: 0, height: 0 }}
+                     className="bg-[#FCFBF8] p-6 space-y-6 text-left border-t border-[#F1E7D0] overflow-hidden"
                   >
                     {/* Language Switcher */}
                     <div className="flex items-center justify-between border-b border-[#E6DBC3]/60 pb-3">
-                      <span className="text-[10px] font-sans font-bold text-amber-700/60 uppercase tracking-widest">
-                        Translation Engine
+                      <span className={`text-[10px] font-sans font-bold text-amber-700/60 uppercase ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
+                        {isHindi ? "अनुवाद माध्यम" : "Translation Engine"}
                       </span>
                       <div className="inline-flex rounded-lg bg-amber-100/50 p-0.5 border border-[#E6DBC3]">
                         <button
@@ -721,7 +763,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                             mode === "PANDIT" ? "bg-amber-600 text-white shadow-sm" : "text-amber-800 hover:text-amber-900"
                           } disabled:opacity-50`}
                         >
-                          Hindi / English
+                          {isHindi ? "संस्कृत मिश्रित हिंदी" : "Hindi / English"}
                         </button>
                         <button
                           onClick={() => { setMode("SIMPLE_ENGLISH"); fetchDetailedPrediction("SIMPLE_ENGLISH"); }}
@@ -730,7 +772,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                             mode === "SIMPLE_ENGLISH" ? "bg-amber-600 text-white shadow-sm" : "text-amber-800 hover:text-amber-900"
                           } disabled:opacity-50`}
                         >
-                          Pure English
+                          {isHindi ? "अंग्रेजी रूप" : "Pure English"}
                         </button>
                       </div>
                     </div>
@@ -738,7 +780,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                     {detailedLoading ? (
                       <div className="py-12 flex flex-col items-center gap-3">
                         <Loader2 className="w-6 h-6 text-amber-600 animate-spin" />
-                        <p className="text-xs text-amber-700/60 font-serif italic text-center">Recalculating planetary vectors...</p>
+                        <p className="text-xs text-amber-700/60 font-serif italic text-center">{isHindi ? "ग्रहीय नक्षत्रों का संरेखण पुनर्गठित किया जा रहा है..." : "Recalculating planetary vectors..."}</p>
                       </div>
                     ) : (
                       detailedData && (
@@ -747,7 +789,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                           {/* Pandit Oral Counsel Bubble */}
                           <div className="bg-[#FAF4E5] border border-[#DFD3BA] rounded-2xl p-6 shadow-inner relative overflow-hidden">
                             <div className="absolute right-4 bottom-4 text-7xl text-amber-700/5 select-none font-serif font-bold">ॐ</div>
-                            <p className="text-[10px] uppercase tracking-widest text-amber-600/60 font-bold mb-3">💬 {isPandit ? "मौखिक ज्योतिषीय वाचन (Oral Reading)" : "Pandit's Reading"}</p>
+                            <p className={`text-[10px] uppercase font-bold mb-3 ${isHindi ? 'tracking-normal text-xs text-amber-600' : 'tracking-widest text-amber-600/60'}`}>💬 {isHindi ? "पंडित जी का सूक्ष्म वाचन (Oral Reading)" : "Pandit's Reading"}</p>
                             <div className="text-[13px] font-serif text-amber-900 leading-relaxed space-y-4 whitespace-pre-line">
                               {detailedData.narrative}
                             </div>
@@ -794,7 +836,9 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
 
                           {/* Technical Chart Analysis Grid */}
                           <div className="space-y-3">
-                            <p className="text-[9px] font-sans font-bold text-amber-600/50 uppercase tracking-widest">📋 Astrological Decomposition (Dasha & Transit)</p>
+                            <p className={`text-[9px] font-sans font-bold uppercase ${isHindi ? 'tracking-normal text-xs text-amber-600' : 'tracking-widest text-amber-600/50'}`}>
+                              {isHindi ? "📋 ज्योतिषीय संयोजन (दशा एवं गोचर)" : "📋 Astrological Decomposition (Dasha & Transit)"}
+                            </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {/* Natal Promise */}
                               {detailedData.detailedReport?.natalPromise && (
@@ -863,10 +907,14 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
               >
                 <div className="flex items-center gap-2 text-base">
                   <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">💬</span>
-                  <span>Clarify Doubts with Chat Pundit</span>
+                  <span>{isHindi ? "चैट पंडित जी से शंका समाधान करें" : "Clarify Doubts with Chat Pundit"}</span>
                 </div>
                 <div className="px-3 py-1 text-[10px] uppercase font-sans font-bold bg-[#FFF2D8] border border-amber-300 text-amber-900 rounded-full flex items-center gap-1.5 shadow-sm">
-                  <span>Scope: {domain} ({period === "this-week" ? "Week" : period === "this-month" ? "Month" : period})</span>
+                  <span>
+                    {isHindi 
+                      ? `विषय: ${domain === "career" ? "आजीविका" : domain === "finance" ? "वित्त" : domain === "health" ? "स्वास्थ्य" : domain === "relationships" ? "संबंध" : "सामान्य"} (${period === "this-week" ? "सप्ताह" : period === "this-month" ? "मासिक" : period === "today" ? "आज" : "वार्षिक"})`
+                      : `Scope: ${domain} (${period === "this-week" ? "Week" : period === "this-month" ? "Month" : period})`}
+                  </span>
                   {chatOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </div>
               </button>
@@ -903,7 +951,11 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                         <div className="flex justify-start">
                           <div className="p-4 rounded-2xl bg-white border border-[#EADFC7] flex items-center gap-2.5 text-xs text-amber-700/60 font-medium italic">
                             <Loader2 className="w-3.5 h-3.5 text-amber-600 animate-spin" />
-                            <span>Pundit is reflecting on your {domain} chart...</span>
+                            <span>
+                              {isHindi 
+                                ? `पंडित जी आपके ${domain === "career" ? "आजीविका" : domain === "finance" ? "वित्त" : domain === "health" ? "स्वास्थ्य" : domain === "relationships" ? "संबंध" : "सामान्य"} चार्ट पर विचार कर रहे हैं...`
+                                : `Pundit is reflecting on your ${domain} chart...`}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -917,7 +969,11 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
                       <input
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        placeholder={`Ask follow-up doubts about your ${domain} predictions...`}
+                        placeholder={
+                          isHindi 
+                            ? `पंडित जी से अपने ${domain === "career" ? "आजीविका" : domain === "finance" ? "वित्त" : domain === "health" ? "स्वास्थ्य" : domain === "relationships" ? "संबंध" : "सामान्य"} मार्गदर्शन के बारे में पूछें...`
+                            : `Ask follow-up doubts about your ${domain} predictions...`
+                        }
                         className="flex-1 bg-white border border-[#EADFC7] rounded-full py-2.5 px-4 text-xs text-amber-900 placeholder-amber-400 outline-none focus:border-amber-400 transition-all shadow-xs"
                       />
                       <button
@@ -934,8 +990,8 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
             </div>
 
             <button onClick={() => { setStep("period"); setPeriod(null); setDomain(null); }}
-              className="w-full py-4 rounded-2xl bg-white border border-[#F1E7D0] text-amber-700 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-50 hover:border-amber-300 transition-all shadow-sm">
-              New Prediction →
+              className={`w-full py-4 rounded-2xl bg-white border border-[#F1E7D0] text-amber-700 text-[10px] font-bold uppercase hover:bg-amber-50 hover:border-amber-300 transition-all shadow-sm ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
+              {isHindi ? "नवीन भविष्यफल प्राप्त करें →" : "New Prediction →"}
             </button>
           </motion.div>
         )}

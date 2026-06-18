@@ -16,6 +16,7 @@ export const IMPACT_WEIGHTS: Record<string, number> = {
 export interface TransitPosition {
   name: string;
   longitude: number;
+  sign: number;
   speed: number;
   weight: number;
 }
@@ -55,9 +56,11 @@ export async function calculateCurrentTransits() {
 
   for (const p of planets) {
     const { xx } = eph.swe_calc_ut(julDay, p.id, flags);
+    const longitude = xx[0];
     results.push({
       name: p.name,
-      longitude: xx[0],
+      longitude,
+      sign: Math.floor(longitude / 30) + 1, // 1-12
       speed: xx[3],
       weight: IMPACT_WEIGHTS[p.name] || 2,
     });
@@ -66,9 +69,11 @@ export async function calculateCurrentTransits() {
   // Ketu calculation (Binary opposite of Rahu)
   const rahu = results.find(r => r.name === "Rahu");
   if (rahu) {
+    const ketuLong = (rahu.longitude + 180) % 360;
     results.push({
       name: "Ketu",
-      longitude: (rahu.longitude + 180) % 360,
+      longitude: ketuLong,
+      sign: Math.floor(ketuLong / 30) + 1, // 1-12
       speed: rahu.speed,
       weight: IMPACT_WEIGHTS["Ketu"],
     });

@@ -61,7 +61,7 @@ export default function AstrologyAnchor({ chartData }: { chartData?: any }) {
         <div className="absolute top-0 right-0 w-24 h-24 bg-amber-100 blur-[40px] -mr-6 -mt-6 rounded-full" />
         <h4 className="text-[10px] font-bold text-amber-600/70 uppercase tracking-widest mb-1">Birth Chart Identity</h4>
         <h2 className="text-2xl font-serif font-semibold text-amber-900 mb-4">
-          {realLagnaSignName} <span className="text-amber-600/60 font-normal text-lg">Ascendant</span>
+          {realLagnaSignName} <span className="text-amber-600 font-normal text-lg">Ascendant</span>
         </h2>
 
         <div className="flex gap-6">
@@ -88,18 +88,18 @@ export default function AstrologyAnchor({ chartData }: { chartData?: any }) {
             <h4 className="text-[10px] font-bold text-amber-700/50 uppercase tracking-widest mb-1">Current Life Chapter (Dasha)</h4>
             <div className="flex items-baseline gap-2">
               <h2 className="text-2xl font-serif font-semibold text-amber-900">{realMD}</h2>
-              <span className="text-amber-600/60 text-sm">Mahadasha</span>
+              <span className="text-amber-600 text-sm">Mahadasha</span>
             </div>
-            <p className="text-xs text-amber-700/50 mt-0.5">Active until {mdEndsAt}</p>
+            <p className="text-xs text-amber-700 mt-0.5">Active until {mdEndsAt}</p>
           </div>
 
           <div className="text-right">
             <h4 className="text-[10px] font-bold text-amber-700/50 uppercase tracking-widest mb-1">Current Focus</h4>
             <div className="flex items-baseline gap-2 justify-end">
               <h2 className="text-xl font-serif font-semibold text-amber-600">{realAD}</h2>
-              <span className="text-amber-600/60 text-sm">Antardasha</span>
+              <span className="text-amber-600 text-sm">Antardasha</span>
             </div>
-            <p className="text-xs text-amber-700/50 mt-0.5">{chartData?.temporal?.timing?.remaining || "—"} remaining</p>
+            <p className="text-xs text-amber-700 mt-0.5">{chartData?.temporal?.timing?.remaining || "—"} remaining</p>
           </div>
         </div>
 

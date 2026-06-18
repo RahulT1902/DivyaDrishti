@@ -1152,21 +1152,21 @@ function getTodayTimingLine(mode: OutputMode, domain: Domain): string {
     if (domain === "growth") return "Morning is ideal for learning setup, afternoon for focused practice, and evening for reflection on what was actually applied.";
     return "Morning may feel mentally noisy, afternoon can bring clarity, and evening should be protected from overthinking loops.";
   }
-  if (domain === "career") return "à¤¸à¥à¤¬à¤¹ à¤¥à¥‹à¤¡à¤¼à¤¾ slow feel à¤¹à¥‹ à¤¸à¤•à¤¤à¤¾ à¤¹à¥ˆ, à¤¦à¥‹à¤ªà¤¹à¤° focused execution à¤•à¥‡ à¤²à¤¿à¤ à¤¬à¥‡à¤¹à¤¤à¤° à¤°à¤¹à¥‡à¤—à¥€, à¤”à¤° à¤¶à¤¾à¤® review à¤•à¥‡ à¤²à¤¿à¤ à¤¸à¤¹à¥€ à¤°à¤¹à¥‡à¤—à¥€, à¤¨à¤ à¤¬à¤¡à¤¼à¥‡ à¤«à¥ˆà¤¸à¤²à¥‹à¤‚ à¤•à¥‡ à¤²à¤¿à¤ à¤¨à¤¹à¥€à¤‚à¥¤";
-  if (domain === "finance") return "à¤¸à¥à¤¬à¤¹ numbers calmly à¤¦à¥‡à¤–à¤¨à¥‡ à¤•à¤¾ à¤¸à¤®à¤¯ à¤¹à¥ˆ, à¤¦à¥‹à¤ªà¤¹à¤° planned action à¤•à¥‡ à¤²à¤¿à¤ à¤¬à¥‡à¤¹à¤¤à¤° à¤¹à¥ˆ, à¤”à¤° à¤¶à¤¾à¤® impulse money decision à¤¸à¥‡ à¤¬à¤šà¤¨à¤¾ à¤šà¤¾à¤¹à¤¿à¤à¥¤";
-  if (domain === "health") return "à¤¸à¥à¤¬à¤¹ body à¤¥à¥‹à¤¡à¤¼à¥€ heavy à¤²à¤— à¤¸à¤•à¤¤à¥€ à¤¹à¥ˆ, à¤¦à¥‹à¤ªà¤¹à¤° light movement à¤•à¥‡ à¤²à¤¿à¤ à¤…à¤šà¥à¤›à¥€ à¤¹à¥ˆ, à¤”à¤° à¤¶à¤¾à¤® nervous-system à¤•à¥‹ à¤¶à¤¾à¤‚à¤¤ à¤•à¤°à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤°à¤–à¥‡à¤‚à¥¤";
-  if (domain === "relationships") return "à¤¸à¥à¤¬à¤¹ emotional sensitivity à¤°à¤¹ à¤¸à¤•à¤¤à¥€ à¤¹à¥ˆ, à¤¦à¥‹à¤ªà¤¹à¤° clear conversation à¤•à¥‡ à¤²à¤¿à¤ à¤¬à¥‡à¤¹à¤¤à¤° à¤¹à¥ˆ, à¤”à¤° à¤¶à¤¾à¤® à¤®à¥‡à¤‚ tone soft à¤°à¤–à¤¨à¤¾ à¤œà¤°à¥‚à¤°à¥€ à¤¹à¥ˆà¥¤";
-  if (domain === "growth") return "à¤¸à¥à¤¬à¤¹ learning setup, à¤¦à¥‹à¤ªà¤¹à¤° focused practice, à¤”à¤° à¤¶à¤¾à¤® reflection à¤•à¥‡ à¤²à¤¿à¤ à¤¸à¤¬à¤¸à¥‡ à¤¬à¥‡à¤¹à¤¤à¤° à¤°à¤¹à¤¤à¥€ à¤¹à¥ˆà¥¤";
-  return "à¤¸à¥à¤¬à¤¹ mind à¤¥à¥‹à¤¡à¤¼à¤¾ noisy à¤²à¤— à¤¸à¤•à¤¤à¤¾ à¤¹à¥ˆ, à¤¦à¥‹à¤ªà¤¹à¤° clarity à¤¦à¥‡ à¤¸à¤•à¤¤à¥€ à¤¹à¥ˆ, à¤”à¤° à¤¶à¤¾à¤® à¤•à¥‹ overthinking loop à¤¸à¥‡ à¤¬à¤šà¤¾à¤¨à¤¾ à¤œà¤¼à¤°à¥‚à¤°à¥€ à¤¹à¥ˆà¥¤";
+  if (domain === "career") return "सुबह थोड़ा slow feel हो सकता है, दोपहर focused execution के लिए बेहतर रहेगी, और शाम review के लिए सही रहेगी, नए बड़े फैसलों के लिए नहीं।";
+  if (domain === "finance") return "सुबह numbers calmly देखने का समय है, दोपहर planned action के लिए बेहतर है, और शाम impulse money decision से बचना चाहिए।";
+  if (domain === "health") return "सुबह body थोड़ी heavy लग सकती है, दोपहर light movement के लिए अच्छी है, और शाम nervous-system को शांत करने के लिए रखें।";
+  if (domain === "relationships") return "सुबह emotional sensitivity रह सकती है, दोपहर clear conversation के लिए बेहतर है, और शाम में tone soft रखना जरूरी है।";
+  if (domain === "growth") return "सुबह learning setup, दोपहर focused practice, और शाम reflection के लिए सबसे बेहतर रहती है।";
+  return "सुबह mind थोड़ा noisy लग सकता है, दोपहर clarity दे सकती है, और शाम को overthinking loop से बचाना ज़रूरी है।";
 }
 
 function getHindiDomainLabel(domain: Domain): string {
-  if (domain === "career") return "à¤•à¤°à¤¿à¤¯à¤°";
-  if (domain === "finance") return "à¤«à¤¾à¤‡à¤¨à¥‡à¤‚à¤¸";
-  if (domain === "health") return "à¤¹à¥‡à¤²à¥à¤¥";
-  if (domain === "relationships") return "à¤°à¤¿à¤²à¥‡à¤¶à¤¨à¤¶à¤¿à¤ªà¥à¤¸";
-  if (domain === "growth") return "à¤ªà¤°à¥à¤¸à¤¨à¤² à¤—à¥à¤°à¥‹à¤¥";
-  return "à¤®à¤¾à¤‡à¤‚à¤¡ à¤¬à¥ˆà¤²à¥‡à¤‚à¤¸";
+  if (domain === "career") return "करियर";
+  if (domain === "finance") return "फाइनेंस";
+  if (domain === "health") return "हेल्थ";
+  if (domain === "relationships") return "रिलेशनशिप्स";
+  if (domain === "growth") return "पर्सनल ग्रोथ";
+  return "माइंड बैलेंस";
 }
 
 function buildTodayNarrative(
@@ -1537,8 +1537,25 @@ interface LifeDomainCard {
   caution: string | null;
   primaryPlanet: string;
   strength: "supportive" | "sensitive" | "neutral";
+  statusLabel?: string;
+  statusLabelHindi?: string;
+  emphasisTag?: "Most Active" | "Currently Influenced" | null;
+  emphasisTagHindi?: "सर्वाधिक सक्रिय" | "वर्तमान में प्रभावित" | null;
+  confidenceTone?: string;
+  confidenceToneHindi?: string;
+  timingWindow?: string;
+  timingWindowHindi?: string;
+  whyThisMatters?: {
+    transitReasoning: string;
+    transitReasoningHindi: string;
+    dashaInfluence: string;
+    dashaInfluenceHindi: string;
+    practicalInterpretation: string;
+    practicalInterpretationHindi: string;
+    emotionalGuidance: string;
+    emotionalGuidanceHindi: string;
+  };
 }
-
 
 function getActivatedPatternsForDomain(
   id: string,
@@ -1550,64 +1567,64 @@ function getActivatedPatternsForDomain(
   const isSensitive = strength === "sensitive";
 
   if (id === "self") {
-    if (isSupportive) return ["Self-expression is highly empowered by benign cosmic configurations.", "Vitality and mental resilience are peak; excellent for initiating self-discipline.", "A strong sense of personal identity aligns with your active goals."];
-    if (isSensitive) return ["Transits suggest high restlessness and physical tiredness. Prioritize sleep.", "Avoid taking criticism personally or acting in haste under stress.", "Mind and body require recovery blocks to handle daily pressures."];
-    return ["A stable and grounded period for regular self-discipline.", "Keep focus on daily health routines and moderate movement.", "Good window for steady personal projects."];
+    if (isSupportive) return ["A surge of clarity brings personal goals into sharp focus today.", "Your natural presence resonates strongly, making it a wonderful time to establish new physical habits.", "Inner alignment feels steady, allowing self-expression to flow without friction."];
+    if (isSensitive) return ["Physical energy might fluctuate today, reminding you to honor moments of rest.", "A gentle approach to self-expectations helps steer clear of minor frustrations.", "Taking a step back to recover preserves your vital momentum."];
+    return ["A quiet, steady rhythm supports simple daily self-care.", "Consistent routines act as a comforting anchor for your mind.", "Focusing on immediate physical comfort brings stable grounding."];
   }
   if (id === "wealth") {
-    if (isSupportive) return ["Financial stability is expanding; good time for long-term investments.", "Accumulated assets show positive trends under wise governance.", "Speech is highly persuasive and helps in settling old matters."];
-    if (isSensitive) return ["Volatile financial trends suggest avoiding all speculative risks.", "Keep dynamic control over expenditures and avoid impulse buying.", "Verify all cash outflows and document financial commitments."];
-    return ["Consolidate existing finances and track inflow/outflow.", "Maintain a structured budget without making major modifications.", "Good time for quiet savings."];
+    if (isSupportive) return ["A disciplined approach to resources begins to show subtle, positive returns.", "Financial planning feels clear and structured, helping secure long-term goals.", "Conversations regarding family assets move forward with constructive ease."];
+    if (isSensitive) return ["Patience with temporary resource delays protects your peace of mind.", "Evaluating expenses calmly prevents impulsive financial steps today.", "A cautious, structured boundary with outgoing funds is highly supportive."];
+    return ["Maintaining a simple budget tracking routine keeps your mind relaxed.", "Focusing on capital preservation provides an excellent stable baseline.", "A quiet period for reviewing accounts supports long-term security."];
   }
   if (id === "siblings") {
-    if (isSupportive) return ["Courage and personal self-efforts bring swift, constructive rewards.", "Short journeys or professional writing tasks show highly supportive outcomes.", "Collaborative projects with close contacts get positive momentum."];
-    if (isSensitive) return ["Avoid unnecessary verbal friction or defensive discussions with colleagues.", "Short journeys might be slow or require dynamic rescheduling.", "Mindful communication is key to avoiding hasty responses."];
-    return ["Maintain a calm and practical tone in daily discussions.", "Focus on executing daily self-efforts rather than waiting for help.", "Use structured communication."];
+    if (isSupportive) return ["Your daily self-efforts carry a determined, constructive energy today.", "Methodical communication opens smooth pathways with peers and close contacts.", "A courageous spark helps you initiate structured writing or local projects."];
+    if (isSensitive) return ["Approaching colleagues with extra patience helps prevent minor misunderstandings.", "Short journeys or dynamic plans succeed when you allow extra time.", "Expressing thoughts softly keeps interactions cooperative."];
+    return ["Quiet consistency in your daily checklist builds solid progress.", "A steady, practical tone resolves minor communication tasks smoothly.", "Focusing on immediate execution brings a quiet sense of accomplishment."];
   }
   if (id === "home") {
-    if (isSupportive) return ["Internal peace and domestic harmony are beautifully supported.", "Excellent period for improving home environment and family bonds.", "Mother's health is supportive; emotional stability is peak."];
-    if (isSensitive) return ["Domestic atmosphere might feel slightly tense or demanding.", "Take deep care of mother's health and family stability.", "Emotional grounding is vital; practice daily mindfulness."];
-    return ["Keep your domestic routine quiet and low-noise.", "Take steady decisions regarding real estate or home organization.", "Focus on home comfort."];
+    if (isSupportive) return ["The domestic atmosphere shifts toward a quiet, comforting harmony.", "Spending calm moments at home restores your deep emotional reserves.", "A nurturing focus on your living space creates a beautiful sanctuary."];
+    if (isSensitive) return ["Emotional boundaries at home help keep the domestic environment quiet.", "Offering extra care to family members' wellness creates gentle stability.", "Taking quiet pauses prevents household tasks from feeling urgent."];
+    return ["A steady, low-noise domestic routine brings comfort today.", "Simple home organizing tasks support an orderly state of mind.", "Focusing on basic domestic comforts grounds your emotional core."];
   }
   if (id === "children") {
-    if (isSupportive) return ["Creative expression and academic growth are highly favored.", "Speculative intellect is sharp; excellent for strategic plans.", "Heartfelt romantic connections bring warmth and peace."];
-    if (isSensitive) return ["Speculative risks must be completely avoided under active volatility.", "Patience is required with children or creative roadblocks.", "Channel emotional excitement into structured learning or hobby."];
-    return ["Maintain a steady academic or creative routine.", "Keep romantic bonds realistic and mature.", "Practice calm, plan-based speculation if any."];
+    if (isSupportive) return ["Creative inspiration flows easily when you trust your natural rhythm.", "Your intellectual focus is sharp, making it ideal for deep study or planning.", "Relational interactions feel warm, honest, and grounded in mutual respect."];
+    if (isSensitive) return ["Patience with creative blockages allows fresh ideas to mature naturally.", "Steering clear of hasty speculative risks keeps your progress secure.", "Channeling emotional intensity into structured learning yields wonderful rewards."];
+    return ["Maintaining a consistent study or creative routine builds confidence.", "Keeping expectations realistic supports stable, loving connections.", "A calm, methodical approach to learning feels highly sustainable."];
   }
   if (id === "health") {
-    if (isSupportive) return ["Physical recovery systems are highly efficient and active.", "Obstacles are cleared smoothly through regular daily service.", "Excellent time to resolve long-pending health routine challenges."];
-    if (isSensitive) return ["Physical digestion and sleep cycle require strict scheduling.", "Avoid overtraining or pushing through bodily exhaustion signals.", "Nervous-system downshift is necessary; limit evening screen noise."];
-    return ["Keep meal timings regular and water intake adequate.", "Maintain a moderate but consistent exercise plan.", "Resolve daily chores calmly."];
+    if (isSupportive) return ["The physical system recovers energy efficiently when given wholesome inputs.", "Approaching daily chores with a service-oriented mindset feels deeply satisfying.", "A balanced daily rhythm supports structural physical wellness."];
+    if (isSensitive) return ["Listening carefully to your body's early rest signals preserves vitality.", "Regular meal timings and plenty of hydration support smooth digestion.", "A quiet, screen-free evening helps wind down a sensitive nervous system."];
+    return ["Keeping a moderate, steady movement schedule supports joint comfort.", "Simple, consistent wellness choices protect your physical baseline.", "Managing daily chores methodically prevents mental fatigue."];
   }
   if (id === "spouse") {
-    if (isSupportive) return ["Partnerships and public agreements are in an expanding phase.", "Excellent alignment for resolving long-standing marital friction.", "Collaborative energy is high; shared goals feel natural."];
-    if (isSensitive) return ["Expect high sensitivities in partnerships; speak slowly and gently.", "Avoid passive assumptions or postponing essential clarifications.", "Patience is the primary anchor to keep relational harmony."];
-    return ["Maintain open, clear communication with your spouse/partners.", "Keep relationship expectations mature and balanced.", "Review contracts carefully."];
+    if (isSupportive) return ["Shared goals and collaborative plans feel naturally aligned today.", "An atmosphere of mutual understanding softens any historical frictions.", "Clear, gentle dialogues reinforce the strength of your primary bonds."];
+    if (isSensitive) return ["Relationships flourish when sensitive topics are approached with patient listening.", "Clarifying assumptions early and softly keeps partnerships harmonious.", "A calm, unhurried tone prevents minor domestic debates from escalating."];
+    return ["Maintaining open and quiet communication channels ensures steady harmony.", "Keeping mutual expectations mature and balanced feels deeply anchoring.", "Handling joint responsibilities methodically supports stable trust."];
   }
   if (id === "transformation") {
-    if (isSupportive) return ["Deep research, analytical work, and occult pursuits are highly favored.", "Sudden gains or resolving complex inheritances show positive trends.", "Transformative psychological clarity emerges from quiet contemplation."];
-    if (isSensitive) return ["Unexpected shifts or slow-downs require a calm, detached mind.", "Avoid high-risk physical activities or rushing under stress.", "Focus on inner healing and let go of obsessive control patterns."];
-    return ["Maintain deep focus on research and self-understanding.", "Keep a low profile regarding joint finances or tax files.", "A quiet time for contemplation."];
+    if (isSupportive) return ["Quiet introspection yields beautiful psychological clarity today.", "Deep analytical tasks or research move forward with exceptional focus.", "Letting go of old emotional baggage feels liberating and natural."];
+    if (isSensitive) return ["A calm, detached perspective makes handling minor delays effortlessly.", "Allowing plans to evolve organically clears away unnecessary pressure.", "Focusing on internal healing helps release obsessive control loops."];
+    return ["A quiet phase supports steady contemplation and personal reflection.", "Managing pending tax, insurance, or joint account paperwork goes smoothly.", "Keeping a low profile allows you to process thoughts without external noise."];
   }
   if (id === "wisdom") {
-    if (isSupportive) return ["Wisdom, philosophical learning, and general fortune are peak.", "Father or mentors provide deep, timely guidance.", "Spiritual inclination is strong, bringing mental grounding."];
-    if (isSensitive) return ["Philosophical doubts or delays in higher studies require patience.", "Be respectful and patient in discussions with mentors or father.", "Focus on applying wisdom to daily challenges rather than chasing ideals."];
-    return ["Maintain a daily spiritual or reading routine.", "Reflect on long-term philosophy without rushing into shifts.", "A balanced time for guidance."];
+    if (isSupportive) return ["A deep sense of wisdom guides your decisions into productive avenues.", "Philosophical insights offer a beautiful sense of perspective and direction.", "Conversations with mentors or father figures carry mutual respect and learning."];
+    if (isSensitive) return ["Philosophical doubts clear up when you focus on simple, practical truths.", "Respectful listening during senior discussions preserves harmony.", "Patience with long-term educational plans allows details to settle nicely."];
+    return ["A regular daily reading or meditation habit grounds your mindset.", "Reflecting quietly on long-term goals keeps your steps aligned.", "A balanced appreciation of senior guidance supports steady growth."];
   }
   if (id === "career") {
-    if (isSupportive) return ["Professional authority, career growth, and recognition are supported.", "Excellent phase for taking leadership responsibility and executing.", "A highly productive window for professional visibility."];
-    if (isSensitive) return ["Saturn/Rahu transits demand steady execution over rapid shifts.", "Avoid reactive arguments with seniors or authority figures.", "High workloads require systematic delegation and schedule discipline."];
-    return ["Focus on completing existing projects with high quality.", "Keep professional progress documented and transparent.", "Execute daily responsibilities."];
+    if (isSupportive) return ["Professional execution feels clear, helping you build positive momentum.", "A methodical approach to leadership responsibilities gains quiet respect.", "Your focus on project quality supports long-term career positioning."];
+    if (isSensitive) return ["Saturn's steady transit requires disciplined execution over rapid shifts.", "Approaching workspace changes with a calm, methodical attitude ensures stability.", "Relying on clear project logs and documentation prevents minor miscommunications."];
+    return ["Quietly executing your current tasks ensures reliable progress.", "Keeping professional logs transparent and up-to-date supports trust.", "A stable routine keeps workload stress completely manageable."];
   }
   if (id === "gains") {
-    if (isSupportive) return ["Material gains, salary enhancements, and network support are high.", "Elder siblings or close friends provide valuable opportunities.", "Social circles compound positively, bringing key contacts."];
-    if (isSensitive) return ["Delays in financial gains or returns require patient follow-up.", "Avoid speculative cash plays within social networks or associations.", "Verify network reliability before entering collaborative projects."];
-    return ["Maintain healthy, stable networks without overcommitting.", "Track all dynamic streams of income with structure.", "Consolidate existing gains."];
+    if (isSupportive) return ["Collaborative network opportunities align beautifully with your goals.", "Interactions with elder siblings or friends bring constructive support.", "Methodical progress toward revenue streams shows steady, reliable gains."];
+    if (isSensitive) return ["A conservative approach to joint financial plans keeps your assets safe.", "Patience with processing delays in payments prevents unnecessary worry.", "Verifying collaborative details thoroughly before committing protects your interests."];
+    return ["Maintaining clean boundaries with social acquaintances keeps life simple.", "Tracking your secondary streams of revenue calmly supports budgeting.", "Consistent check-ins with reliable associates foster long-term ties."];
   }
   // expenses
-  if (isSupportive) return ["Spiritual isolation, meditation, and quiet times are peak.", "Sleep quality is deep, helping in complete cognitive recovery.", "Intelligent, planned expenditures for spiritual or family growth."];
-  if (isSensitive) return ["Sleep disturbances or late-night overthinking can reduce vitality.", "Unplanned leakage of funds requires strict expenditure checks.", "Practice deep grounding and screen-free routines before bedtime."];
-  return ["Maintain a balanced bedtime schedule and avoid late-night caffeine.", "Track small outflows of money systematically.", "A quiet period for self-reflection."];
+  if (isSupportive) return ["Quiet solitude provides a deeply restorative and healing influence.", "Planned allocations toward long-term learning feel highly constructive.", "A quiet bedtime schedule supports deep, refreshing sleep quality."];
+  if (isSensitive) return ["Restricting evening cognitive stimulation helps calm a busy mind for sleep.", "Strict, structured tracking prevents minor leaks in your daily budget.", "Creating a low-noise wind-down window restores physical vitality."];
+  return ["Consistent sleep hygiene practices support deep cellular recovery.", "A simple tracking habit keeps outflow of funds highly predictable.", "Allocating brief moments for quiet self-reflection grounds the day."];
 }
 
 function getCautionForDomain(
@@ -1619,32 +1636,32 @@ function getCautionForDomain(
   const isPandit = mode === "PANDIT";
 
   if (isPandit) {
-    if (id === "self") return "जल्दबाजी और क्रोध से बचें। शारीरिक थकान होने पर पर्याप्त विश्राम लें और अपनी वाणी को नम्र रखें।";
-    if (id === "wealth") return "बिना सोचे-समझे किसी नए निवेश या बड़े खर्च से पूरी तरह बचें। उधार देने से आज परहेज करें।";
-    if (id === "siblings") return "सहकर्मियों या करीबियों के साथ बातचीत में तंज या कड़वाहट से बचें। यात्रा में सावधानी रखें।";
-    if (id === "home") return "पारिवारिक मामलों में बहस को तूल न दें। माता के स्वास्थ्य और मानसिक शांति का विशेष ध्यान रखें।";
-    if (id === "children") return "शेयर बाजार या किसी भी शॉर्टकट वाले निवेश में पैसा लगाने से बिल्कुल बचें। धैर्य बनाए रखें।";
-    if (id === "health") return "देर रात तक जागने और अनियमित खान-पान से बचें। पेट और गैस से जुड़ी समस्या परेशान कर सकती है।";
-    if (id === "spouse") return "जीवनसाथी के साथ बातचीत में गुस्सा न करें। किसी भी गलतफहमी को शांत रहकर तुरंत बातचीत से दूर करें।";
-    if (id === "transformation") return "वाहन चलाते समय सावधानी रखें। पुरानी नकारात्मक बातों को सोचकर खुद को मानसिक रूप से परेशान न करें।";
-    if (id === "wisdom") return "गुरु या पिता के साथ वैचारिक मतभेद होने पर मौन रहें। भाग्य के भरोसे बैठकर काम टालने से बचें।";
-    if (id === "career") return "कार्यक्षेत्र में अचानक अपनी नौकरी या काम बदलने का निर्णय न लें। उच्च अधिकारियों के साथ संयम रखें।";
-    if (id === "gains") return "किसी मित्र के कहने पर उधार देने या बड़ी डीलिंग में शामिल होने से बचें। अपने पैसे को सुरक्षित रखें।";
-    return "अनावश्यक खर्चों पर तुरंत रोक लगाएं। सोने से पहले स्क्रीन से दूर रहें ताकि नींद प्रभावित न हो।";
+    if (id === "self") return "सकारात्मक सोच बनाए रखें और स्वास्थ्य पर ध्यान दें।";
+    if (id === "wealth") return "बिना सोचे-मत समझे निवेश करने या पैसे उधार देने से बचें।";
+    if (id === "siblings") return "दूसरों के साथ बातचीत में तंज या कड़वाहट से बचें।";
+    if (id === "home") return "पारिवारिक शांति बनाए रखने के लिए प्रतिक्रिया देने में थोड़ा रुकें।";
+    if (id === "children") return "शॉर्टकट वाले निवेशों और अति-उत्साह में बड़े जोखिमों से बचें।";
+    if (id === "health") return "सोने और खाने के समय को नियमित रखें, देर रात जागने से बचें।";
+    if (id === "spouse") return "जीवनसाथी के साथ बातचीत में संयम और उदारता बनाए रखें।";
+    if (id === "transformation") return "वाहन चलाते समय अतिरिक्त सावधानी रखें और अनावश्यक विचारों से बचें।";
+    if (id === "wisdom") return "वरिष्ठों के साथ वैचारिक मतभेद होने पर मौन रहकर विचार करें।";
+    if (id === "career") return "कार्यक्षेत्र में जल्दबाजी में निर्णय न लें और नियमित काम पर टिके रहें।";
+    if (id === "gains") return "किसी मित्र के कहने पर उधार देने या बड़ी डीलिंग में शामिल होने से बचें।";
+    return "अनावश्यक खर्चों पर नियंत्रण रखें और रात को स्क्रीन से दूर रहें।";
   }
 
-  if (id === "self") return "Avoid hasty decisions and physical overexertion. Ensure you get adequate rest and remain humble in communication.";
-  if (id === "wealth") return "Refrain from speculative investments or major unplanned purchases. Keep a firm boundary regarding lending cash.";
-  if (id === "siblings") return "Avoid defensive or passive-aggressive communication with peers. Reschedule non-urgent journeys if needed.";
-  if (id === "home") return "Do not escalate household arguments. Prioritize mother's wellness and maintain a calm living atmosphere.";
-  if (id === "children") return "Completely avoid high-risk speculative plays. Practice active patience under creative blockages.";
-  if (id === "health") return "Avoid irregular meal times and late-night screen scrolling. Listen to early bodily signals of fatigue.";
-  if (id === "spouse") return "Avoid hasty reactions in primary relationships. Clear up assumptions early with calm, mutual dialogue.";
-  if (id === "transformation") return "Exercise care during journeys and physical movement. Avoid ruminating on past emotional patterns.";
-  if (id === "wisdom") return "Remain patient and respectful when dealing with mentors or senior advice. Do not procrastinate expecting luck.";
-  if (id === "career") return "Avoid reactive career shifts or sudden verbal arguments at your workplace. Focus on system compliance.";
-  if (id === "gains") return "Refrain from overcommitting cash inside social circles or unverified ventures. Protect your capital.";
-  return "Control unnecessary budget leakage. Establish a strict screen-free routine before sleep to combat fatigue.";
+  if (id === "self") return "Nurture positive thoughts and honor bodily recovery signals.";
+  if (id === "wealth") return "Refrain from speculative investments or unverified lending commitments.";
+  if (id === "siblings") return "Avoid reactive or sharp exchanges with colleagues and associates.";
+  if (id === "home") return "Pace your interactions to support home and domestic harmony.";
+  if (id === "children") return "Steer completely clear of volatile speculative financial channels.";
+  if (id === "health") return "Lock in sleep schedules and avoid late-night caffeine or screens.";
+  if (id === "spouse") return "Use gentle, clear expressions and patient dialogue in partnerships.";
+  if (id === "transformation") return "Take extra care during transit and release obsolete emotional loops.";
+  if (id === "wisdom") return "Remain patient and receptive when listening to elder counsel.";
+  if (id === "career") return "Avoid sudden professional shifts; focus on methodical execution.";
+  if (id === "gains") return "Exercise structured caution regarding collaborative capital commitments.";
+  return "Establish strict limits on outflow and protect bedtime rest quality.";
 }
 
 function buildDomainNarrativeBox(
@@ -1665,125 +1682,396 @@ function buildDomainNarrativeBox(
 
   if (isPandit) {
     if (id === "self") {
-      if (strength === "supportive") return `Beta, abhi tumhari dasha mein ${md} aur ${ad} ka achha prabhav chal raha hai, aur tumhare lagna swami ${primaryPlanet} ki sthiti kaafi anukul hai. Tumhare vyaktitva aur physical energy mein ek naya nikhara aayega. Apne confidence ko sahi disha mein lagao, naye routines shuru karo aur khud par poora vishwas rakho. Sab achha chal raha hai.`;
-      if (strength === "sensitive") return `Beta, lagnesh ${primaryPlanet} aur gochar mein chal rahe sensitive planets ke karan body thoda heavy aur fatigue feel kar sakti hai. Is samay tumhare dasha chakra mein ${ad}/${pd} ka chalna bata raha hai ki tumhare mind par stress jaldi asar karega. Khud ko push mat karo, thoda rest aur recovery zaroori hai. Chinta bilkul mat karna, bas disciplined raho.`;
-      return `Beta, lagnesh ${primaryPlanet} abhi normal sthiti mein hain. Tumhari dasha ${md}/${ad} ke chalte ek behad stable aur quiet period chal raha hai. Nayi planning aur self-discipline ke liye yeh behtareen samay hai. Apne daily routine ko simple aur organized rakho, dheere-dheere tarakki milegi.`;
+      if (strength === "supportive") return `Beta, abhi tumhari dasha mein ${md} aur ${ad} ka achha prabhav chal raha hai, aur tumhare lagna swami ${primaryPlanet} ki sthiti kaafi anukul hai. Vyaktitva aur physical energy mein ek naya nikhara aane ke yog hain. Confidence ko sahi disha mein lagao aur khud par poora vishwas rakho.`;
+      if (strength === "sensitive") return `Beta, lagnesh ${primaryPlanet} aur gochar mein sensitive planets ke prabhav ke karan body thoda heavy feel kar sakti hai. Is samay tumhare dasha chakra mein ${ad}/${pd} ka chalna bata raha hai ki chinta se door rehna aur thoda rest lena faydemand rahega.`;
+      return `Beta, lagnesh ${primaryPlanet} abhi normal sthiti mein hain. Tumhari active dasha ${md}/${ad} ke chalte ek behad stable aur quiet period chal raha hai. Daily routine ko simple aur organized rakho.`;
     }
     if (id === "wealth") {
-      if (strength === "supportive") return `Beta, tumhare dhana bhav ke swami ${primaryPlanet} hain aur abhi dasha mein ${ad} ki shakti mil rahi hai, jisse tumhari financial position behtar hone ke poore sanket hain. Purane ruke hue paise milne ki sambhavna hai. Apne budget par dhayan do aur disciplined savings shuru karo, yeh samay future secure karne ke liye bahut shubh hai.`;
-      if (strength === "sensitive") return `Beta, abhi gochar mein sensitive planets tumhare dhana bhav ko prabhavit kar rahe hain, aur active dasha ${md}/${pd} ke chalte paise ke mamle mein volatility dikh rahi hai. Koi bhi bada investment ya speculative risk is samay bilkul mat lena. Apne kharchon ko tight rakho, bina planning ke impulse spending se bachna zaroori hai.`;
-      return `Beta, tumhare dhana swami ${primaryPlanet} abhi stable hain. Tumhari dasha ke chalte paise ke inflow aur outflow mein ek balance bana rahega. Naya speculative risk lene ki jagah purani strategy par hi tike raho. Budgeting aur tracking clean rakhna, Laxmi ji ki kripa bani rahegi.`;
+      if (strength === "supportive") return `Beta, tumhare dhana bhav ke swami ${primaryPlanet} hain aur abhi dasha mein ${ad} ki shakti mil rahi hai, jisse financial position behtar hone ke sanket hain. Disciplined savings shuru karo, yeh shubh samay hai.`;
+      if (strength === "sensitive") return `Beta, abhi gochar mein sensitive planets dhana bhav ko prabhavit kar rahe hain. active dasha ${md}/${pd} ke chalte koi bhi speculative risk mat lena, budget par dhyan do.`;
+      return `Beta, tumhare dhana swami ${primaryPlanet} abhi stable hain. Budgeting aur tracking clean rakhna, Laxmi ji ki kripa bani rahegi.`;
     }
     if (id === "siblings") {
-      if (strength === "supportive") return `Beta, tumhari dasha mein ${ad} ka prabhav aur tritiya swami ${primaryPlanet} ka gochar tumhare andar ek naya sahas aur self-effort jagane wala hai. Tum jo bhi mehnat karoge, uska turant fal milega. Writing, communication aur siblings ke sath rishton mein anukulata rahegi. Apne idea ko bina darr ke aage badhao.`;
-      if (strength === "sensitive") return `Beta, tritiya swami ${primaryPlanet} par sensitive transits ke karan is samay tumhari self-efforts mein thodi rukavat ya fatigue ho sakta hai. Tumhari active dasha ${md}/${pd} ke chalte colleagues ya close circles ke sath minor argument hone ki ashanka hai. Apni tone ko bilkul soft rakhna, reactive hone se bachna behtar rahega.`;
-      return `Beta, tumhare sahas bhav ke swami ${primaryPlanet} abhi normal sthiti mein chal rahe hain. Mehnat aur consistency hi tumhara sabse bada weapon hai is samay. Daily tasks ko structured tareeqe se poora karo, kisi bade sudden change ki umeed kiye bina quietly kaam karte raho.`;
+      if (strength === "supportive") return `Beta, tritiya swami ${primaryPlanet} ka gochar aur active dasha sahas ko badhane wala hai. Writing aur communication ke kshetr mein tarakki ho sakti hai.`;
+      if (strength === "sensitive") return `Beta, tritiya swami ${primaryPlanet} par sensitive transits ke karan peers ke sath communication mein tone bilkul soft rakhna zaroori hai.`;
+      return `Beta, sahas bhav ke swami ${primaryPlanet} normal sthiti mein chal rahe hain. quiet consistency se apne kaam karte raho.`;
     }
     if (id === "home") {
-      if (strength === "supportive") return `Beta, chaturtha swami ${primaryPlanet} aur gochar ke shubh asar se ghar ka vatavaran behad shant aur supportive banega. Tumhari dasha mein ${ad} tumhare internal peace aur emotional stability ko badha rahi hai. Ghar ke renovation ya vehicle se juda koi kaam shubh fal dega. Mata ji ka aashirwad tumhare sath hai.`;
-      if (strength === "sensitive") return `Beta, tumhare chaturtha bhav par abhi sensitive planets ka pressure hai, jisse ghar mein thodi anban ya stress feel ho sakta hai. Tumhari dasha ${md}/${pd} ke chalte mata ji ki health ka dhayan rakhna zaroori hai. Jab bhi stress lage, ghar se thoda break lo aur emotional calm banaye rakho. Hanuman Chalisa ka paath karo, shanti milegi.`;
-      return `Beta, tumhare chaturtha bhav ke swami ${primaryPlanet} abhi stable hain. Domestic life aur emotional peace bilkul normal rahegi. Apne home routine ko clean rakho aur emotional boundaries banaye rakho. Purane ghar ke pending kaamo ko quietly quietly nipatane ke liye behad anukul samay hai.`;
+      if (strength === "supportive") return `Beta, chaturtha swami ${primaryPlanet} aur gochar ke shubh asar se ghar ka vatavaran behad shant rahega. Mata ji ka aashirwad tumhare sath hai.`;
+      if (strength === "sensitive") return `Beta, chaturtha bhav par sensitive planets ka pressure hai. active dasha ${md}/${pd} ke chalte mata ji ki health aur domestic peace ka dhyan rakhna zaroori hai.`;
+      return `Beta, chaturtha bhav ke swami ${primaryPlanet} stable hain. Domestic comfort aur home maintenance ke pending kaamo ko quietly nipatane ke liye anukul samay hai.`;
     }
     if (id === "children") {
-      if (strength === "supportive") return `Beta, pancham swami ${primaryPlanet} aur dasha swami ${ad} ki kripa se tumhari buddhi aur creativity bilkul shikhara par hain. Agar tum padhai ya naye creative project mein ho, toh bada breakthrough milega. Relationships mein warmth rahegi aur intellect sahi decisions lene mein madad karega. Bhole Baba ka dhyan karo.`;
-      if (strength === "sensitive") return `Beta, active dasha ${md}/${pd} aur sensitive transit ke chalte pancham bhav par thoda pressure hai. Speculative market ya shares mein is samay galti se bhi paisa mat lagana, nuksan ho sakta hai. Creative projects mein temporary block feel ho toh pareshan mat hona, thoda ruk kar kaam shuru karna.`;
-      return `Beta, pancham swami ${primaryPlanet} abhi stable phase mein hain. Education, creative learning aur romance ke mamle mein ek normal, consistent flow rahega. Mind ko clear rakhna aur daily study ya learning routine par focus banaye rakhna fayde mein rahega.`;
+      if (strength === "supportive") return `Beta, pancham swami ${primaryPlanet} aur dasha swami ${ad} ki kripa se creative learning aur studies mein breakthrough mil sakta hai. Bhole Baba ka dhyan karo.`;
+      if (strength === "sensitive") return `Beta, active dasha ${md}/${pd} aur sensitive transit ke chalte shares ya speculative market mein galti se bhi paisa mat lagana.`;
+      return `Beta, pancham swami ${primaryPlanet} stable phase mein hain. Methodical study aur consistent learning routine banaye rakhein.`;
     }
     if (id === "health") {
-      if (strength === "supportive") return `Beta, shastha swami ${primaryPlanet} aur dasha ki sthiti anukul hone se physical recovery bahut tez rahegi. Agar koi purani health issue thi, toh usme bada sudhaar dikhega. Tumhare shatru aur obstacles quietly khatam honge. Daily exercise aur wholesome routine banaye rakhna, body support karegi.`;
-      if (strength === "sensitive") return `Beta, abhi gochar mein sensitive planets shastha bhav ko prabhavit kar rahe hain, jisse digestion, sleep aur overall energy down feel ho sakti hai. active dasha ${md}/${pd} ke chalte excessive workload se body par pressure badhega. Apne sleeping pattern aur water intake ko bilkul lock kar lo.`;
-      return `Beta, shastha bhav ke swami ${primaryPlanet} abhi normal sthiti mein chal rahe hain. Health bilkul normal rahegi, bas routine mein consistency rakhna zaroori hai. Puraney schedule ko disciplined rakho aur body ke indicators ko quietly suno aur adjust karo.`;
+      if (strength === "supportive") return `Beta, shastha swami ${primaryPlanet} aur dasha ki sthiti anukul hone se physical recovery bahut tez rahegi. exercise aur wholesome diet support karegi.`;
+      if (strength === "sensitive") return `Beta, gochar mein sensitive planets shastha bhav ko dekh rahe hain. sleep aur routine ko lock kar lo, push mat karo.`;
+      return `Beta, shastha bhav ke swami ${primaryPlanet} normal sthiti mein hain. Health stable rahegi, bas daily schedules regular rakhein.`;
     }
     if (id === "spouse") {
-      if (strength === "supportive") return `Beta, saptam swami ${primaryPlanet} ki anukulata aur active dasha ${ad} ke shubh prabhav se partnerships aur marital life mein prem aur samanjasya badhega. Agar business mein koi naya partner jud raha hai, toh fayda hoga. Rishton mein badhaai aur clear, loving conversation ka daur rahega. Sukhi raho.`;
-      if (strength === "sensitive") return `Beta, saptam swami ${primaryPlanet} par sensitive transits aur active dasha ${md}/${pd} ke prabhav ke karan rishton mein temporary miscommunication ya tension dikh rahi hai. Partner ki baat ko poore dhairya se suno, impulsive hokar koi reaction mat dena. Doosron ke behkave mein aakar rishta kharab mat karna.`;
-      return `Beta, saptam bhav ke swami ${primaryPlanet} abhi stable hain. Personal aur professional partnerships bilkul normal chalenge. Ek-doosre ki expectations ko respect karo, communication open rakho aur quietly daily responsibilities ko milkat poora karo.`;
+      if (strength === "supportive") return `Beta, saptam swami ${primaryPlanet} ki anukulata se marital life aur partnerships mein prem badhega. Sukhi raho.`;
+      if (strength === "sensitive") return `Beta, saptam swami ${primaryPlanet} par sensitive transits ke prabhav ke karan partner ki baat ko poore dhairya se suno, reactive mat hona.`;
+      return `Beta, saptam bhav ke swami ${primaryPlanet} stable hain. open communication aur mutual respect se balance bana rahega.`;
     }
     if (id === "transformation") {
-      if (strength === "supportive") return `Beta, ashtam swami ${primaryPlanet} aur active dasha ${ad} ke shubh asar se research, occult science, aur deep psychology mein tumhara interest badhega. Unplanned resources ya inheritance se koi good news mil sakti hai. Apne inner thoughts ko purify karne aur deep learning ke liye bahut shubh samay hai.`;
-      if (strength === "sensitive") return `Beta, active dasha ${md}/${pd} aur ashtam bhav par sensitive transits ke chalte life mein temporary delays ya sudden changes feel ho sakte hain. Is pressure zone mein bilkul mat ghabrana, yeh tumhare badlav ka samay hai. Driving karte samay carefully raho aur extreme physical activity se parhez karo.`;
-      return `Beta, ashtam swami ${primaryPlanet} abhi stable phase mein hain. Deep research aur tax/insurance se jude pending kaam bina kisi rukavat ke quietly pure ho jayenge. Apne routine ko calm rakho aur positive self-reflection par focus karo.`;
+      if (strength === "supportive") return `Beta, ashtam swami ${primaryPlanet} aur active dasha research ya deep psychology mein interest badhayegi. inner healing ke liye shubh samay hai.`;
+      if (strength === "sensitive") return `Beta, ashtam bhav par pressure zone hai. Driving carefully karo aur sudden changes ke samay ghabrana mat.`;
+      return `Beta, ashtam swami ${primaryPlanet} stable hain. pending tax ya insurance se jude kaam bina kisi rukavat ke quietly pure honge.`;
     }
     if (id === "wisdom") {
-      if (strength === "supportive") return `Beta, navam swami ${primaryPlanet} ki shubh sthiti aur active dasha ${ad} tumhare bhagya ko mazboot kar rahi hai. Mentors, mentors aur father ka poora support milega. Spiritual journey ya higher education ke liye behad anukul samay hai. Tumhari kismat har sahi nirnay mein tumhara sath degi.`;
-      if (strength === "sensitive") return `Beta, navam swami ${primaryPlanet} par active transits ke karan bhagya thoda slow chal sakta hai, aur kaam banne mein aakhiri waqt par thode delays ho sakte hain. Tumhari dasha ${md}/${pd} ke chalte father ki health ka dhayan rakhna zaroori hai. Karm karte raho, kismat ka umeed lene se bachna behtar hoga.`;
-      return `Beta, navam swami ${primaryPlanet} abhi stable sthiti mein hain. Spiritual inclination aur higher wisdom normal bani rahegi. Father aur seniors ke sath respect banaye rakhein, aur daily spiritual practices ya books padhne mein thoda samay bitayein.`;
+      if (strength === "supportive") return `Beta, navam swami ${primaryPlanet} ki shubh sthiti bhagya ko mazboot karegi. Mentors aur father ka support milega.`;
+      if (strength === "sensitive") return `Beta, navam swami ${primaryPlanet} par transit ke karan karma par focus rakho, bhagya के bharose kaam mat talo.`;
+      return `Beta, navam swami ${primaryPlanet} stable hain. daily spiritual practice aur seniors ke sath respect banaye rakhein.`;
     }
     if (id === "career") {
-      if (strength === "supportive") return `Beta, tumhare dasham bhav ke swami ${primaryPlanet} hain aur abhi dasha mein ${ad} की शक्ति मिल रही है, जिससे तुम्हारी professional recognition और authority बढ़ने के संकेत हैं। नए roles और leadership opportunities मिलने की पूरी सम्भावना है। अपने projects को confidence और systematic planning के साथ execute करो।`;
-      if (strength === "sensitive") return `Beta, abhi dasham bhav par sensitive planets ka pressure hai, aur active dasha ${md}/${pd} ke chalte workplace par responsibilities aur pressure kafi jyada rahega. Apne seniors ke sath koi bhi ego conflict ya hasty debate se bilkul bachna. Apne kaam ko methodical aur calm hokar karte raho, sab thik hoga.`;
-      return `Beta, dasham swami ${primaryPlanet} abhi stable hain. Tumhari career path par ek quiet building aur consistency ka phase chal raha hai. Kisi bade sudden decision ki jagah daily execution quality ko improve karne par focus karo. Mehnat ka fal zaroor milega.`;
+      if (strength === "supportive") return `Beta, tumhare dasham bhav ke swami ${primaryPlanet} hain aur dasha mein ${ad} ki shakti mil rahi hai, jisse authority aur recognition badhne ke yog hain. Projects confidence se execute karo.`;
+      if (strength === "sensitive") return `Beta, active dasha ${md}/${pd} ke chalte workspace par responsibilities aur workload kafi rahega. Ego conflicts se bacho aur methodical kaam karo.`;
+      return `Beta, dasham swami ${primaryPlanet} stable hain. Quiet consistency hi career mein steady growth degi.`;
     }
     if (id === "gains") {
-      if (strength === "supportive") return `Beta, ekadash swami ${primaryPlanet} aur dasha ki anukulata tumhari income streams aur social networks ko expand karne wali hai. Elder siblings aur network circles se important benefits milenge. Tumhare long-term goals quietly materialize hone shuru honge. Laxmi ji ki kripa rahegi.`;
-      if (strength === "sensitive") return `Beta, active dasha ${md}/${pd} aur ekadash bhav par active transits ke chalte payments ya benefits aane mein temporary delays ho sakte hain. Social circles mein kisi ke sath financial deal ya loan dene se bachna. Apne cash allocations ko conservative rakhna, patience zaroori hai.`;
-      return `Beta, ekadash swami ${primaryPlanet} abhi stable chal rahe hain. Income aur network stability bani rahegi. Nayi relationships build karne ke sath purane connections ko solid banaye rakhein. Apne budget and allocations ko stable tareeqe se manage karein.`;
+      if (strength === "supportive") return `Beta, ekadash swami ${primaryPlanet} aur dasha ki anukulata income aur networks ko expand karegi. long-term goals quietly materialize honge.`;
+      if (strength === "sensitive") return `Beta, active dasha ${md}/${pd} ke chalte payments aane mein temporary delays ho sakte hain. Loan dene se bacho.`;
+      return `Beta, ekadash swami ${primaryPlanet} stable hain. cash allocations conservative rakho aur budget systematically manage karo.`;
     }
     // expenses
-    if (strength === "supportive") return `Beta, dvadash swami ${primaryPlanet} aur active dasha ${ad} ke shubh asar se meditation, spiritual retreats aur deep sleep ka shubh yog hai. Expenditures dharmik ya long-term systems build karne mein honge. Solitude ka anand lo, khud ko internally discover karne ke liye anukul samay hai.`;
-    if (strength === "sensitive") return `Beta, active dasha ${md}/${pd} aur sensitive transits ke karan late-night overthinking aur sleep disturbances ho sakti hain. Unplanned ya useless expenditures hone ki ashanka hai, jisse budget hil sakta hai. Sone se pehle mind ko shant rakho, screen se door raho aur budget control tight rakho.`;
-    return `Beta, dvadash swami ${primaryPlanet} abhi stable hain. Solitude, spiritual practices aur expenditures bilkul normal flow mein rahenge. Screen time limit karke clean bed-time routine follow karein. Expenditures ko quietly track karte rahein.`;
+    if (strength === "supportive") return `Beta, dvadash swami ${primaryPlanet} aur active dasha ${ad} ke asar se mediation aur deep sleep ka shubh yog hai. Solitude ka anand lo.`;
+    if (strength === "sensitive") return `Beta, gochar aur active dasha ke chalte overthinking ho sakti hai. Budget control tight rakho aur sone se pehle screen band karo.`;
+    return `Beta, dvadash swami ${primaryPlanet} stable hain. sleep schedule regular rakho aur expenditures quietly track karo.`;
   } else {
     if (id === "self") {
-      if (strength === "supportive") return `My dear, you are currently experiencing a highly supportive planetary phase under the active cycles of ${md} and ${ad}. The planetary alignment for your physical ascendant, governed by ${primaryPlanet}, is exceptionally strong. This will bring a beautiful boost to your physical vitality and personal confidence. It is a wonderful time to initiate healthy personal habits and execute goals with self-assurance. Trust in your capabilities.`;
-      if (strength === "sensitive") return `My dear, the governing ruler of your physical ascendant, ${primaryPlanet}, is currently receiving sensitive planetary transits. The current sub-cycles of ${ad} and ${pd} suggest that stress or heavy workloads can easily manifest as physical exhaustion. Do not push your boundaries too hard right now; structured rest and conscious recovery are absolutely essential. Proceed calmly and maintain a gentle daily routine.`;
-      return `My dear, the governing ruler of your physical ascendant, ${primaryPlanet}, is in a balanced position. Under the current cycles of ${md} and ${ad}, you are entering a highly stable, introspective period. This is an ideal window to calmly organize your daily life, build mental discipline, and lay low-noise foundations for your personal projects. Focus on quiet daily execution.`;
+      if (strength === "supportive") return `My dear, governed by your ascendant lord ${primaryPlanet}, your vitality and personal clarity receive a highly constructive boost. It is a wonderful phase for implementing positive habits and executing personal goals.`;
+      if (strength === "sensitive") return `My dear, with sensitive transits affecting your ascendant ruler ${primaryPlanet}, physical fatigue can manifest under heavy workloads. Prioritize recovery and proceed with a gentle daily pace.`;
+      return `My dear, with ascendant ruler ${primaryPlanet} in a stable position, you are in a quiet building phase. Keep your daily routine steady and grounded.`;
     }
     if (id === "wealth") {
-      if (strength === "supportive") return `My dear, the planetary ruler of your accumulated wealth, ${primaryPlanet}, is highly favored under the current active cycle of ${ad}. This indicates a highly constructive phase for financial enhancement and structural savings. Rusted resources or long-pending receivables may finally materialize. Focus on systematic long-term financial planning and secure your resources.`;
-      if (strength === "sensitive") return `My dear, sensitive transits are currently passing through your financial sector, which, combined with the active cycle of ${md}/${pd}, brings financial volatility. It is highly advised to completely avoid speculative markets or high-risk investments during this window. Keep a tight control over your expenditures and avoid all emotionally driven purchases.`;
-      return `My dear, the ruler of your accumulated wealth, ${primaryPlanet}, is in a stable position. Your financial inflow and outflow are set to maintain a balanced, predictable rhythm. Avoid making major adjustments or taking speculative risks. Keep your budget documented and your focus on steady capital preservation.`;
+      if (strength === "supportive") return `My dear, your wealth lord ${primaryPlanet} is well-placed, suggesting a highly constructive window for financial discipline and systematic asset building.`;
+      if (strength === "sensitive") return `My dear, sensitive transits passing through your financial sector indicate financial volatility. Completely avoid speculative risks and maintain a structured budget.`;
+      return `My dear, your accumulated wealth lord ${primaryPlanet} is stable. Keep inflow and outflow in a balanced, predictable routine.`;
     }
     if (id === "siblings") {
-      if (strength === "supportive") return `My dear, your active planetary cycles of ${ad} and the positive position of ${primaryPlanet} are igniting a strong wave of courage and personal self-efforts. Any methodical effort you invest in your goals right now will bear positive fruits. Writing, communication, and sibling dynamics will be highly constructive. Express your ideas with confidence.`;
-      if (strength === "sensitive") return `My dear, the ruler of your personal effort sector, ${primaryPlanet}, is under sensitive transit pressure. The active cycle of ${md}/${pd} suggests minor delays or sudden exhaustion in daily communication. Avoid defensive arguments or hasty responses with peers and close contacts. Maintain a soft, professional, and patient tone in all interactions.`;
-      return `My dear, the ruler of your self-effort sector, ${primaryPlanet}, is in a balanced position. Consistency and structured planning are your best tools right now. Continue executing your daily tasks calmly without expecting sudden external changes. Steady efforts will build a strong foundation.`;
+      if (strength === "supportive") return `My dear, the position of effort ruler ${primaryPlanet} ignites positive courage and methodical progress in daily communication and peer projects.`;
+      if (strength === "sensitive") return `My dear, your effort sector ruler ${primaryPlanet} is under sensitive transit pressure. Maintain a soft, patient, and professional tone to bypass minor peer friction.`;
+      return `My dear, with effort ruler ${primaryPlanet} stable, quiet consistency and structured execution will be your best assets today.`;
     }
     if (id === "home") {
-      if (strength === "supportive") return `My dear, the planetary ruler of your domestic life, ${primaryPlanet}, is in a highly supportive configuration, bringing calm and peace to your household. Your active cycle of ${ad} supports deep emotional stability and a nurturing home environment. Family relationships are set to improve significantly. Focus on domestic comfort and emotional grounding.`;
-      if (strength === "sensitive") return `My dear, your domestic sector is currently receiving pressure from sensitive transits, which may cause minor household friction or emotional restlessness. Under the active cycle of ${md}/${pd}, it is important to pay close attention to your mother's wellness and maintain a calm living space. Cultivate peace through patient listening.`;
-      return `My dear, the ruler of your domestic sector, ${primaryPlanet}, is in a stable state. Household matters and emotional peace will maintain a balanced, ordinary flow. Keep your home routine simple, avoid major real estate decisions, and focus on maintaining low-noise personal boundaries.`;
+      if (strength === "supportive") return `My dear, the ruler of your domestic life, ${primaryPlanet}, supports a comforting, peaceful atmosphere. Spend quiet moments restoring your emotional reserves.`;
+      if (strength === "sensitive") return `My dear, sensitive transits in your home house suggest minor domestic friction or maternal wellness checks. Keep your living space calm and low-noise.`;
+      return `My dear, home ruler ${primaryPlanet} is stable. Focus quietly on minor domestic maintenance or pending family adjustments.`;
     }
     if (id === "children") {
-      if (strength === "supportive") return `My dear, the active planetary cycle of ${ad} and the strong position of ${primaryPlanet} are highly expanding your intellect and creative faculties. If you are involved in structured learning, academic pursuits, or creative planning, you will experience highly positive breakthroughs. Romantic connections and creative expressions are deeply favored.`;
-      if (strength === "sensitive") return `My dear, the active planetary sub-cycles of ${md}/${pd} and sensitive transits are placing minor pressure on your creative and speculative sector. It is highly critical to avoid all speculative investments, share market risks, or hasty financial moves. Remain patient if you encounter temporary creative blockages; focus on structured study.`;
-      return `My dear, the ruler of your creative sector, ${primaryPlanet}, is in a balanced configuration. Your academic pursuits, romantic connections, and creative projects will move forward in a steady, predictable flow. Keep your daily learning structured and your intellectual goals highly realistic.`;
+      if (strength === "supportive") return `My dear, creative and intellectual projects move forward beautifully as pancham swami ${primaryPlanet} brings sharp focus and clear choices.`;
+      if (strength === "sensitive") return `My dear, active dasha ${md}/${pd} and sensitive transits require pausing speculative financial risks. Channel emotional drive into structured learning.`;
+      return `My dear, children house lord ${primaryPlanet} is in a stable configuration. Keep romantic expectations and academic routines steady.`;
     }
     if (id === "health") {
-      if (strength === "supportive") return `My dear, the planetary ruler of your health and recovery sector, ${primaryPlanet}, is exceptionally well-placed, ensuring a highly active phase for bodily healing and vitality. Ongoing health struggles will show significant improvement. Keep up with your positive lifestyle habits, as your body is in an excellent position to compound fitness gains.`;
-      if (strength === "sensitive") return `My dear, sensitive transits are currently impacting your health sector. The active cycle of ${md}/${pd} suggests that high daily stress or workplace workloads could compromise your digestive and sleep patterns. Establish a firm daily routine, limit screen time, and prioritize wholesome nourishment.`;
-      return `My dear, the ruler of your health sector, ${primaryPlanet}, is in a balanced state. Your physical wellness will maintain a stable path as long as you follow a structured routine. Avoid sudden changes in your diet or exercise habits, and listen calmly to your body's recovery signals.`;
+      if (strength === "supportive") return `My dear, with health house ruler ${primaryPlanet} supportive, physical recovery is efficient. wholsome routine choices will easily compound fitness gains.`;
+      if (strength === "sensitive") return `My dear, sensitive transits affecting health ruler ${primaryPlanet} demand structured sleep and digestion hygiene. Listen to early bodily signals.`;
+      return `My dear, recovery ruler ${primaryPlanet} is stable. Maintain standard wellness habits and avoid unnecessary physical push today.`;
     }
     if (id === "spouse") {
-      if (strength === "supportive") return `My dear, the ruler of your relationship sector, ${primaryPlanet}, is well-placed, and the active cycle of ${ad} is bringing deep harmony and mutual understanding to your marital life and partnerships. If you are entering professional contracts or business alliances, they will prove highly beneficial. Engage in open, loving communication.`;
-      if (strength === "sensitive") return `My dear, the ruler of your partnership sector, ${primaryPlanet}, is receiving sensitive transits. Under the active sub-cycles of ${md}/${pd}, temporary miscommunications or subtle friction could arise with partners. Listen patiently, avoid making reactive assumptions, and communicate with gentle clarity.`;
-      return `My dear, the planetary ruler of your relationships, ${primaryPlanet}, is in a stable position. Your personal and professional partnerships will proceed in a steady, ordinary flow. Respect each other's boundaries, maintain open channels of dialogue, and handle shared duties with maturity.`;
+      if (strength === "supportive") return `My dear, your relationship ruler ${primaryPlanet} is well-placed, encouraging loving, clear, and highly supportive connections in your partnerships.`;
+      if (strength === "sensitive") return `My dear, relationship ruler ${primaryPlanet} receives sensitive transits. Avoid reactive debates; listen patiently and clear assumptions early.`;
+      return `My dear, partner lord ${primaryPlanet} is in a stable state. Mutual expectations will proceed in a steady, mature, and balanced flow.`;
     }
     if (id === "transformation") {
-      if (strength === "supportive") return `My dear, the planetary ruler of your transformative sector, ${primaryPlanet}, is highly favored under the cycle of ${ad}, facilitating deep analytical research and spiritual contemplation. You may receive constructive updates regarding joint assets or estate inheritances. This is a highly shubh window for deep psychological healing.`;
-      if (strength === "sensitive") return `My dear, the active cycle of ${md}/${pd} and sensitive transits in your transformative sector might trigger temporary delays or unexpected adjustments. Do not feel anxious under these shifts, as they are designed to build deep internal resilience. Exercise caution during travel and avoid high-risk physical activities.`;
-      return `My dear, the ruler of your transformative sector, ${primaryPlanet}, is in a stable state. Deep analytical tasks, tax filings, or insurance-related documentation will proceed quietly without major bottlenecks. Keep your daily routine calm and focus on structured, positive contemplation.`;
+      if (strength === "supportive") return `My dear, the ruler of your transformative house, ${primaryPlanet}, supports deep research, tax filings, and Occult studies. Insights emerge during quietude.`;
+      if (strength === "sensitive") return `My dear, sensitive transits indicate unexpected timeline shifts. Maintain a detached, calm mind and take extra care during journeys.`;
+      return `My dear, transformation lord ${primaryPlanet} is stable. Resolve insurance, tax, or joint estate paperwork quietly without rush.`;
     }
     if (id === "wisdom") {
-      if (strength === "supportive") return `My dear, the ruler of your wisdom sector, ${primaryPlanet}, is highly active, bringing a strong phase of positive fortune and spiritual alignment. Mentors, teachers, and senior figures will extend valuable guidance. It is an exceptionally supportive period for pursuing higher education or deeper philosophical studies.`;
-      if (strength === "sensitive") return `My dear, the ruler of your wisdom sector, ${primaryPlanet}, is under sensitive transit pressure, which might trigger minor delays in higher plans or general luck. Under the cycle of ${md}/${pd}, ensure you maintain a highly respectful and patient tone with mentors and father figures. Focus on methodical, practical execution.`;
-      return `My dear, the ruler of your wisdom sector, ${primaryPlanet}, is in a balanced position. Your philosophical interests and spiritual practices will maintain a steady, comforting flow. Spend time in structured reading, avoid rushing into major structural shifts, and appreciate quiet guidance.`;
+      if (strength === "supportive") return `My dear, wisdom ruler ${primaryPlanet} is highly active, bringing supportive guidance from father or mentors. A great time for philosophical learning.`;
+      if (strength === "sensitive") return `My dear, wisdom lord ${primaryPlanet} is under sensitive pressure. Respect senior guidance and avoid forcing long-term travel plans today.`;
+      return `My dear, wisdom ruler ${primaryPlanet} is stable. Keep up with spiritual practice and structured philosophical reading.`;
     }
     if (id === "career") {
-      if (strength === "supportive") return `My dear, the ruler of your professional sector, ${primaryPlanet}, is exceptionally strong, and the active cycle of ${ad} is opening doors for career recognition and professional authority. Opportunities for leadership or advanced roles will manifest naturally. Execute your responsibilities with serene confidence and systematic planning.`;
-      if (strength === "sensitive") return `My dear, your career sector is under sensitive transit pressure. The active sub-cycles of ${md}/${pd} suggest elevated professional workload and accountability. Avoid hasty debates or ego conflicts with workplace seniors. Focus entirely on methodical execution, and maintain structured communication.`;
-      return `My dear, the ruler of your career sector, ${primaryPlanet}, is in a balanced configuration. Your professional path is undergoing a quiet building phase. Avoid taking sudden, reactive career leaps; instead, focus on improving the quality of your daily execution. Consistent efforts will yield durable rewards.`;
+      if (strength === "supportive") return `My dear, governed by career lord ${primaryPlanet}, you are in a highly constructive positioning phase. leadership opportunities can materialize through systematic planning.`;
+      if (strength === "sensitive") return `My dear, career house ruler ${primaryPlanet} receives sensitive transits, indicating elevated workplace workloads. Avoid workplace debates; focus on systematic task completion.`;
+      return `My dear, career lord ${primaryPlanet} is stable. Continue building professional quality calmly; consistent progress will bear results.`;
     }
     if (id === "gains") {
-      if (strength === "supportive") return `My dear, the ruler of your financial gains sector, ${primaryPlanet}, is highly favored, and the active cycle of ${ad} is facilitating positive growth in your revenues and professional network. Valuable opportunities will emerge from senior associates. Your long-term goals will quietly begin to materialize.`;
-      if (strength === "sensitive") return `My dear, the active cycle of ${md}/${pd} and sensitive transits in your sector of gains might trigger temporary delays in revenues or professional payouts. Refrain from lending money or committing capital inside unverified network circles. Keep your cash allocations highly conservative.`;
-      return `My dear, the ruler of your gains sector, ${primaryPlanet}, is in a stable state. Your income flows and network relationships will maintain a balanced, predictable rhythm. Focus on strengthening your existing connections, and manage your budget with systematic tracking.`;
+      if (strength === "supportive") return `My dear, gains lord ${primaryPlanet} expands network opportunities and secondary revenues. Your long-term goals quietly begin to align.`;
+      if (strength === "sensitive") return `My dear, active dasha ${md}/${pd} in your gains house can trigger minor payout delays. Keep cash allocation conservative and verify network associations.`;
+      return `My dear, gains ruler ${primaryPlanet} is in a stable configuration. Track revenue details quietly and keep social boundaries clear.`;
     }
     // expenses
-    if (strength === "supportive") return `My dear, the ruler of your expenditures, ${primaryPlanet}, is well-placed under the cycle of ${ad}, supporting deep mental recovery, meditation, and quiet isolation. Any financial expenses incurred will be highly planned and directed toward long-term growth. Embrace quiet solitude and build inner spiritual power.`;
-    if (strength === "sensitive") return `My dear, under the active cycle of ${md}/${pd} and sensitive transits, late-night overthinking or screen habits could disrupt your sleep quality. There is also a temporary risk of budget leakage or unplanned expenditures. Maintain a disciplined budget, and cultivate a quiet, screen-free routine before bedtime.`;
-    return `My dear, the ruler of your expenditures, ${primaryPlanet}, is in a stable configuration. Your personal expenditures, solitude, and sleep quality will maintain a regular flow. Ensure you limit evening screen time, track all cash outflows systematically, and practice daily self-reflection.`;
+    if (strength === "supportive") return `My dear, expenditures ruler ${primaryPlanet} supports planned long-term allocations and restful solitude. Sleep quality is deep.`;
+    if (strength === "sensitive") return `My dear, sensitive transits in your solitude house suggest sleep interruptions. Keep a disciplined screen-free bedtime routine.`;
+    return `My dear, expenditure ruler ${primaryPlanet} is stable. Track minor outflow details quietly and cultivate moments of self-reflection.`;
   }
+}
+
+function getDomainStatusLabels(
+  id: string,
+  strength: "supportive" | "sensitive" | "neutral",
+  primaryPlanet: string,
+  transitsInHouse: string[],
+  dasha: DashaContext
+): { label: string; labelHindi: string } {
+  if (transitsInHouse.includes("Jupiter")) {
+    return { label: "Breakthrough", labelHindi: "अनुकूल" };
+  }
+  if (transitsInHouse.includes("Saturn")) {
+    return { label: "Disciplined", labelHindi: "संतुलित" };
+  }
+  if (transitsInHouse.includes("Rahu") || transitsInHouse.includes("Ketu")) {
+    return { label: "Transformational", labelHindi: "परिवर्तनशील" };
+  }
+  if (dasha.md.planet === primaryPlanet || dasha.ad.planet === primaryPlanet) {
+    return { label: "Active", labelHindi: "सक्रिय" };
+  }
+  if (strength === "sensitive") {
+    return { label: "Under Pressure", labelHindi: "दबावयुक्त" };
+  }
+  if (id === "spouse" || id === "siblings") {
+    return { label: "Collaborative", labelHindi: "सहयोगी" };
+  }
+  return { label: "Stable", labelHindi: "स्थिर" };
+}
+
+function buildWhyThisMatters(
+  id: string,
+  strength: "supportive" | "sensitive" | "neutral",
+  primaryPlanet: string,
+  transitsInHouse: string[],
+  dasha: DashaContext
+) {
+  let transitReasoning = "";
+  let transitReasoningHindi = "";
+  if (transitsInHouse.length > 0) {
+    transitReasoning = `The transit of ${transitsInHouse.join(" and ")} through this house directly activates its core themes, prompting active adjustments in this sphere.`;
+    transitReasoningHindi = `इस भाव में ${transitsInHouse.join(" और ")} का गोचर इसके मुख्य विषयों को सीधे जागृत कर रहा है, जिससे इस क्षेत्र में बदलाव आ रहे हैं।`;
+  } else {
+    transitReasoning = "No major slow transits are directly affecting this house, allowing its affairs to settle into a quiet, stable phase.";
+    transitReasoningHindi = "कोई भी बड़ा गोचर सीधे इस भाव को प्रभावित नहीं कर रहा है, जिससे इसके कार्य एक शांत और स्थिर चरण में बने हुए हैं।";
+  }
+
+  let dashaInfluence = "";
+  let dashaInfluenceHindi = "";
+  if (dasha.md.planet === primaryPlanet) {
+    dashaInfluence = `Governed by the Mahadasha lord (${primaryPlanet}), this house represents a long-term central focus of your entire current life cycle.`;
+    dashaInfluenceHindi = `महादशा स्वामी (${primaryPlanet}) द्वारा शासित होने के कारण, यह भाव आपके वर्तमान जीवन चक्र का एक दीर्घकालिक केंद्रीय फोकस है।`;
+  } else if (dasha.ad.planet === primaryPlanet) {
+    dashaInfluence = `Governed by the active Antardasha lord (${primaryPlanet}), this house undergoes dynamic activation, bringing immediate priorities to the forefront.`;
+    dashaInfluenceHindi = `सक्रिय अंतर्दशा स्वामी (${primaryPlanet}) द्वारा शासित, यह भाव गतिशील रूप से सक्रिय है, जिससे तात्कालिक प्राथमिकताएं सामने आ रही हैं।`;
+  } else {
+    dashaInfluence = `The active Dasha lords are not directly ruling this sector, allowing its energy to function as a quiet, supportive background layer.`;
+    dashaInfluenceHindi = `सक्रिय दशा स्वामी सीधे इस क्षेत्र पर शासन नहीं कर रहे हैं, जिससे इसकी ऊर्जा एक शांत, सहायक पृष्ठभूमि के रूप में कार्य कर रही है।`;
+  }
+
+  const practicalMap = {
+    self: {
+      supportive: "Establishing a clean, regular morning routine helps capture the day's peak productive energy.",
+      sensitive: "A structured limit on daily physical commitments prevents sudden fatigue.",
+      neutral: "Documenting simple daily wins keeps self-motivation naturally high.",
+      supportiveH: "एक स्वच्छ, नियमित सुबह की दिनचर्या स्थापित करने से दिन की उच्च उत्पादक ऊर्जा को हासिल करने में मदद मिलती है।",
+      sensitiveH: "दैनिक शारीरिक प्रतिबद्धताओं पर एक व्यवस्थित सीमा लगाने से अचानक होने वाली थकान से बचाव होता है।",
+      neutralH: "दैनिक छोटी जीतों को दर्ज करने से आत्म-प्रेरणा स्वाभाविक रूप से बनी रहती है।"
+    },
+    wealth: {
+      supportive: "A systematic review of long-term allocations ensures assets remain productive.",
+      sensitive: "Verifying transaction statements and pausing major expenditures keeps cash protected.",
+      neutral: "Tracking daily outflows calmly builds a clear picture of financial health.",
+      supportiveH: "दीर्घकालिक आवंटन की एक व्यवस्थित समीक्षा यह सुनिश्चित करती है कि संपत्ति उत्पादक बनी रहे।",
+      sensitiveH: "लेन-देन के विवरणों को सत्यापित करना और बड़े खर्चों को टालना नकदी को सुरक्षित रखता है।",
+      neutralH: "दैनिक खर्चों को शांत रहकर ट्रैक करने से वित्तीय स्थिति की स्पष्ट तस्वीर बनती है।"
+    },
+    siblings: {
+      supportive: "Drafting clear outlines before meetings keeps daily self-efforts efficient.",
+      sensitive: "Drafting emails calmly and delaying sensitive responses avoids communication friction.",
+      neutral: "Quietly completing your scheduled writing tasks ensures clean progress.",
+      supportiveH: "बैठकों से पहले स्पष्ट रूपरेखा तैयार करने से दैनिक प्रयास कुशल बने रहते हैं।",
+      sensitiveH: "शांत रहकर ईमेल लिखना और संवेदनशील प्रतिक्रियाओं को टालना संचार घर्षण से बचाता है।",
+      neutralH: "निर्धारित लेखन कार्यों को शांति से पूरा करना स्पष्ट प्रगति सुनिश्चित करता है।"
+    },
+    home: {
+      supportive: "Decluttering your immediate workspace at home immediately refreshes domestic harmony.",
+      sensitive: "Setting a low-noise, comfortable space for evening family rest supports everyone.",
+      neutral: "Steady domestic maintenance tasks keep your surroundings structured.",
+      supportiveH: "घर पर अपने कार्यक्षेत्र को व्यवस्थित करने से पारिवारिक सामंजस्य तुरंत ताज़ा हो जाता है।",
+      sensitiveH: "शाम के पारिवारिक आराम के लिए एक शांत और आरामदायक स्थान निर्धारित करना सभी का समर्थन करता है।",
+      neutralH: "निरंतर घरेलू रखरखाव के कार्य आपके परिवेश को व्यवस्थित बनाए रखते हैं।"
+    },
+    children: {
+      supportive: "Dedicate block-time to structured learning or a creative skill to harness peak focus.",
+      sensitive: "Pausing all speculative investment actions keeps your primary funds safe.",
+      neutral: "A regular, realistic learning schedule builds stable knowledge compounding.",
+      supportiveH: "शिखर ध्यान केंद्रित करने के लिए व्यवस्थित अध्ययन या रचनात्मक कौशल के लिए समय समर्पित करें।",
+      sensitiveH: "सभी सट्टा निवेशों पर रोक लगाना आपके प्राथमिक धन को सुरक्षित रखता है।",
+      neutralH: "एक नियमित और वास्तविक अध्ययन कार्यक्रम ज्ञान के स्थिर संचय का निर्माण करता है।"
+    },
+    health: {
+      supportive: "Simple, clean dietary choices and light exercise support a high energy level.",
+      sensitive: "Locking in exact sleep and meal times protects your physical system.",
+      neutral: "Steady, moderate daily movement keeps the body feeling light and ready.",
+      supportiveH: "सरल, स्वच्छ आहार विकल्प और हल्का व्यायाम ऊर्जा के स्तर को ऊंचा बनाए रखते हैं।",
+      sensitiveH: "सोने और खाने के सटीक समय को निश्चित करना आपके शारीरिक स्वास्थ्य की रक्षा करता है।",
+      neutralH: "निरंतर और मध्यम दैनिक गतिविधि शरीर को हल्का और तैयार महसूस कराती है।"
+    },
+    spouse: {
+      supportive: "Setting aside dedicated quality time for collaborative dialogue deepens trust.",
+      sensitive: "Using direct, gentle phrases and active listening resolves minor issues smoothly.",
+      neutral: "Regular, calm check-ins on shared tasks keep alliances operating smoothly.",
+      supportiveH: "सहयोगात्मक संवाद के लिए समर्पित गुणवत्तापूर्ण समय निकालना आपसी विश्वास को गहरा करता है।",
+      sensitiveH: "सीधे, कोमल शब्दों का उपयोग और सक्रिय रूप से सुनना छोटी समस्याओं को आसानी से हल करता है।",
+      neutralH: "साझा कार्यों पर नियमित, शांत चर्चा गठजोड़ को सुचारू रूप से संचालित रखती है।"
+    },
+    transformation: {
+      supportive: "Quiet research or structural reviews of paperwork move forward with ease.",
+      sensitive: "Delaying major high-risk activities and keeping driving speed moderate is wise.",
+      neutral: "Resolving pending insurance or filing duties quietly prevents administrative lag.",
+      supportiveH: "शांत अनुसंधान या कागजी कार्रवाई की संरचनात्मक समीक्षा आसानी से आगे बढ़ती है।",
+      sensitiveH: "उच्च जोखिम वाली गतिविधियों को टालना और वाहन की गति मध्यम रखना बुद्धिमानी है।",
+      neutralH: "लंबित बीमा या कर कागजात को शांति से हल करना प्रशासनिक देरी को रोकता है।"
+    },
+    wisdom: {
+      supportive: "Reflecting on philosophical books or senior guidance offers clear direction.",
+      sensitive: "Approaching conversations with mentors with patient, respectful listening is helpful.",
+      neutral: "A regular morning reading session adds stable value to your long-term vision.",
+      supportiveH: "दार्शनिक पुस्तकों या वरिष्ठों के मार्गदर्शन पर विचार करना स्पष्ट दिशा प्रदान करता है।",
+      sensitiveH: "गुरुओं के साथ बातचीत में धैर्य और सम्मानपूर्वक सुनना मददगार होता है।",
+      neutralH: "सुबह की नियमित अध्ययन दिनचर्या आपके दीर्घकालिक दृष्टिकोण में मूल्य जोड़ती है।"
+    },
+    career: {
+      supportive: "Documenting accomplishments clearly and taking on structured duties gains respect.",
+      sensitive: "Focusing entirely on executing existing projects methodically secures your position.",
+      neutral: "Keeping professional records organized and updated ensures reliable progress.",
+      supportiveH: "उपलब्धियों को स्पष्ट रूप से दर्ज करना और संरचित कर्तव्यों को संभालना सम्मान दिलाता है।",
+      sensitiveH: "मौजूदा परियोजनाओं को व्यवस्थित रूप से निष्पादित करने पर ध्यान केंद्रित करना आपकी स्थिति सुरक्षित करता है।",
+      neutralH: "पेशेवर अभिलेखों को व्यवस्थित और अद्यतित रखना विश्वसनीय प्रगति सुनिश्चित करता है।"
+    },
+    gains: {
+      supportive: "Reaching out to verified network contacts opens very constructive avenues.",
+      sensitive: "Keeping cash allocations conservative and postponing peer lending is highly recommended.",
+      neutral: "Calmly tracking secondary income streams keeps financial goals clear.",
+      supportiveH: "सत्यापित संपर्कों से संपर्क साधना अत्यंत रचनात्मक मार्ग प्रशस्त करता है।",
+      sensitiveH: "नकदी के आवंटन को रूढ़िवादी रखना और दूसरों को उधार देना टालना अत्यधिक अनुशंसित है।",
+      neutralH: "द्वितीयक आय धाराओं को शांत रहकर ट्रैक करना वित्तीय लक्ष्यों को स्पष्ट रखता है।"
+    },
+    expenses: {
+      supportive: "Structuring a quiet meditation or reflection retreat restores your energy.",
+      sensitive: "Setting strict limits on evening screen usage immediately supports sleep quality.",
+      neutral: "Tracking minor cash outflows methodically ensures zero budget surprises.",
+      supportiveH: "एक शांत ध्यान या आत्मनिरीक्षण की दिनचर्या बनाना आपकी ऊर्जा को पुनर्जीवित करता है।",
+      sensitiveH: "शाम को स्क्रीन के उपयोग पर सख्त सीमाएं लगाना तुरंत नींद की गुणवत्ता का समर्थन करता है।",
+      neutralH: "छोटे खर्चों को व्यवस्थित रूप से ट्रैक करना बजट में किसी भी अनपेक्षित आश्चर्य से बचाता है।"
+    }
+  };
+
+  const emotionalMap = {
+    self: {
+      supportive: "Emotional balance feels natural when personal time is protected.",
+      sensitive: "Slowing down your breathing during hectic moments preserves vital peace.",
+      neutral: "Quiet self-acceptance acts as a strong anchor against outer noise.",
+      supportiveH: "व्यक्तिगत समय सुरक्षित रहने पर भावनात्मक संतुलन स्वाभाविक महसूस होता है।",
+      sensitiveH: "व्यस्त क्षणों में सांसों की गति को धीमा करना महत्वपूर्ण शांति बनाए रखता है।",
+      neutralH: "शांत आत्म-स्वीकृति बाहरी कोलाहल के खिलाफ एक मजबूत आधार का काम करती है।"
+    },
+    wealth: {
+      supportive: "A quiet confidence in your resources allows you to focus on growth.",
+      sensitive: "Reminding yourself that capital preservation is a form of active progress reduces worry.",
+      neutral: "Gratitude for small financial stabilities creates a harmonious money mindset.",
+      supportiveH: "अपने संसाधनों में शांत आत्मविश्वास आपको विकास पर ध्यान केंद्रित करने की अनुमति देता है।",
+      sensitiveH: "स्वयं को यह याद दिलाना कि पूंजी की सुरक्षा भी सक्रिय प्रगति है, चिंता को कम करता है।",
+      neutralH: "छोटी वित्तीय स्थिरता के लिए आभार व्यक्त करना एक सामंजस्यपूर्ण सोच का निर्माण करता है।"
+    },
+    siblings: {
+      supportive: "A serene confidence in your capabilities makes execution feel natural.",
+      sensitive: "Steering clear of defensive verbal loops preserves mental clarity.",
+      neutral: "A practical focus on execution rather than external approval grounds your mind.",
+      supportiveH: "अपनी क्षमताओं में शांत आत्मविश्वास कार्य निष्पादन को स्वाभाविक बनाता है।",
+      sensitiveH: "बचावात्मक तर्कों से दूर रहना मानसिक स्पष्टता की रक्षा करता है।",
+      neutralH: "बाहरी अनुमोदन के बजाय काम पर व्यावहारिक ध्यान देना आपके दिमाग को केंद्रित रखता है।"
+    },
+    home: {
+      supportive: "Resting quietly in a comfortable corner restores your emotional reserve.",
+      sensitive: "Reminding yourself that domestic peace is a process helps handle daily chores calmly.",
+      neutral: "A peaceful living environment naturally reflects in your daily decisions.",
+      supportiveH: "एक आरामदायक कोने में शांति से विश्राम करना आपकी भावनात्मक ऊर्जा को बहाल करता है।",
+      sensitiveH: "स्वयं को यह याद दिलाना कि घरेलू शांति एक प्रक्रिया है, दैनिक कार्यों को शांत रखता है।",
+      neutralH: "एक शांतिपूर्ण जीवन वातावरण स्वाभाविक रूप से आपके दैनिक निर्णयों में झलकता है।"
+    },
+    children: {
+      supportive: "Creative confidence rises when you express ideas without self-doubt.",
+      sensitive: "Allowing creative blockages to pass without frustration restores inspiration.",
+      neutral: "Keeping romantic or personal expectations realistic creates lasting peace.",
+      supportiveH: "आत्म-संदेह के बिना विचारों को व्यक्त करने से रचनात्मक आत्मविश्वास बढ़ता है।",
+      sensitiveH: "रचनात्मक अवरोधों को बिना निराशा के गुजरने देने से प्रेरणा पुनः लौट आती है।",
+      neutralH: "व्यक्तिगत अपेक्षाओं को वास्तविक रखना स्थायी शांति का निर्माण करता है।"
+    },
+    health: {
+      supportive: "A clean body rhythm naturally yields a highly optimized state of mind.",
+      sensitive: "Responding gently to early bodily fatigue signs avoids energy exhaustion.",
+      neutral: "Approaching daily wellness choices without pressure supports steady health.",
+      supportiveH: "शरीर की स्वच्छ लय स्वाभाविक रूप से मन की एक अत्यधिक अनुकूलित अवस्था प्रदान करती है।",
+      sensitiveH: "शारीरिक थकान के शुरुआती संकेतों पर कोमलता से प्रतिक्रिया देने से ऊर्जा क्षय से बचाव होता है।",
+      neutralH: "दबाव के बिना दैनिक स्वास्थ्य विकल्पों को अपनाना निरंतर स्वास्थ्य का समर्थन करता है।"
+    },
+    spouse: {
+      supportive: "A serene trust in shared relationships makes daily interactions harmonious.",
+      sensitive: "Letting go of small relational expectations keeps the atmosphere light.",
+      neutral: "Approaching partnerships with maturity keeps emotional boundaries clear.",
+      supportiveH: "साझा संबंधों में शांत विश्वास दैनिक अंतःक्रियाओं को सामंजस्यपूर्ण बनाता है।",
+      sensitiveH: "छोटी-मोटी आपसी अपेक्षाओं को जाने देना वातावरण को हल्का बनाए रखता है।",
+      neutralH: "परिपक्वता के साथ साझेदारी को अपनाना भावनात्मक सीमाओं को स्पष्ट रखता है।"
+    },
+    transformation: {
+      supportive: "Deep psychological insight emerges when outer noise is reduced.",
+      sensitive: "Accepting that timing adjustments are a natural part of growth reduces stress.",
+      neutral: "Quiet contemplation helps process thoughts in a balanced, grounded way.",
+      supportiveH: "बाहरी शोर कम होने पर गहरी मनोवैज्ञानिक समझ उभरती है।",
+      sensitiveH: "यह स्वीकार करना कि समय का समायोजन विकास का एक स्वाभाविक हिस्सा है, तनाव कम करता है।",
+      neutralH: "शांत चिंतन विचारों को संतुलित और जमीनी रूप सेसंशोधित करने में मदद करता है।"
+    },
+    wisdom: {
+      supportive: "A deep, serene trust in timing brings quiet reassurance.",
+      sensitive: "Accepting slow developments with patience keeps you focused.",
+      neutral: "Wisdom flows naturally when you align daily choices with mature principles.",
+      supportiveH: "समय चक्र पर गहरा, शांत विश्वास मन को आश्वस्त करता है।",
+      sensitiveH: "धीमी प्रगति को धैर्य के साथ स्वीकार करना आपको केंद्रित रखता है।",
+      neutralH: "जब आप दैनिक विकल्पों को परिपक्व सिद्धांतों के साथ संरेखित करते हैं, तो ज्ञान स्वतः प्रवाहित होता है।"
+    },
+    career: {
+      supportive: "A calm confidence in your execution quality brings career peace.",
+      sensitive: "Steering clear of office politics or reactive arguments keeps you grounded.",
+      neutral: "Recognizing that steady execution precedes external recognition maintains focus.",
+      supportiveH: "कार्य की गुणवत्ता में शांत आत्मविश्वास करियर में शांति लाता है।",
+      sensitiveH: "कार्यालय की राजनीति या तीखे तर्कों से दूर रहना आपको जमीनी रूप से स्थिर रखता है।",
+      neutralH: "यह समझना कि निरंतर कार्य बाहरी पहचान से पहले आता है, ध्यान बनाए रखता है।"
+    },
+    gains: {
+      supportive: "A harmonious connection with close friends brings warm reassurance.",
+      sensitive: "Staying detached from social circle gossip preserves your mental energy.",
+      neutral: "A quiet network presence allows you to focus on immediate personal goals.",
+      supportiveH: "करीबी दोस्तों के साथ सामंजस्यपूर्ण संबंध हार्दिक आश्वासन लाते हैं।",
+      sensitiveH: "सामाजिक मंडल की गपशप से दूर रहना आपकी मानसिक ऊर्जा की रक्षा करता है।",
+      neutralH: "एक शांत नेटवर्क उपस्थिति आपको तात्कालिक व्यक्तिगत लक्ष्यों पर ध्यान केंद्रित करने देती है।"
+    },
+    expenses: {
+      supportive: "Deep rest in solitude restores your vital reserves and psychological balance.",
+      sensitive: "Reminding yourself that quiet isolation is recovery, not loneliness, supports calm.",
+      neutral: "A peaceful wind-down routine prepares the mind for deep recovery.",
+      supportiveH: "एकांत में गहरा विश्राम आपकी जीवन शक्ति और मनोवैज्ञानिक संतुलन को बहाल करता है।",
+      sensitiveH: "स्वयं को यह याद दिलाना कि शांत एकांत सुधार है, अकेलापन नहीं, मन को शांत रखता है।",
+      neutralH: "एक शांतिपूर्ण शाम की दिनचर्या मन को गहरी रिकवरी के लिए तैयार करती है।"
+    }
+  };
+
+  const practical = (practicalMap as any)[id] || practicalMap.self;
+  const emotional = (emotionalMap as any)[id] || emotionalMap.self;
+
+  return {
+    transitReasoning,
+    transitReasoningHindi,
+    dashaInfluence,
+    dashaInfluenceHindi,
+    practicalInterpretation: strength === "supportive" ? practical.supportive : strength === "sensitive" ? practical.sensitive : practical.neutral,
+    practicalInterpretationHindi: strength === "supportive" ? practical.supportiveH : strength === "sensitive" ? practical.sensitiveH : practical.neutralH,
+    emotionalGuidance: strength === "supportive" ? emotional.supportive : strength === "sensitive" ? emotional.sensitive : emotional.neutral,
+    emotionalGuidanceHindi: strength === "supportive" ? emotional.supportiveH : strength === "sensitive" ? emotional.sensitiveH : emotional.neutralH,
+  };
 }
 
 function generateLifeDomainPredictions(
@@ -1809,7 +2097,23 @@ function generateLifeDomainPredictions(
     { id: "expenses", icon: "🌙", title: "Solitude & Expenditures", titleHindi: "द्वादश भाव (व्यय भाव)", houseNum: 12 },
   ];
 
-  return domainsData.map((d) => {
+  const planetWeights = {
+    Saturn: 1.0,
+    Rahu: 0.95,
+    Jupiter: 0.9,
+    Ketu: 0.85,
+    Mars: 0.6,
+    Venus: 0.5,
+    Sun: 0.4,
+    Moon: 0.2,
+    Mercury: 0.4,
+  };
+
+  const mdPlanet = dasha.md.planet;
+  const adPlanet = dasha.ad.planet;
+  const pdPlanet = dasha.pd.planet;
+
+  const houseDetails = domainsData.map((d) => {
     const houseSignNum = ((lagnaSign - 1 + (d.houseNum - 1)) % 12) + 1;
     const signName = getSignName(houseSignNum);
     const primaryPlanet = getSignRuler(signName);
@@ -1822,12 +2126,46 @@ function generateLifeDomainPredictions(
       }
     });
 
+    let transitScore = 0;
+    transitsInHouse.forEach((p) => {
+      transitScore += ((planetWeights as any)[p] || 0.3);
+    });
+
+    let dashaScore = 0;
+    if (primaryPlanet === mdPlanet) dashaScore += 1.0;
+    if (primaryPlanet === adPlanet) dashaScore += 0.8;
+    if (primaryPlanet === pdPlanet) dashaScore += 0.6;
+
+    const totalActivation = transitScore + dashaScore;
+
+    return {
+      d,
+      primaryPlanet,
+      signName,
+      transitsInHouse,
+      totalActivation,
+    };
+  });
+
+  const sortedDetails = [...houseDetails].sort((a, b) => b.totalActivation - a.totalActivation);
+  const mostActiveIds = new Set();
+  let activeCount = 0;
+  for (const item of sortedDetails) {
+    if (item.totalActivation >= 0.8 && activeCount < 2) {
+      mostActiveIds.add(item.d.id);
+      activeCount++;
+    }
+  }
+
+  return houseDetails.map(({ d, primaryPlanet, signName, transitsInHouse }) => {
+    const isMostActive = mostActiveIds.has(d.id);
+
     let strength: "supportive" | "sensitive" | "neutral" = "neutral";
     if (transitsInHouse.includes("Jupiter")) {
       strength = "supportive";
-    } else if (transitsInHouse.includes("Saturn") || transitsInHouse.includes("Rahu")) {
+    } else if (transitsInHouse.includes("Saturn") || transitsInHouse.includes("Rahu") || transitsInHouse.includes("Ketu")) {
       strength = "sensitive";
-    } else if (dasha.md.planet === primaryPlanet || dasha.ad.planet === primaryPlanet) {
+    } else if (mdPlanet === primaryPlanet || adPlanet === primaryPlanet) {
       strength = "supportive";
     }
 
@@ -1843,6 +2181,55 @@ function generateLifeDomainPredictions(
       : null;
 
     const narrative = buildDomainNarrativeBox(d.id, d.title, d.titleHindi, strength, primaryPlanet, transitsInHouse, dasha, mode);
+    const statusLabels = getDomainStatusLabels(d.id, strength, primaryPlanet, transitsInHouse, dasha);
+
+    let emphasisTag: "Most Active" | "Currently Influenced" | null = null;
+    let emphasisTagHindi: "सर्वाधिक सक्रिय" | "वर्तमान में प्रभावित" | null = null;
+
+    if (isMostActive) {
+      emphasisTag = "Most Active";
+      emphasisTagHindi = "सर्वाधिक सक्रिय";
+    } else if (transitsInHouse.length > 0 || primaryPlanet === mdPlanet || primaryPlanet === adPlanet || primaryPlanet === pdPlanet) {
+      emphasisTag = "Currently Influenced";
+      emphasisTagHindi = "वर्तमान में प्रभावित";
+    }
+
+    let confidenceTone = "Stable Anchor";
+    let confidenceToneHindi = "स्थिर आधार";
+
+    if (emphasisTag === "Most Active") {
+      if (strength === "sensitive") {
+        confidenceTone = "Temporarily Sensitive";
+        confidenceToneHindi = "अस्थायी संवेदनशील";
+      } else {
+        confidenceTone = "Strongly Activated";
+        confidenceToneHindi = "सक्रिय प्रभाव";
+      }
+    } else if (emphasisTag === "Currently Influenced") {
+      if (strength === "sensitive") {
+        confidenceTone = "Mildly Influenced";
+        confidenceToneHindi = "मंद प्रभाव";
+      } else {
+        confidenceTone = "Gradually Building";
+        confidenceToneHindi = "क्रमशः निर्मित";
+      }
+    }
+
+    let timingWindow = "Stable, long-term alignment.";
+    let timingWindowHindi = "स्थिर और दीर्घकालिक प्रभाव।";
+
+    if (transitsInHouse.includes("Moon")) {
+      timingWindow = "Most noticeable over the next 24–48 hours.";
+      timingWindowHindi = "अगले 24-48 घंटों के दौरान सबसे प्रभावी।";
+    } else if (transitsInHouse.includes("Saturn") || transitsInHouse.includes("Rahu") || transitsInHouse.includes("Ketu")) {
+      timingWindow = "Core theme over the next 30–45 days.";
+      timingWindowHindi = "अगले 30-45 दिनों के दौरान मुख्य प्रभाव।";
+    } else if (transitsInHouse.some((p) => ["Sun", "Mars", "Mercury", "Venus"].includes(p))) {
+      timingWindow = "Active influence for the next 7–14 days.";
+      timingWindowHindi = "अगले 7-14 दिनों तक सक्रिय प्रभाव।";
+    }
+
+    const whyThisMatters = buildWhyThisMatters(d.id, strength, primaryPlanet, transitsInHouse, dasha);
 
     return {
       id: d.id,
@@ -1855,6 +2242,15 @@ function generateLifeDomainPredictions(
       caution,
       primaryPlanet,
       strength,
+      statusLabel: statusLabels.label,
+      statusLabelHindi: statusLabels.labelHindi,
+      emphasisTag,
+      emphasisTagHindi,
+      confidenceTone,
+      confidenceToneHindi,
+      timingWindow,
+      timingWindowHindi,
+      whyThisMatters,
     };
   });
 }

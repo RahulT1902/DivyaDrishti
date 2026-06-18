@@ -96,10 +96,10 @@ export default function PunditChatView() {
                <p className="text-[10px] text-amber-700/50 uppercase tracking-widest">Diagnostic Consult</p>
             </div>
          </div>
-         <div className="flex items-center gap-2 px-4 py-1 bg-emerald-100 border border-emerald-200 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest">Active Engine</span>
-         </div>
+          <div className="flex items-center gap-2 px-4 py-1 bg-emerald-100 border border-emerald-200 rounded-full">
+             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80" />
+             <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest">Active Engine</span>
+          </div>
       </div>
 
       {/* Message Area */}
@@ -124,7 +124,7 @@ export default function PunditChatView() {
                   {m.role === "pundit" ? (
                     <PunditResponse content={m.content} />
                   ) : (
-                    <p className="text-sm font-light leading-relaxed">{m.content}</p>
+                    <p className="text-sm font-normal leading-relaxed">{m.content}</p>
                   )}
                 </div>
 
@@ -214,7 +214,7 @@ function PunditResponse({ content }: { content: string }) {
         );
 
         return (
-          <p key={i} className="text-sm text-amber-800/60 font-light leading-relaxed whitespace-pre-wrap">
+          <p key={i} className="text-sm text-amber-800 font-normal leading-relaxed whitespace-pre-wrap">
             {part}
           </p>
         );

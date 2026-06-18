@@ -19,10 +19,11 @@ export function extractIntent(question: string): Intent {
     timing: (/(when|time|soon|later|date|duration)/i.test(q) ? 1 : 0) ? 1 : 0,
     week: (/(week)/i.test(q) ? 1 : 0),
     month: (/(month)/i.test(q) ? 1 : 0),
-    today: (/(today|now)/i.test(q) ? 1 : 0)
+    today: (/(today|now)/i.test(q) ? 1 : 0),
+    year: (/(year|annual|long term|long-term)/i.test(q) ? 1 : 0)
   };
 
-  const timeframe = hits.week ? "week" : hits.month ? "month" : hits.today ? "today" : "general";
+  const timeframe = hits.week ? "week" : hits.month ? "month" : hits.year ? "year" : hits.today ? "today" : "general";
 
   // Determine Max Domain
   let maxDomain: IntentDomain = "general";

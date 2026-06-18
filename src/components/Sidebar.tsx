@@ -156,7 +156,7 @@ export default function Sidebar({ onModuleSelect, activeModule }: SidebarProps) 
         </div>
         <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] font-black text-black/10 italic">
           <span>v1.2.5 Hardened</span>
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
         </div>
       </div>
     </aside>
