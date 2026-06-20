@@ -6,18 +6,7 @@ import { calculateCurrentTransits } from "@/lib/astrology/transit";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
 import { extractIntent } from "@/lib/intelligence/intentExtractor";
 import { buildSuccessResponse, buildErrorResponse } from "@/lib/utils/apiResponse";
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-
-// Configure Provider dynamically
-const useDeepSeek = !!process.env.DEEPSEEK_API_KEY && process.env.DEEPSEEK_API_KEY !== "sk-...";
-
-const aiProvider = createOpenAI({
-  baseURL: useDeepSeek ? 'https://api.deepseek.com/v1' : undefined,
-  apiKey: useDeepSeek ? process.env.DEEPSEEK_API_KEY : process.env.OPENAI_API_KEY,
-});
-
-const aiModel = useDeepSeek ? "deepseek-chat" : "gpt-4o";
+import { callAI, hasAnyProvider } from "@/lib/ai/provider";
 
 export async function POST(req: NextRequest) {
   try {
@@ -103,7 +92,7 @@ export async function POST(req: NextRequest) {
     let answerText = "";
     let followUpText = "What specific aspect of this phase would you like to explore further?";
 
-    if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+    if (!hasAnyProvider()) {
       answerText = `[Deterministic Insight]: ${narrative.heroInsight}\n\n${narrative.realityTranslation}\n\n👉 Focus on structured consistency during this ${intent.domain} phase.`;
     } else {
       const prompt = `You are Chat Pundit, an elite Vedic Astrologer-Strategic Advisor.
@@ -207,15 +196,11 @@ DeepInsight JSON Context:
 ${JSON.stringify(narrative, null, 2)}`;
 
       try {
-        const { text } = await generateText({
-          model: aiProvider.chat(aiModel),
-          prompt,
-          temperature: 0.7,
-        });
+        const { text } = await callAI({ prompt, temperature: 0.7 });
         answerText = text;
       } catch (aiError: any) {
-        console.error("AI Generation failed (Quota/Auth):", aiError);
-        answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "DeepSeek/OpenAI gateway timeout."}\n\n[Deterministic Fallback]: ${narrative.heroInsight}\n\n${narrative.realityTranslation}`;
+        console.error("AI Generation failed (all providers):", aiError);
+        answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "AI gateway timeout."}\n\n[Deterministic Fallback]: ${narrative.heroInsight}\n\n${narrative.realityTranslation}`;
       }
       
       if (intent.domain === "career") followUpText = "Are you considering a specific role change, or just reviewing options?";

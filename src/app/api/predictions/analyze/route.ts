@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
@@ -613,7 +615,7 @@ function generateDetailedDomainReport(
 
   return {
     analysis: mode === "PANDIT"
-      ? `${recipientName}, à¤…à¤­à¥€ à¤œà¥‹ à¤¸à¤®à¤¯ à¤šà¤² à¤°à¤¹à¤¾ à¤¹à¥ˆ, à¤µà¤¹ ${cfg.label.toLowerCase()} à¤®à¥‡à¤‚ à¤§à¥€à¤°à¥‡-à¤§à¥€à¤°à¥‡ à¤®à¤œà¤¬à¥‚à¤¤ à¤ªà¥à¤°à¤—à¤¤à¤¿ à¤¬à¤¨à¤¾à¤¨à¥‡ à¤µà¤¾à¤²à¤¾ à¤šà¤°à¤£ à¤¹à¥ˆà¥¤`
+      ? `${recipientName}, अभी जो समय चल रहा है, वह ${cfg.label.toLowerCase()} में धीरे-धीरे मजबूत प्रगति बनाने वाला चरण है।`
       : `${recipientName}, right now you are in a structured phase of progress in ${cfg.label.toLowerCase()}.`,
     narrative,
 

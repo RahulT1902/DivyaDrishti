@@ -1,14 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-
-const useDeepSeek = !!process.env.DEEPSEEK_API_KEY && process.env.DEEPSEEK_API_KEY !== "sk-...";
-
-const aiProvider = createOpenAI({
-  baseURL: useDeepSeek ? "https://api.deepseek.com/v1" : undefined,
-  apiKey: useDeepSeek ? process.env.DEEPSEEK_API_KEY : process.env.OPENAI_API_KEY,
-});
-const aiModel = useDeepSeek ? "deepseek-chat" : "gpt-4o";
+import { callAI, hasAnyProvider } from "@/lib/ai/provider";
 
 /**
  * POST /api/narrative/generate
@@ -34,20 +25,19 @@ export async function POST(req: NextRequest) {
     // Guard: Max token limit to prevent expensive runaway calls
     const safeMaxTokens = Math.min(maxTokens || 200, 400);
 
-    if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+    if (!hasAnyProvider()) {
       return NextResponse.json(
         { success: false, narrative: null, error: "No LLM provider configured." },
         { status: 503 }
       );
     }
 
-    const { text } = await generateText({
-      model: aiProvider.chat(aiModel),
+    const { text } = await callAI({
       system,
       prompt: user,
       maxTokens: safeMaxTokens,
       temperature: temperature ?? 0.4,
-    } as any);
+    });
 
     return NextResponse.json({ success: true, narrative: text });
   } catch (error: any) {

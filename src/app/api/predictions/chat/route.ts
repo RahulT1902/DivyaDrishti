@@ -10,18 +10,7 @@ import {
 } from "@/lib/astrology/dasha";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
 import { Intent, IntentDomain } from "@/lib/intelligence/types";
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-
-// Configure Provider dynamically
-const useDeepSeek = !!process.env.DEEPSEEK_API_KEY && process.env.DEEPSEEK_API_KEY !== "sk-...";
-
-const aiProvider = createOpenAI({
-  baseURL: useDeepSeek ? 'https://api.deepseek.com/v1' : undefined,
-  apiKey: useDeepSeek ? process.env.DEEPSEEK_API_KEY : process.env.OPENAI_API_KEY,
-});
-
-const aiModel = useDeepSeek ? "deepseek-chat" : "gpt-4o";
+import { callAI, hasAnyProvider } from "@/lib/ai/provider";
 
 export async function POST(req: NextRequest) {
   try {
@@ -92,7 +81,7 @@ export async function POST(req: NextRequest) {
     let chatResponseText = "";
     let answerText = "";
     
-    if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+    if (!hasAnyProvider()) {
       answerText = `[Deterministic Insight]: ${insight.heroInsight}\n\n${insight.realityTranslation}\n\n👉 This phase favors stability over aggressive moves.`;
     } else {
       const prompt = `You are DivyaDrishti, an elite Vedic Astrology Intelligence Engine acting as a wise, strategic advisor.
@@ -199,15 +188,11 @@ DeepInsight JSON Context:
 ${JSON.stringify(insight, null, 2)}`;
 
       try {
-        const { text } = await generateText({
-          model: aiProvider.chat(aiModel),
-          prompt,
-          temperature: 0.8,
-        });
+        const { text } = await callAI({ prompt, temperature: 0.8 });
         answerText = text;
       } catch (aiError: any) {
-        console.error("AI Generation failed (Quota/Auth):", aiError);
-        answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "DeepSeek/OpenAI gateway timeout."}\n\n[Deterministic Fallback]: ${insight.heroInsight}\n\n${insight.realityTranslation}`;
+        console.error("AI Generation failed (all providers):", aiError);
+        answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "AI gateway timeout."}\n\n[Deterministic Fallback]: ${insight.heroInsight}\n\n${insight.realityTranslation}`;
       }
     }
     
