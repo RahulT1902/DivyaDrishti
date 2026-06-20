@@ -395,13 +395,10 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
   const focusList = parsedGuidance.dos.length > 0 ? parsedGuidance.dos.slice(0, 3) : (prediction?.dos?.slice(0, 3) || []);
   const avoidList = parsedGuidance.donts.length > 0 ? parsedGuidance.donts.slice(0, 3) : (prediction?.donts?.slice(0, 3) || []);
 
-  const headlineText = detailedData?.narrative 
-    ? detailedData.narrative.split("\n\n")[0]
-    : (prediction?.headline || "Planetary parameters resolved.");
-  
-  const summaryText = detailedData?.narrative 
-    ? (detailedData.narrative.split("\n\n")[1] || detailedData.analysis)
-    : (prediction?.summary || "Compounding stability through consistent action.");
+  const narrativeParagraphs = detailedData?.narrative?.split("\n\n") ?? [];
+  const headlineText = narrativeParagraphs[0] || prediction?.headline || "Planetary parameters resolved.";
+  const summaryText = narrativeParagraphs[1] || detailedData?.analysis || prediction?.summary || "Compounding stability through consistent action.";
+  const bodyText = narrativeParagraphs.slice(2).join("\n\n");
 
   const timing = domain ? getTimingFlow(domain) : { morning: "", afternoon: "", evening: "" };
   const remedyObj = domain ? getRemedy(domain) : { icon: "🪔", title: "Remedy", content: "" };
@@ -548,6 +545,17 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
               <p className="text-sm text-amber-800/80 leading-relaxed font-light pl-4 border-l-2 border-amber-300">
                 {summaryText}
               </p>
+
+              {/* Full Narrative Body — remaining paragraphs */}
+              {bodyText && (
+                <div className="mt-4 space-y-3">
+                  {bodyText.split("\n\n").map((para, i) => (
+                    <p key={i} className="text-sm text-amber-800/75 leading-relaxed whitespace-pre-line">
+                      {para}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Visual Timing Flow / Energy Curve */}
