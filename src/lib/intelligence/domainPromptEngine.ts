@@ -383,7 +383,8 @@ export function buildDomainPrompt(
   question: string,
   _bodyRiskProfile?: BodyRiskProfile | null
 ): string {
-  const style: NarrativeStyle = intent.narrativeStyle ?? "A";
+  const STYLES: NarrativeStyle[] = ["A", "B", "C", "D", "E"];
+  const style: NarrativeStyle = STYLES[new Date().getUTCHours() % 5];
 
   switch (intent.domain) {
     case "finance":
