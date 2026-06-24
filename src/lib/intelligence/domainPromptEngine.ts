@@ -386,7 +386,7 @@ export function buildDomainPrompt(
   const STYLES: NarrativeStyle[] = ["A", "B", "C", "D", "E"];
   const style: NarrativeStyle = STYLES[new Date().getUTCHours() % 5];
 
-  switch (intent.domain) {
+  switch (intent.domain as string) {
     case "finance":
       return financePrompt(question, narrativeJSON, style);
     case "career":
