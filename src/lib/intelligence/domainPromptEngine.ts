@@ -1,4 +1,6 @@
-import { Intent, NarrativeStyle } from "./types";
+import { Intent } from "./types";
+
+type NarrativeStyle = "A" | "B" | "C" | "D" | "E";
 import type { BodyRiskProfile } from "./health/bodyRiskProfile";
 
 /**
