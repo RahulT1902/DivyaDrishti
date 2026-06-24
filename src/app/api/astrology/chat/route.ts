@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
       return buildErrorResponse("DATA_MALFORMATION", "User profile not found.", 404);
     }
 
-    // 2. Intent Extraction — pass user email as seed for deterministic narrative style rotation
-    const extractedIntent = extractIntent(question, userEmail || undefined);
+    // 2. Intent Extraction
+    const extractedIntent = extractIntent(question);
     
     // Determine domain — fall back to history scan when current question is ambiguous
     let targetDomain = forcedDomain || extractedIntent.domain;
@@ -141,12 +141,13 @@ export async function POST(req: NextRequest) {
           weekday: "long", month: "long", day: "numeric", year: "numeric",
         });
         const ZODIAC = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+        const NAKSHATRAS = ["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","Purva Phalguni","Uttara Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Moola","Purva Ashadha","Uttara Ashadha","Shravana","Dhanishtha","Shatabhisha","Purva Bhadrapada","Uttara Bhadrapada","Revati"];
         const moonTransit = currentTransits.positions.find(p => p.name === "Moon");
         const moonSignName = moonTransit ? ZODIAC[Math.floor(moonTransit.longitude / 30)] : null;
         const moonDeg = moonTransit ? (moonTransit.longitude % 30).toFixed(1) : null;
-        const transitMoonNakshatra = moonTransit ? getNakshatra(moonTransit.longitude) : null;
+        const moonNakshatraName = moonTransit ? NAKSHATRAS[Math.min(26, Math.floor((moonTransit.longitude % 360) / (360 / 27)))] : null;
         const moonNote = moonSignName
-          ? `\nToday's Moon: ${moonSignName} at ${moonDeg}°${transitMoonNakshatra ? `, Nakshatra ${transitMoonNakshatra.name}` : ""} — Moon shifts Nakshatra roughly every 24 hours, changing which body systems are most sensitive today.`
+          ? `\nToday's Moon: ${moonSignName} at ${moonDeg}°${moonNakshatraName ? `, Nakshatra ${moonNakshatraName}` : ""} — Moon shifts Nakshatra roughly every 24 hours, changing which body systems are most sensitive today.`
           : "";
 
         prompt = `You are a Vedic wellness advisor generating a personal health forecast.
