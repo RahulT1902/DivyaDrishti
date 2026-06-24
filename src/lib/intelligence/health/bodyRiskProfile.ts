@@ -66,6 +66,38 @@ const BASELINE = 25;
 const DUSTHANA_HOUSES = new Set([6, 8, 12]);
 const KENDRA_HOUSES   = new Set([1, 4, 7, 10]);
 
+// Moon's Nakshatra (~1 per day) governs different body systems — this is the
+// primary source of daily variation in health sensitivity.
+const NAKSHATRA_BODY_MAP: (keyof BodyRiskProfile)[][] = [
+  ["head", "nervousSystem"],              // 0  Ashwini
+  ["throat", "neck"],                     // 1  Bharani
+  ["eyes", "head", "sinuses"],            // 2  Krittika
+  ["throat", "neck", "shoulders"],        // 3  Rohini
+  ["shoulders", "neck", "upperBack"],     // 4  Mrigashira
+  ["head", "lungs", "sinuses"],           // 5  Ardra
+  ["stomach", "liver", "digestiveSystem"],// 6  Punarvasu
+  ["stomach", "digestiveSystem", "heart"],// 7  Pushya
+  ["stomach", "digestiveSystem"],         // 8  Ashlesha
+  ["heart", "spine", "lowerBack"],        // 9  Magha
+  ["heart", "spine", "upperBack"],        // 10 Purva Phalguni
+  ["heart", "digestiveSystem", "spine"],  // 11 Uttara Phalguni
+  ["digestiveSystem", "stomach", "nervousSystem"], // 12 Hasta
+  ["stomach", "digestiveSystem"],         // 13 Chitra
+  ["lungs", "stress", "throat"],          // 14 Swati
+  ["kidneys", "stress", "lowerBack"],     // 15 Vishakha
+  ["stomach", "heart", "kidneys"],        // 16 Anuradha
+  ["spine", "nervousSystem", "stress"],   // 17 Jyeshtha
+  ["lowerBack", "spine", "feet"],         // 18 Moola
+  ["joints", "lowerBack", "muscles"],     // 19 Purva Ashadha
+  ["knees", "spine", "joints"],           // 20 Uttara Ashadha
+  ["legs", "kidneys", "lowerBack"],       // 21 Shravana
+  ["legs", "nervousSystem", "stress"],    // 22 Dhanishtha
+  ["legs", "sleep", "stress"],            // 23 Shatabhisha
+  ["feet", "sleep", "recovery"],          // 24 Purva Bhadrapada
+  ["feet", "recovery", "sleep"],          // 25 Uttara Bhadrapada
+  ["feet", "recovery", "digestiveSystem"],// 26 Revati
+];
+
 interface NatalPlanet {
   name: string;
   sign: number;
@@ -194,6 +226,18 @@ export function computeBodyRiskProfile(
     const tScore  = computeTransitActivation(transit.name, transit.speed, transit.longitude);
     const tWeight = ((transit.weight || 1) / totalTransitWeight) * 0.15;
     applyPlanetContribution(profile, transit.name, tScore, tWeight);
+  }
+
+  // ── 5. Moon Nakshatra Daily Effect (20 pts per governed system) ────────────
+  // Moon transits one Nakshatra (~13.33°) every ~24-27 hours, so this shifts
+  // which body systems rank highest day-to-day.
+  const moonPos = transitPositions.find(p => p.name === "Moon");
+  if (moonPos) {
+    const nakshatraIndex = Math.min(26, Math.floor((moonPos.longitude % 360) / (360 / 27)));
+    const nakshatraSystems = NAKSHATRA_BODY_MAP[nakshatraIndex] ?? [];
+    for (const sys of nakshatraSystems) {
+      profile[sys] += 20;
+    }
   }
 
   // Clamp & round all values to 0–100

@@ -144,8 +144,9 @@ export async function POST(req: NextRequest) {
         const moonTransit = currentTransits.positions.find(p => p.name === "Moon");
         const moonSignName = moonTransit ? ZODIAC[Math.floor(moonTransit.longitude / 30)] : null;
         const moonDeg = moonTransit ? (moonTransit.longitude % 30).toFixed(1) : null;
+        const transitMoonNakshatra = moonTransit ? getNakshatra(moonTransit.longitude) : null;
         const moonNote = moonSignName
-          ? `\nToday's Moon: ${moonSignName} at ${moonDeg}° (Moon transits a sign every ~2.5 days — emotional body and digestive sensitivity shift with it).`
+          ? `\nToday's Moon: ${moonSignName} at ${moonDeg}°${transitMoonNakshatra ? `, Nakshatra ${transitMoonNakshatra.name}` : ""} — Moon shifts Nakshatra roughly every 24 hours, changing which body systems are most sensitive today.`
           : "";
 
         prompt = `You are a Vedic wellness advisor generating a personal health forecast.
