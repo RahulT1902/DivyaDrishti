@@ -44,10 +44,14 @@ export default function PunditChatView() {
 
     try {
       const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
+      const history = messages.slice(1).slice(-6).map(m => ({
+        role: m.role === "pundit" ? "assistant" : "user",
+        content: m.content.slice(0, 600),
+      }));
       const res = await fetch("/api/astrology/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text, email: userEmail }),
+        body: JSON.stringify({ question: text, email: userEmail, conversationHistory: history }),
       });
       const result = await res.json();
 
