@@ -84,7 +84,6 @@ export async function POST(req: NextRequest) {
       type: extractedIntent.type || "general",
       confidence: extractedIntent.confidence,
       timeframe: targetTimeframe,
-      narrativeStyle: extractedIntent.narrativeStyle,
     };
 
     // 3. Astrology Engine (Standard Setup)
