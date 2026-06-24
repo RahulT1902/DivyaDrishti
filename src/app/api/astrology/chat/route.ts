@@ -135,8 +135,10 @@ export async function POST(req: NextRequest) {
 
       if (targetDomain === "health" && bodyRiskProfile) {
         // ── Health Domain: Wellness Advisor Mode (all scores stay internal) ──
+        // History is NOT injected here — the bodyRiskProfile prompt is self-contained
+        // and cross-domain history (e.g. a prior career question) would confuse the AI.
         prompt = `You are a Vedic wellness advisor generating a personal health forecast.
-${historyBlock}
+
 The user asked: "${question}"
 
 You have been given a bodyRiskProfile — an internal model that scores 24 body systems (0–100) for today's health sensitivity based on the user's natal chart, active Dasha, and current transits. Higher score = more astrological stress on that system today.
