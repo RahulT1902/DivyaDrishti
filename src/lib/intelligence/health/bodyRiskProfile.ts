@@ -76,6 +76,7 @@ interface NatalPlanet {
 
 interface TransitPlanet {
   name: string;
+  longitude: number;
   speed: number;
   weight: number;
 }
@@ -107,10 +108,23 @@ function computeNatalActivation(
 
 /**
  * How much stress a transiting planet contributes right now.
+ * Uses longitude to detect sandhi (sign-boundary) positions which amplify
+ * effects, giving the score daily variation as planets move.
  */
-function computeTransitActivation(planetName: string, speed: number): number {
+function computeTransitActivation(planetName: string, speed: number, longitude: number): number {
   let score = PLANET_BASE_STRESS[planetName] ?? 45;
   if (speed < 0) score += 12; // retrograde amplifies the effect
+
+  // Sandhi: first/last 3° of a sign are transitional — heightened sensitivity
+  const degreeInSign = longitude % 30;
+  if (degreeInSign < 3 || degreeInSign > 27) score += 10;
+
+  // Moon moves ~13°/day — use its degree within the sign for fine daily variation
+  if (planetName === "Moon") {
+    // Degrees 0-10 (rising), 10-20 (peak), 20-30 (waning) have different energies
+    if (degreeInSign >= 10 && degreeInSign <= 20) score += 5; // peak sensitization
+  }
+
   return Math.min(90, Math.max(10, Math.round(score)));
 }
 
@@ -177,7 +191,7 @@ export function computeBodyRiskProfile(
   // Each transit planet's share is proportional to its astrological impact weight
   const totalTransitWeight = transitPositions.reduce((s, t) => s + (t.weight || 1), 0);
   for (const transit of transitPositions) {
-    const tScore  = computeTransitActivation(transit.name, transit.speed);
+    const tScore  = computeTransitActivation(transit.name, transit.speed, transit.longitude);
     const tWeight = ((transit.weight || 1) / totalTransitWeight) * 0.15;
     applyPlanetContribution(profile, transit.name, tScore, tWeight);
   }

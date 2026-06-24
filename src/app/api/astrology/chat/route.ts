@@ -137,7 +137,20 @@ export async function POST(req: NextRequest) {
         // ── Health Domain: Wellness Advisor Mode (all scores stay internal) ──
         // History is NOT injected here — the bodyRiskProfile prompt is self-contained
         // and cross-domain history (e.g. a prior career question) would confuse the AI.
+        const todayLabel = new Date().toLocaleDateString("en-US", {
+          weekday: "long", month: "long", day: "numeric", year: "numeric",
+        });
+        const ZODIAC = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+        const moonTransit = currentTransits.positions.find(p => p.name === "Moon");
+        const moonSignName = moonTransit ? ZODIAC[Math.floor(moonTransit.longitude / 30)] : null;
+        const moonDeg = moonTransit ? (moonTransit.longitude % 30).toFixed(1) : null;
+        const moonNote = moonSignName
+          ? `\nToday's Moon: ${moonSignName} at ${moonDeg}° (Moon transits a sign every ~2.5 days — emotional body and digestive sensitivity shift with it).`
+          : "";
+
         prompt = `You are a Vedic wellness advisor generating a personal health forecast.
+
+Today's date: ${todayLabel}${moonNote}
 
 The user asked: "${question}"
 
