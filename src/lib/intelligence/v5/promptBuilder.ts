@@ -29,6 +29,7 @@ export interface V5PromptParams {
   todayLabel: string;
   moonTransitNote: string;
   topRisks?: Array<{ system: string; score: number }>;
+  bodyRiskProfile?: Record<string, number>; // full profile for health status computation
 }
 
 // ─── Block builders ────────────────────────────────────────────────────────────
@@ -99,18 +100,99 @@ TRANSIT ENVIRONMENT: ${brief.transitHighlight}`;
   return block;
 }
 
-function buildHealthBlock(topRisks: Array<{ system: string; score: number }> | undefined): string {
+// Human-readable labels for body system keys
+const BODY_LABELS: Record<string, string> = {
+  head: "head and temples", eyes: "eyes and visual focus", sinuses: "sinuses and nasal passages",
+  throat: "throat and voice", neck: "neck and cervical region", shoulders: "shoulders and upper traps",
+  upperBack: "upper back", lowerBack: "lower back and lumbar region", spine: "spine and posture",
+  heart: "heart and circulation", lungs: "lungs and breathing", stomach: "stomach and appetite",
+  digestiveSystem: "digestion and gut", liver: "liver and metabolism", kidneys: "kidneys and fluid balance",
+  nervousSystem: "nervous system and mental clarity", muscles: "muscles and physical stamina",
+  joints: "joints and flexibility", knees: "knees", legs: "legs and lower limbs", feet: "feet",
+  sleep: "sleep quality and depth", recovery: "physical recovery and restoration",
+  stress: "stress response and mental load",
+};
+
+function computeHealthStatus(profile: Record<string, number> | undefined): {
+  overall: string; energy: string; recovery: string; stress: string; sleep: string;
+} {
+  if (!profile) return { overall: "stable", energy: "moderate", recovery: "moderate", stress: "moderate", sleep: "neutral" };
+
+  const all = Object.values(profile);
+  const avg = all.reduce((a, b) => a + b, 0) / (all.length || 1);
+  const stressScore  = profile["stress"]   ?? avg;
+  const recovScore   = profile["recovery"] ?? avg;
+  const sleepScore   = profile["sleep"]    ?? avg;
+  const energyScore  = 100 - (stressScore * 0.4 + recovScore * 0.4 + avg * 0.2);
+
+  return {
+    overall:  avg < 40 ? "excellent" : avg < 52 ? "good" : avg < 65 ? "average — some areas need attention" : "somewhat stressed — care is warranted",
+    energy:   energyScore > 62 ? "good" : energyScore > 44 ? "moderate" : "lower than usual — rest helps",
+    recovery: recovScore < 45 ? "good" : recovScore < 62 ? "moderate — recovery is slower than ideal" : "poor — the body needs more rest than it is getting",
+    stress:   stressScore < 40 ? "low" : stressScore < 58 ? "moderate" : "elevated — the nervous system is under load",
+    sleep:    sleepScore  < 45 ? "restful" : sleepScore  < 62 ? "neutral — quality could improve" : "disrupted — prioritize rest tonight",
+  };
+}
+
+function buildHealthBlock(
+  topRisks: Array<{ system: string; score: number }> | undefined,
+  profile: Record<string, number> | undefined,
+  moonTransitNote: string
+): string {
   if (!topRisks || topRisks.length === 0) return "";
 
-  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HEALTH SENSITIVITY — INTERNAL DATA (never reveal scores or numbers to user)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Today's most sensitive body systems (astrologically indicated):
-1. ${topRisks[0]?.system ?? "stress"} — highest sensitivity today
-2. ${topRisks[1]?.system ?? "recovery"} — secondary sensitivity
-3. ${topRisks[2]?.system ?? "digestiveSystem"} — notable today
+  const status = computeHealthStatus(profile);
+  const primary   = BODY_LABELS[topRisks[0]?.system ?? "stress"]       ?? topRisks[0]?.system ?? "stress";
+  const secondary = BODY_LABELS[topRisks[1]?.system ?? "recovery"]     ?? topRisks[1]?.system ?? "recovery";
+  const tertiary  = BODY_LABELS[topRisks[2]?.system ?? "digestiveSystem"] ?? topRisks[2]?.system ?? "digestion";
 
-Translate these into lived experience the user can recognize — never mention "score", "profile", or numbers.
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HEALTH INTELLIGENCE BRIEF (INTERNAL — use this structure, never quote it verbatim)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRE-CONSULTATION HEALTH ASSESSMENT:
+  Overall Health Today : ${status.overall}
+  Energy Level         : ${status.energy}
+  Recovery             : ${status.recovery}
+  Stress Load          : ${status.stress}
+  Sleep Quality        : ${status.sleep}
+  Primary Area Today   : ${primary}
+  Secondary Note       : ${secondary}
+  Also Worth Watching  : ${tertiary}
+  Today's Moon Theme   : ${moonTransitNote.replace(/\n/g, " ")}
+
+MANDATORY RESPONSE STRUCTURE FOR HEALTH QUESTIONS:
+Answer in exactly this order — no section may be skipped:
+
+  1. OVERALL HEALTH TODAY (2–3 sentences)
+     Answer the question directly. State whether today is a good, average, or careful day physically.
+     Do NOT open with philosophy. Do NOT open with life themes. Answer first.
+     Example: "Today appears to be a broadly stable day for health. I don't see indications of
+     illness, but I do notice the body may be spending more energy than it is recovering."
+
+  2. ENERGY & RECOVERY (specific)
+     Describe the likely energy pattern through the day. When is it strongest? When does it dip?
+     Is recovery keeping pace with activity, or lagging?
+
+  3. AREA WORTH WATCHING (from: ${primary})
+     Name this body system in plain language. What might the user notice?
+     What simple action helps? Never use words like "risk", "profile", "score".
+
+  4. WHY I SAY THIS (1 short paragraph — astrological translation)
+     Translate the transit and dasha context into plain experience.
+     Do not name planets until you have first stated what they create in the body.
+
+  5. PRACTICAL GUIDANCE (3–4 specific, actionable suggestions)
+     Concrete. Not philosophical. Things the user can actually do today.
+
+  6. PUNDIT'S CLOSING THOUGHT (mandatory)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMAIN PRIORITY RULE — HEALTH (non-negotiable):
+Every sentence must be about the body, energy, sleep, digestion, or physical wellbeing.
+Ambition, recognition, career growth, life purpose — these are NOT health topics.
+The current life theme (career, finances, relationships) must NOT leak into a health response.
+If work stress is physically affecting the body, ONE sentence of context is permitted. No more.
+A health consultation that drifts into career advice has failed its purpose.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 }
 
@@ -121,7 +203,7 @@ export function buildV5Prompt(params: V5PromptParams): string {
     question, richIntent, brief,
     lagnaSignName, natalMoonSignName, dashaStack,
     transitSummary, conversationHistory,
-    todayLabel, moonTransitNote, topRisks,
+    todayLabel, moonTransitNote, topRisks, bodyRiskProfile,
   } = params;
 
   // Select opening mode now that we have the brief (hasBothForces is known)
@@ -140,7 +222,7 @@ export function buildV5Prompt(params: V5PromptParams): string {
 
   const briefBlock = buildBriefBlock(brief);
   const historyBlock = buildHistoryBlock(conversationHistory);
-  const healthBlock = buildHealthBlock(topRisks);
+  const healthBlock = buildHealthBlock(topRisks, bodyRiskProfile, moonTransitNote);
 
   // Conditional engine blocks
   const probabilityBlock = richIntent.confidenceRequired

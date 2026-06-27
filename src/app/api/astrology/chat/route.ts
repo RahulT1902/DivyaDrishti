@@ -186,6 +186,7 @@ export async function POST(req: NextRequest) {
         todayLabel,
         moonTransitNote,
         topRisks: topRisks.length > 0 ? topRisks : undefined,
+        bodyRiskProfile: bodyRiskProfile ? (bodyRiskProfile as unknown as Record<string, number>) : undefined,
       });
 
       try {
