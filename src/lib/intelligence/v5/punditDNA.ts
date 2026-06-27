@@ -245,6 +245,27 @@ Do not say "eventually" or "when the time is right." Give meaningful windows lik
 
 // ─── Main DNA block builder ───────────────────────────────────────────────────
 
+// Question types that require a direct answer as the first sentence.
+// For these, the Pundit DNA opening mode (observation/contradiction/story) is suppressed
+// because it would bury the actual answer behind an observation or story.
+const DIRECT_ANSWER_QTYPES = new Set<QuestionType>(["probability", "timing"]);
+
+const DIRECT_OPENING_OVERRIDES: Partial<Record<QuestionType, string>> = {
+  probability:
+    `OPENING APPROACH — PROBABILITY QUESTION (overrides default opening mode):
+Your VERY FIRST sentence must be the probability estimate. Not an observation. Not "at first glance." Not a story.
+Correct: "Looking at your chart, I would estimate roughly 60–70% probability for a meaningful hike in this cycle."
+Wrong: "What immediately catches my attention..." / "At first glance, the chart appears..."
+State the probability in sentence 1. Explain and qualify after.`,
+
+  timing:
+    `OPENING APPROACH — TIMING QUESTION (overrides default opening mode):
+Your VERY FIRST sentence must state the current momentum — where things stand right now.
+Correct: "The energy around this is building steadily, with a clearer window opening in the coming months."
+Wrong: "What immediately catches my attention..." / "I have seen this pattern before..."
+State the current state in sentence 1. Give the time windows after.`,
+};
+
 export function getPunditDNABlock(
   openingMode: OpeningMode,
   emotionalTone: EmotionalTone,
@@ -254,12 +275,16 @@ export function getPunditDNABlock(
   const domainBehavior = DOMAIN_BEHAVIORS[domain] ?? "";
   const questionInstruction = QUESTION_TYPE_INSTRUCTIONS[questionType];
 
+  // For structured question types, replace the creative opening mode with a direct answer override
+  const openingSection = DIRECT_ANSWER_QTYPES.has(questionType)
+    ? (DIRECT_OPENING_OVERRIDES[questionType] ?? `OPENING APPROACH: Answer the question directly in your first sentence.`)
+    : `OPENING APPROACH — Use this mode for your opening:\n${OPENING_MODES[openingMode]}`;
+
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PUNDIT DNA — CONSULTATION PERSONALITY (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-OPENING APPROACH — Use this mode for your opening:
-${OPENING_MODES[openingMode]}
+${openingSection}
 
 EMOTIONAL TONE FOR THIS DOMAIN:
 ${TONE_INSTRUCTIONS[emotionalTone]}
