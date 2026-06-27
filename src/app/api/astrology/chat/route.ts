@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
         domain: targetDomain,
         lagnaSignName,
         natalMoonSignName,
-        dashaStack: temporal.stack ?? { mahadasha: "unknown", antardasha: "unknown" },
+        dashaStack: temporal?.stack ?? { mahadasha: "unknown", antardasha: "unknown" },
         transitSummary,
         conversationHistory: history,
         topRisks: topRisks.length > 0 ? topRisks : undefined,
