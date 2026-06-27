@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
@@ -8,7 +8,10 @@ import { extractIntent } from "@/lib/intelligence/intentExtractor";
 import { buildSuccessResponse, buildErrorResponse } from "@/lib/utils/apiResponse";
 import { callAI, hasAnyProvider } from "@/lib/ai/provider";
 import { computeBodyRiskProfile, getTopRisks, type BodyRiskProfile } from "@/lib/intelligence/health/bodyRiskProfile";
-import { buildV4MasterPrompt, buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
+import { buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
+import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
+import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
+import { buildV5Prompt } from "@/lib/intelligence/v5/promptBuilder";
 
 export async function POST(req: NextRequest) {
   try {
@@ -157,20 +160,32 @@ export async function POST(req: NextRequest) {
         topRisks = getTopRisks(bodyRiskProfile, 3);
       }
 
-      // ── Build V4 master prompt ────────────────────────────────────────────
-      const prompt = buildV4MasterPrompt({
+      // ── V5 Pipeline ───────────────────────────────────────────────────────
+      // Layer 1: Rich intent classification
+      const richIntent = classifyQuestion(question, targetDomain);
+
+      // Layer 2: Astrological briefing — plain-English pre-computed reasoning
+      const brief = buildAstrologicalBrief(
+        narrative as any,
+        temporal?.stack ?? { mahadasha: "unknown", antardasha: "unknown" },
+        currentTransits.positions,
+        chart as any,
+        targetDomain
+      );
+
+      // Layer 3: Assemble V5 prompt (narrate from brief, not raw JSON)
+      const prompt = buildV5Prompt({
         question,
-        domain: targetDomain,
+        richIntent,
+        brief,
         lagnaSignName,
         natalMoonSignName,
         dashaStack: temporal?.stack ?? { mahadasha: "unknown", antardasha: "unknown" },
         transitSummary,
         conversationHistory: history,
-        topRisks: topRisks.length > 0 ? topRisks : undefined,
-        bodyRiskJSON: bodyRiskProfile ? JSON.stringify(bodyRiskProfile, null, 2) : undefined,
-        narrativeJSON: JSON.stringify(narrative, null, 2),
         todayLabel,
         moonTransitNote,
+        topRisks: topRisks.length > 0 ? topRisks : undefined,
       });
 
       try {
