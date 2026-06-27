@@ -196,6 +196,138 @@ A health consultation that drifts into career advice has failed its purpose.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 }
 
+// ─── Response Orchestrator ────────────────────────────────────────────────────
+// Determines which domains are active/forbidden and what structure the response
+// must follow based on question type. This is the most important isolation layer
+// — it prevents career themes from leaking into health responses and vice versa.
+
+const DOMAIN_NEIGHBORS: Record<string, string[]> = {
+  career:       ["finance"],
+  promotion:    ["career", "finance"],
+  finance:      ["career"],
+  health:       [],           // health is completely isolated
+  relationship: [],
+  marriage:     ["relationship"],
+  family:       [],
+  business:     ["career", "finance"],
+  education:    [],
+  spirituality: [],
+  general:      [],
+};
+
+const ALL_DOMAINS = ["career", "health", "finance", "relationship", "marriage", "family", "business", "education", "spirituality", "travel", "property", "children", "peace"];
+
+const QUESTION_STRUCTURES: Record<string, string> = {
+  probability: `MANDATORY STRUCTURE — PROBABILITY QUESTION:
+Your FIRST sentence must state the probability estimate. No preamble. No observation first.
+Example opening: "Looking at your chart, I would estimate roughly 55–65% likelihood..."
+Then follow this order:
+  1. Probability estimate (first sentence — what are the chances, in plain language)
+  2. Confidence level: "I say this with [high/medium/low] confidence because..."
+  3. Why I believe this: 2–3 astrological factors translated to lived experience
+  4. What supports this outcome
+  5. What could delay or reduce it
+  6. Most likely scenario (one concrete sentence)
+  7. Timing window (when is the strongest window?)
+  8. Pundit's Closing Thought — must be specific to this career/compensation moment, not generic life wisdom
+LENGTH: 280–360 words. Do not exceed. Probability responses must be precise, not expansive.`,
+
+  timing: `MANDATORY STRUCTURE — TIMING QUESTION:
+Your FIRST sentence must state where things stand right now.
+Then follow this order:
+  1. Current momentum (first sentence)
+  2. Immediate window: next 2–4 weeks
+  3. Near-term window: 1–3 months
+  4. Strongest window: the peak opportunity period with its astrological trigger
+  5. Astrological translation: what is creating this timing
+  6. What to do in each phase
+  7. Pundit's Closing Thought — specific to timing, not generic
+LENGTH: 260–340 words.`,
+
+  prediction: `MANDATORY STRUCTURE — PREDICTION QUESTION:
+Your FIRST sentence must directly assess likelihood — likely, unlikely, or conditional.
+Example: "Your chart does suggest this is possible, but the timing may not be immediate..."
+Then follow this order:
+  1. Direct assessment (first sentence)
+  2. What the chart supports
+  3. What is still building or not yet ready
+  4. Conditions that would change the outcome
+  5. Timing window
+  6. Guidance
+  7. Pundit's Closing Thought`,
+
+  decision: `MANDATORY STRUCTURE — DECISION QUESTION:
+Your FIRST sentence must state which direction the chart leans.
+Example: "Looking at the chart, there is a lean toward staying rather than moving right now..."
+Then follow this order:
+  1. The chart's leaning (first sentence)
+  2. What supports that path
+  3. What to watch out for
+  4. Timing consideration
+  5. The deeper question (what this decision is really about)
+  6. Guidance
+  7. Pundit's Closing Thought`,
+
+  explanation: `MANDATORY STRUCTURE — EXPLANATION QUESTION:
+Your FIRST sentence must name the primary cause in lived experience, not astrological terms.
+Example: "What is creating this pattern is a combination of..."
+Then follow this order:
+  1. Primary cause (first sentence — experiential, not planetary)
+  2. Why this is happening astrologically (translated to experience)
+  3. How long this pattern lasts
+  4. What would change it
+  5. Guidance
+  7. Pundit's Closing Thought`,
+
+  planet_inquiry: `MANDATORY STRUCTURE — PLANET INQUIRY:
+Your FIRST sentence must name the primary planetary influence and what it is creating.
+Example: "The planet working most actively in your favor right now is Jupiter..."
+Then follow this order:
+  1. Name the planet and its current effect (first sentence)
+  2. Which area of life it is strengthening
+  3. How long this influence lasts
+  4. What else is notable (secondary influence)
+  5. How to work with this energy
+  6. Pundit's Closing Thought`,
+
+  general_status: `STRUCTURE: Observation first → The story unfolding → What the user may experience → Why → Guidance → Pundit's Closing Thought
+LENGTH: 300–380 words.`,
+};
+
+function buildOrchestratorBlock(richIntent: RichIntent): string {
+  const domain  = richIntent.domain;
+  const qType   = richIntent.questionType;
+  const neighbors = DOMAIN_NEIGHBORS[domain] ?? [];
+  const activeDomains = [domain, ...neighbors];
+
+  const forbidden = ALL_DOMAINS.filter(d => !activeDomains.includes(d));
+  const forbiddenStr = forbidden.slice(0, 5).join(", ");
+
+  const structure = QUESTION_STRUCTURES[qType] ?? QUESTION_STRUCTURES["general_status"];
+
+  const hardForbids: string[] = [];
+  if (domain !== "health") hardForbids.push("Do NOT discuss health, body, energy levels, sleep, physical wellbeing, or digestion — even briefly.");
+  if (domain !== "relationship" && domain !== "marriage") hardForbids.push("Do NOT discuss relationships, marriage, or love life.");
+  if (domain !== "spirituality") hardForbids.push("Do NOT discuss spirituality or moksha.");
+
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESPONSE ORCHESTRATION — READ BEFORE WRITING A SINGLE WORD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRIMARY DOMAIN : ${domain.toUpperCase()}
+QUESTION TYPE  : ${qType}
+ACTIVE ENGINES : ${activeDomains.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(" + ")}${richIntent.confidenceRequired ? " + Probability" : ""}${richIntent.timingRequired ? " + Timing" : ""}
+FORBIDDEN      : ${forbiddenStr || "all unrelated domains"}
+
+DOMAIN ISOLATION (absolute):
+${hardForbids.map(f => `• ${f}`).join("\n")}
+• If an unrelated domain is genuinely causing the primary domain's outcome, ONE sentence of context maximum. Then return immediately.
+• The primary domain must account for at least 90% of the response.
+• A response that drifts into a forbidden domain has failed — rewrite it.
+
+${structure}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function buildV5Prompt(params: V5PromptParams): string {
@@ -220,9 +352,13 @@ export function buildV5Prompt(params: V5PromptParams): string {
     richIntent.questionType
   );
 
-  const briefBlock = buildBriefBlock(brief);
-  const historyBlock = buildHistoryBlock(conversationHistory);
-  const healthBlock = buildHealthBlock(topRisks, bodyRiskProfile, moonTransitNote);
+  const briefBlock    = buildBriefBlock(brief);
+  const historyBlock  = buildHistoryBlock(conversationHistory);
+  // Health block only injected for health domain — never for career, finance, etc.
+  const healthBlock   = richIntent.domain === "health"
+    ? buildHealthBlock(topRisks, bodyRiskProfile, moonTransitNote)
+    : "";
+  const orchestratorBlock = buildOrchestratorBlock(richIntent);
 
   // Conditional engine blocks
   const probabilityBlock = richIntent.confidenceRequired
@@ -268,29 +404,25 @@ USER'S QUESTION
 "${question}"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-BEFORE WRITING — COMPLETE THIS INTERNAL REASONING (not shown to user):
+BEFORE WRITING — INTERNAL REASONING (not shown to user):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. What is the primary story in this chart for THIS specific question?
+1. What domain did the user ask about? Stay inside it.
 2. What is the one thing this person most needs to understand right now?
 3. What would an experienced astrologer find most notable or surprising here?
 4. What from the conversation history must I NOT repeat?
 5. What is the memorable moment I will include?
-6. What will my Pundit's Closing Thought be?
+6. What will my Pundit's Closing Thought be? (make it specific to this domain and moment)
 
-THEN write your response. The internal reasoning shapes the response — it does not appear in it.
+THEN write your response.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RESPONSE REQUIREMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STRUCTURE: Experience first → Why it is happening → What to understand or do
-LENGTH: 300–420 words of personalized prose with natural paragraph breaks
-VOICE: Wise, specific, warm, unhurried — never generic, never robotic
+${orchestratorBlock}
 
-BANNED — if any of these appear, rewrite:
-• Opening with a planet name
-• Listing planets sequentially
-• "The chart shows / The data indicates / The calculations suggest"
-• Repeating themes, advice, or observations from previous responses in this conversation
-• Statements that could apply to any person regardless of their specific chart
-• Any phrase that sounds like an AI-generated astrology report`;
+VOICE & QUALITY:
+• Wise, specific, warm, unhurried — never generic, never robotic
+• Every sentence must be something only THIS person's chart would produce
+• Do NOT open with a planet name
+• Do NOT list planets sequentially
+• Do NOT use: "The chart shows / The data indicates / The calculations suggest"
+• Do NOT repeat themes, advice, or observations from previous responses
+• Pundit's Closing Thought: end every response with this — bold, italic, labelled "Pundit's Closing Thought:" — make it memorable and specific to this person's situation`;
 }
