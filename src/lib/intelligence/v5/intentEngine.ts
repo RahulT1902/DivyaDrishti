@@ -36,12 +36,20 @@ export interface RichIntent {
 // ─── Question type patterns ────────────────────────────────────────────────────
 
 const P = {
-  probability: /what are (my )?chances|how likely|probability|likelihood|odds|prospects of|how probable/i,
+  // Matches: "what are my chances", "what are the chances", "chances of getting/achieving/having",
+  // "how likely", "probability", "likelihood", "odds", "how probable", "percent chance", "% chance"
+  probability: /what are (my |the )?chances|chances of (getting|achieving|receiving|having|getting|making)|how likely|probability|likelihood|\bodds\b|prospects of|how probable|percent(age)? chance|\d+%.*chance|chance of (getting|making|receiving)/i,
+
   timing:      /when will|which month|how (soon|long)|what time|timeline|by when|how many months|expected (date|time)|when (can|should|would)/i,
+
   prediction:  /will i (get|find|have|achieve|receive|be|become|land|pass|clear|make it|succeed)|is it possible|can i expect|do i (have|stand) a chance/i,
+
   decision:    /should i|shall i|must i|is it (good|right|wise|advisable) to|would it be (better|wise)|do i (need to|have to)|which (is better|option)/i,
+
   explanation: /why (am i|is my|are my|isn't|aren't|don't|doesn't|can't|won't)|what('s| is) (causing|blocking|stopping|holding|preventing|creating)|reason (for|behind)/i,
+
   planet:      /which planet|what planet|which (dasha|house|period|nakshatra|antardasha|mahadasha)|who is (helping|supporting|affecting|influencing|blocking)|what force/i,
+
   challenge:   /why (am i not|is my .* not|aren't i|don't i|can't i|haven't i)|why (nothing|everything) (works|is happening|is improving|is changing)|why (stuck|stagnant|delayed|blocked)|what('s| is) wrong with/i,
 };
 
@@ -110,7 +118,8 @@ export function classifyQuestion(
     domain,
     subDomain: extractSubDomain(q),
     timeframe: extractTimeframe(q),
-    confidenceRequired: questionType === "probability" || questionType === "prediction",
+    confidenceRequired: questionType === "probability" || questionType === "prediction"
+      || /chances|probability|how likely|how probable|odds of/i.test(q),
     timingRequired: questionType === "timing" || /when\b/i.test(q),
     challengeMode: questionType === "challenge",
     emotionalTone: (DOMAIN_TONE[domain] ?? "reflective") as EmotionalTone,
