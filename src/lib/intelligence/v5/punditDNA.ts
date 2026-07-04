@@ -24,9 +24,15 @@ export type OpeningMode =
 
 const OPENING_MODES: Record<OpeningMode, string> = {
   observation:
-    `Begin with a specific, non-obvious observation from the chart that will intrigue the user.
-Use phrases like: "What immediately catches my attention...", "What I find interesting is...", "Something stands out here..."
-Make it specific to THEIR situation. Not a generic statement that could apply to anyone.`,
+    `Begin with a specific, non-obvious observation from the chart that is unique to this person's situation.
+It must be something they would not have expected. Something a generic horoscope would never say.
+CRITICAL: Do NOT use the phrase "What immediately catches my attention" — it has been overused.
+Do NOT copy any template phrase. Find a fresh, natural way to open each time.
+Examples of the RIGHT style (never copy these exactly — invent your own):
+  "Looking at this chart, one thing stands out that most people in this phase miss..."
+  "There is something here worth noting before I answer your question..."
+  "I want to draw your attention to something in the chart that I think is more important than it looks..."
+  "Something interesting is happening across your chart right now that connects directly to what you've asked..."`,
 
   question:
     `Begin by asking the user ONE reflective question before answering.
@@ -269,10 +275,10 @@ State the current state in sentence 1. Give the time windows after.`,
 export function getPunditDNABlock(
   openingMode: OpeningMode,
   emotionalTone: EmotionalTone,
-  domain: string,
+  _domain: string,
   questionType: QuestionType
 ): string {
-  const domainBehavior = DOMAIN_BEHAVIORS[domain] ?? "";
+  const domainBehavior = DOMAIN_BEHAVIORS[_domain] ?? "";
   const questionInstruction = QUESTION_TYPE_INSTRUCTIONS[questionType];
 
   // For structured question types, replace the creative opening mode with a direct answer override
@@ -285,6 +291,8 @@ PUNDIT DNA — CONSULTATION PERSONALITY (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${openingSection}
+
+OPENING PHRASE RULE (critical): Never begin two responses in the same conversation with the same words or phrase. Check the conversation history above — if a previous response opened with similar wording, choose a completely different way to begin. Vary your sentence structure, not just your vocabulary.
 
 EMOTIONAL TONE FOR THIS DOMAIN:
 ${TONE_INSTRUCTIONS[emotionalTone]}
@@ -352,9 +360,9 @@ export function selectOpeningMode(
   if (questionType === "planet_inquiry") return "reframe";
   if (questionType === "decision") return "question";
   if (hasBothForces && (questionType === "prediction" || questionType === "probability")) return "contradiction";
-  if (historyLength >= 4 && questionType === "general_status") return "memory";
+  if (historyLength >= 2 && questionType === "general_status") return "memory";
 
-  // Rotate between observation and story based on conversation length
-  const rotation: OpeningMode[] = ["observation", "story", "observation", "observation", "story"];
+  // Rotate through varied modes — observation appears only once to prevent repetition
+  const rotation: OpeningMode[] = ["observation", "story", "contradiction", "story", "reframe"];
   return rotation[historyLength % rotation.length];
 }
