@@ -162,7 +162,25 @@ export async function POST(req: NextRequest) {
 
       // ── V5 Pipeline ───────────────────────────────────────────────────────
       // Layer 1: Rich intent classification
-      const richIntent = classifyQuestion(question, targetDomain);
+      let richIntent = classifyQuestion(question, targetDomain);
+
+      // Timeframe inheritance for follow-up questions:
+      // If user asks "how about next 2 months?" (follow-up, new timeframe) → use the new timeframe.
+      // If user asks "what about finance?" (follow-up, no timeframe) → inherit timeframe from prior message.
+      if (richIntent.isFollowUp && richIntent.timeframe === "general" && history.length > 0) {
+        const recentUserMessages = history
+          .filter(m => m.role === "user")
+          .slice(-3)
+          .map(m => m.content)
+          .reverse();
+        for (const msg of recentUserMessages) {
+          const prevIntent = classifyQuestion(msg, targetDomain);
+          if (prevIntent.timeframe !== "general" && prevIntent.timeframeLabel) {
+            richIntent = { ...richIntent, timeframe: prevIntent.timeframe, timeframeLabel: prevIntent.timeframeLabel };
+            break;
+          }
+        }
+      }
 
       // Layer 2: Astrological briefing — plain-English pre-computed reasoning
       const brief = buildAstrologicalBrief(

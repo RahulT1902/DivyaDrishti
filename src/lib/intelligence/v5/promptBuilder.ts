@@ -306,19 +306,41 @@ function buildOrchestratorBlock(richIntent: RichIntent): string {
   if (domain !== "relationship" && domain !== "marriage") hardForbids.push("Do NOT discuss relationships, marriage, or love life.");
   if (domain !== "spirituality") hardForbids.push("Do NOT discuss spirituality or moksha.");
 
+  const timeframeLabel = richIntent.timeframeLabel;
+  const timeframeLine = timeframeLabel
+    ? `TIMEFRAME      : ${timeframeLabel.toUpperCase()}`
+    : `TIMEFRAME      : CURRENT PERIOD`;
+
+  const timeframeRule = timeframeLabel
+    ? `TIMEFRAME RULE (absolute — same priority as domain isolation):
+• Answer ONLY for "${timeframeLabel}". Every observation, fact, and prediction must be about this window.
+• Do NOT mention other time periods (not last month, not next year, not "in the coming months").
+• If the question is about "this week" — answer this week only.
+• If the question is about "the next 2 months" — answer the next 2 months only.
+• If the question is about "today" — answer today only.`
+    : `TIMEFRAME RULE: Cover the current period naturally. Do not speculate far into the future without astrological basis.`;
+
+  const followUpNote = richIntent.isFollowUp
+    ? `\nFOLLOW-UP CONTEXT: This is a follow-up question. The domain carries over from the prior exchange. Answer the NEW angle only — do NOT repeat, summarize, or rephrase anything from the prior response.`
+    : "";
+
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RESPONSE ORCHESTRATION — READ BEFORE WRITING A SINGLE WORD
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PRIMARY DOMAIN : ${domain.toUpperCase()}
 QUESTION TYPE  : ${qType}
+${timeframeLine}
 ACTIVE ENGINES : ${activeDomains.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(" + ")}${richIntent.confidenceRequired ? " + Probability" : ""}${richIntent.timingRequired ? " + Timing" : ""}
 FORBIDDEN      : ${forbiddenStr || "all unrelated domains"}
+${followUpNote}
 
 DOMAIN ISOLATION (absolute):
 ${hardForbids.map(f => `• ${f}`).join("\n")}
 • If an unrelated domain is genuinely causing the primary domain's outcome, ONE sentence of context maximum. Then return immediately.
 • The primary domain must account for at least 90% of the response.
 • A response that drifts into a forbidden domain has failed — rewrite it.
+
+${timeframeRule}
 
 ${structure}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;

@@ -26,7 +26,9 @@ export interface RichIntent {
   questionType: QuestionType;
   domain: string;
   subDomain: string;
-  timeframe: string;
+  timeframe: string;           // Exact timeframe label for prompt injection
+  timeframeLabel: string;      // Human-readable version for the LLM constraint
+  isFollowUp: boolean;         // Short question with no domain — likely continues prior topic
   confidenceRequired: boolean; // Activate probability engine
   timingRequired: boolean;     // Activate timing engine
   challengeMode: boolean;      // Examine the premise before answering
@@ -73,12 +75,41 @@ function extractSubDomain(q: string): string {
   return "";
 }
 
-function extractTimeframe(q: string): string {
-  if (/today|now|tonight|this morning/i.test(q)) return "today";
-  if (/this week|week/i.test(q)) return "week";
-  if (/this month|month/i.test(q)) return "month";
-  if (/this year|year|annual/i.test(q)) return "year";
-  return "general";
+function extractTimeframe(q: string): { key: string; label: string } {
+  if (/today|now|tonight|this morning/i.test(q))
+    return { key: "today", label: "today only" };
+
+  // "next X months/weeks" — extract exact number
+  const nextMatch = q.match(/next\s+(\d+|two|three|four|five|six|seven|eight|nine|ten)\s*(months?|weeks?|days?)/i);
+  if (nextMatch) {
+    const num = nextMatch[1];
+    const unit = nextMatch[2].toLowerCase();
+    return { key: "near-term", label: `the next ${num} ${unit}` };
+  }
+
+  if (/next\s+month/i.test(q))  return { key: "next-month",  label: "next month" };
+  if (/next\s+week/i.test(q))   return { key: "next-week",   label: "next week" };
+  if (/next\s+year/i.test(q))   return { key: "next-year",   label: "next year" };
+  if (/this\s+week|this\s+7\s*days/i.test(q)) return { key: "week", label: "this week" };
+  if (/this\s+month/i.test(q))  return { key: "month",  label: "this month" };
+  if (/this\s+year|annual/i.test(q)) return { key: "year", label: "this year" };
+  if (/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(q)) {
+    const m = q.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/i);
+    return { key: "month", label: m ? m[1] : "that month" };
+  }
+  if (/week/i.test(q))  return { key: "week",  label: "this week" };
+  if (/month/i.test(q)) return { key: "month", label: "this month" };
+  if (/year/i.test(q))  return { key: "year",  label: "this year" };
+
+  return { key: "general", label: "" };
+}
+
+// Detect follow-up questions: short, no strong domain keyword, references continuation
+function detectFollowUp(q: string, domain: string): boolean {
+  const hasDomainKeyword = /career|job|promot|salary|hike|health|body|finance|money|income|relationship|marriage|family|business|education|spirituality/i.test(q);
+  const isShort = q.trim().split(/\s+/).length <= 12;
+  const startsLikeContinuation = /^(how about|what about|and (in|for|about)|but (what|how)|so (in|for|what)|tell me more|what if|going forward|in that case|ok (so|but)|what (are|is) (my|the))/i.test(q.trim());
+  return (isShort && !hasDomainKeyword) || startsLikeContinuation;
 }
 
 // ─── Domain emotional tone ─────────────────────────────────────────────────────
@@ -115,11 +146,16 @@ export function classifyQuestion(
   else if (P.explanation.test(q))  questionType = "explanation";
   else if (P.prediction.test(q))   questionType = "prediction";
 
+  const tf = extractTimeframe(q);
+  const isFollowUp = detectFollowUp(q, domain);
+
   return {
     questionType,
     domain,
     subDomain: extractSubDomain(q),
-    timeframe: extractTimeframe(q),
+    timeframe: tf.key,
+    timeframeLabel: tf.label,
+    isFollowUp,
     confidenceRequired: questionType === "probability" || questionType === "prediction"
       || /chances|probability|how likely|how probable|odds of/i.test(q),
     timingRequired: questionType === "timing" || /when\b/i.test(q),
