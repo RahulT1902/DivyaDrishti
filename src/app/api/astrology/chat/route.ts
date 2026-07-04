@@ -191,7 +191,14 @@ export async function POST(req: NextRequest) {
 
       try {
         const { text } = await callAI({ prompt, temperature: 0.72 });
-        answerText = text;
+
+        // Extract the LLM-generated follow-up suggestion (EXPLORE: line)
+        // and strip it from the visible answer.
+        const exploreMatch = text.match(/\nEXPLORE:\s*(.+?)(?:\n|$)/);
+        if (exploreMatch?.[1]) {
+          followUpText = exploreMatch[1].trim();
+        }
+        answerText = text.replace(/\nEXPLORE:\s*.+?(?:\n|$)/g, "").trimEnd();
       } catch (aiError: any) {
         console.error("AI Generation failed (all providers):", aiError);
         answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "AI gateway timeout."}\n\n[Deterministic Fallback]: ${narrative.heroInsight}\n\n${narrative.realityTranslation}`;
