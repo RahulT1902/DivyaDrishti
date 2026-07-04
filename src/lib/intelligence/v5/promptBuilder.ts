@@ -146,6 +146,11 @@ function buildHealthBlock(
   const secondary = BODY_LABELS[topRisks[1]?.system ?? "recovery"]     ?? topRisks[1]?.system ?? "recovery";
   const tertiary  = BODY_LABELS[topRisks[2]?.system ?? "digestiveSystem"] ?? topRisks[2]?.system ?? "digestion";
 
+  // Named list of top body areas for direct body-parts questions
+  const bodyPartsList = [primary, secondary, tertiary]
+    .map((area, i) => `  ${i + 1}. ${area}`)
+    .join("\n");
+
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HEALTH INTELLIGENCE BRIEF (INTERNAL — use this structure, never quote it verbatim)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -155,44 +160,35 @@ PRE-CONSULTATION HEALTH ASSESSMENT:
   Recovery             : ${status.recovery}
   Stress Load          : ${status.stress}
   Sleep Quality        : ${status.sleep}
-  Primary Area Today   : ${primary}
-  Secondary Note       : ${secondary}
-  Also Worth Watching  : ${tertiary}
   Today's Moon Theme   : ${moonTransitNote.replace(/\n/g, " ")}
 
-MANDATORY RESPONSE STRUCTURE FOR HEALTH QUESTIONS:
-Answer in exactly this order — no section may be skipped:
+TODAY'S MOST SENSITIVE BODY AREAS (in order of sensitivity):
+${bodyPartsList}
 
-  1. OVERALL HEALTH TODAY (2–3 sentences)
-     Answer the question directly. State whether today is a good, average, or careful day physically.
-     Do NOT open with philosophy. Do NOT open with life themes. Answer first.
-     Example: "Today appears to be a broadly stable day for health. I don't see indications of
-     illness, but I do notice the body may be spending more energy than it is recovering."
+QUESTION-TYPE ROUTING — read the user's question carefully:
 
-  2. ENERGY & RECOVERY (specific)
-     Describe the likely energy pattern through the day. When is it strongest? When does it dip?
-     Is recovery keeping pace with activity, or lagging?
+IF the user is asking "which body parts / areas / systems will be affected":
+  → Your response MUST begin by directly listing the top areas by name.
+  → Format: name the area, then one sentence describing what the user may notice there.
+  → Do NOT open with a general health overview. List first. Explain after.
+  → Example opening: "Today, the areas most worth watching are your [area 1], [area 2], and [area 3]..."
+  → After the list, briefly explain why (astrological translation in plain English).
+  → Close with Pundit's Closing Thought. Total: 180–250 words.
 
-  3. AREA WORTH WATCHING (from: ${primary})
-     Name this body system in plain language. What might the user notice?
-     What simple action helps? Never use words like "risk", "profile", "score".
-
-  4. WHY I SAY THIS (1 short paragraph — astrological translation)
-     Translate the transit and dasha context into plain experience.
-     Do not name planets until you have first stated what they create in the body.
-
-  5. PRACTICAL GUIDANCE (3–4 specific, actionable suggestions)
-     Concrete. Not philosophical. Things the user can actually do today.
-
-  6. PUNDIT'S CLOSING THOUGHT (mandatory)
+IF the user is asking "how is my health today" (general status):
+  Answer in exactly this order:
+  1. OVERALL HEALTH TODAY (2–3 sentences — direct answer first)
+  2. ENERGY & RECOVERY (specific, not philosophical)
+  3. AREA WORTH WATCHING — name the primary area in plain language
+  4. WHY I SAY THIS (brief astrological translation)
+  5. PRACTICAL GUIDANCE (3 specific, actionable suggestions)
+  6. PUNDIT'S CLOSING THOUGHT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DOMAIN PRIORITY RULE — HEALTH (non-negotiable):
 Every sentence must be about the body, energy, sleep, digestion, or physical wellbeing.
 Ambition, recognition, career growth, life purpose — these are NOT health topics.
-The current life theme (career, finances, relationships) must NOT leak into a health response.
-If work stress is physically affecting the body, ONE sentence of context is permitted. No more.
-A health consultation that drifts into career advice has failed its purpose.
+The current life theme must NOT leak into a health response.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 }
 

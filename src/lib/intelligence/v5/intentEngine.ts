@@ -49,6 +49,7 @@ const P = {
   explanation: /why (am i|is my|are my|isn't|aren't|don't|doesn't|can't|won't)|what('s| is) (causing|blocking|stopping|holding|preventing|creating)|reason (for|behind)/i,
 
   planet:      /which planet|what planet|which (dasha|house|period|nakshatra|antardasha|mahadasha)|who is (helping|supporting|affecting|influencing|blocking)|what force/i,
+  body_parts:  /which (body parts?|parts?|areas?|systems?|organs?)|what (body parts?|parts?|areas?) (will|are|might|could|likely|get)|body parts? (affected|sensitive|vulnerable|at risk)|which all/i,
 
   challenge:   /why (am i not|is my .* not|aren't i|don't i|can't i|haven't i)|why (nothing|everything) (works|is happening|is improving|is changing)|why (stuck|stagnant|delayed|blocked)|what('s| is) wrong with/i,
 };
@@ -105,9 +106,10 @@ export function classifyQuestion(
 
   let questionType: QuestionType = "general_status";
 
-  if (P.probability.test(q))  questionType = "probability";
+  if (P.probability.test(q))       questionType = "probability";
   else if (P.challenge.test(q))    questionType = "challenge";
   else if (P.timing.test(q))       questionType = "timing";
+  else if (P.body_parts.test(q))   questionType = "planet_inquiry"; // reuses list-style response structure
   else if (P.planet.test(q))       questionType = "planet_inquiry";
   else if (P.decision.test(q))     questionType = "decision";
   else if (P.explanation.test(q))  questionType = "explanation";
