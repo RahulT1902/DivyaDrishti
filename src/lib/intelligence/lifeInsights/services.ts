@@ -800,18 +800,6 @@ export class ManifestationRankingEngine {
       ];
     }
 
-    // 2. Behavioral Manifestation Filter: prioritize salaried corporate growth over speculative business launches
-    const isSalariedHistory = true; // Observed IT career persistence history
-    if (isSalariedHistory) {
-      manifestations = manifestations.map(m => {
-        if (m === "Business Venture Launch") return "Major Corporate Project Ownership";
-        if (m === "Strategic Alliances") return "Cross-Departmental Alignments";
-        if (m === "Productive Commercial Expansion") return "Expansion of Professional Mandate";
-        if (m === "Partner Joint Ventures") return "High-Visibility Collaboration Mandate";
-        return m;
-      });
-    }
-
     // Apply Age-Aware Manifestation Eligibility Filter & Life Context Suppression Rules
     if (age !== undefined) {
       if (age < 25) {
@@ -1051,99 +1039,6 @@ export class HistoricalPeriodAnalyzer {
 
       let whyStr = `With ${adLord} active as Antardasha Lord in House ${adHouse}, ${topDomain.why}.`;
 
-      // Custom high-fidelity calibration override for validation anchors (2003-2012)
-      const birthYear = birthDate.getFullYear();
-      const isUser1982 = birthYear >= 1980 && birthYear <= 1984;
-      const midPointYear = new Date(midPoint).getFullYear();
-
-      if (isUser1982) {
-        if (midPointYear >= 2003 && midPointYear <= 2004) {
-          theme = "Higher Education Activation";
-          category = "Career";
-          ranked = [
-            { title: "Advanced study planning & prep", probability: 74, why: "Vedic" },
-            { title: "Entrance examination planning & attempts", probability: 70, why: "Vedic" },
-            { title: "Academic specialization shifts", probability: 68, why: "Vedic" },
-            { title: "Scholastic redirection & skill specialization", probability: 65, why: "Vedic" }
-          ];
-          whyStr = "Celestial coordinates stress the 5th house of studies, prompting study plans and prep attempts rather than instant outcomes.";
-          confScore = 74;
-          confLabel = "Strong";
-        } else if (midPointYear === 2005) {
-          theme = "Career Entry & Transition";
-          category = "Career";
-          ranked = [
-            { title: "Unexpected first career opportunity", probability: 88, why: "Vedic" },
-            { title: "Transition from education to workplace", probability: 85, why: "Vedic" },
-            { title: "Initial professional foundation building", probability: 80, why: "Vedic" },
-            { title: "Acquisition of practical business routines", probability: 75, why: "Vedic" }
-          ];
-          whyStr = "Lagna-aspecting Saturn aligns with Career lords to spark an unexpected early professional foundation building cycle.";
-          confScore = 88;
-          confLabel = "Very Strong";
-        } else if (midPointYear >= 2007 && midPointYear <= 2009) {
-          theme = "Challenge & Restructuring Phase";
-          category = "Challenges";
-          ranked = [
-            { title: "Career instability & progress delays", probability: 91, why: "Vedic" },
-            { title: "Elevated liquid capital outflow stress", probability: 87, why: "Vedic" },
-            { title: "Intensive emotional intrapersonal stress", probability: 85, why: "Vedic" },
-            { title: "Defensive professional posture requirement", probability: 80, why: "Vedic" }
-          ];
-          whyStr = "Transit Saturn and active Dasha lords pass through Dusthana (8th/12th) coordinates, triggering peak career instability and liquid capital consolidation.";
-          confScore = 91;
-          confLabel = "Very Strong";
-        } else if (midPointYear === 2010) {
-          theme = "Wellness & Health Vulnerability Window";
-          category = "Challenges";
-          ranked = [
-            { title: "Energy & physical stamina depletion", probability: 79, why: "Vedic" },
-            { title: "Recovery timeline constraints & delays", probability: 75, why: "Vedic" },
-            { title: "Proactive wellness habit re-alignment", probability: 72, why: "Vedic" },
-            { title: "Stress management & preventative routines", probability: 68, why: "Vedic" }
-          ];
-          whyStr = "Celestial transits stress the lagna lord and 6th house of physical wellness, limiting stamina reserves and requiring preventive care routines.";
-          confScore = 79;
-          confLabel = "Strong";
-        } else if (midPointYear >= 2011 && midPointYear <= 2012) {
-          theme = "Recovery & Stabilization Season";
-          category = "Relationships";
-          ranked = [
-            { title: "Relational support & marriage milestone", probability: 83, why: "Vedic" },
-            { title: "Improved physical vitality & energy outlook", probability: 80, why: "Vedic" },
-            { title: "Emotional stabilization & intrapersonal healing", probability: 77, why: "Vedic" },
-            { title: "Domestic environment re-stabilization success", probability: 74, why: "Vedic" }
-          ];
-          whyStr = "Venusian transit alignments cross Navamsa D9 relational houses, dissolving historical friction and initiating relationship integration.";
-          confScore = 83;
-          confLabel = "Strong";
-        } else if (midPointYear >= 2018 && midPointYear <= 2023) {
-          theme = "Professional Transition & Uncertainty Era";
-          category = "Challenges";
-          ranked = [
-            { title: "Contractor engagements & transition cycles", probability: 82, why: "Vedic" },
-            { title: "Temporary professional uncertainty", probability: 78, why: "Vedic" },
-            { title: "Workplace structural alignments & instability", probability: 75, why: "Vedic" },
-            { title: "Skill specialization re-evaluation", probability: 70, why: "Vedic" }
-          ];
-          whyStr = "Active Dasha transits align with the 8th and 6th houses, prompting freelance contract pivots and temporary professional uncertainty.";
-          confScore = 82;
-          confLabel = "Strong";
-        } else if (midPointYear >= 2024 && midPointYear <= 2026) {
-          theme = "Career Reassessment & Shift Season";
-          category = "Challenges";
-          ranked = [
-            { title: "Notice period or role conclusion alignment", probability: 85, why: "Vedic" },
-            { title: "Temporary project or mandate shortages", probability: 80, why: "Vedic" },
-            { title: "Intensive career path reassessment", probability: 76, why: "Vedic" },
-            { title: "Preventive financial budget planning", probability: 70, why: "Vedic" }
-          ];
-          whyStr = "Transiting Saturn aspects active D10 Tenth Lord coordinates, forcing a professional notice transition and systematic role reassessment.";
-          confScore = 85;
-          confLabel = "Very Strong";
-        }
-      }
-
       const peakStart = new Date(ad.start.getTime() + duration * 0.35);
       const peakEnd = new Date(ad.start.getTime() + duration * 0.65);
 
@@ -1270,7 +1165,7 @@ export class NarrativeConsolidationEngine {
 // peak years, beginning/end states, and sub-phase feelings.
 // ----------------------------------------------------
 export class ChapterMeaningEngine {
-  static enrich(chapters: ConsolidatedChapter[]): ConsolidatedChapter[] {
+  static enrich(chapters: ConsolidatedChapter[], birthDate: Date): ConsolidatedChapter[] {
     const seenMilestones = new Set<string>();
 
     return chapters.map(chapter => {
@@ -1414,7 +1309,7 @@ export class ChapterMeaningEngine {
       // 5. Major Life Event Manifestation
       // Analyze dominant active planets in this chapter
       const uniquePlanets = Array.from(new Set(chapter.astroDrivers.map(d => d.adLord)));
-      const outcomes = MajorLifeEventManifestationEngine.getOutcomes(chapter.theme, chapter.category, uniquePlanets, chapter.confidenceScore, chapter.peakStart, seenMilestones);
+      const outcomes = MajorLifeEventManifestationEngine.getOutcomes(chapter.theme, chapter.category, uniquePlanets, chapter.confidenceScore, chapter.peakStart, seenMilestones, birthDate);
       
       return {
         ...chapter,
@@ -1497,8 +1392,8 @@ class MilestoneUniquenessEngine {
 // 4d. MAJOR LIFE EVENT MANIFESTATION ENGINE
 // ----------------------------------------------------
 export class MajorLifeEventManifestationEngine {
-  static getOutcomes(chapterTheme: string, category: string, activePlanets: string[], confidence: number, peakStart: Date, seenMilestones: Set<string>): RealWorldOutcome[] {
-    const age = (peakStart.getTime() - new Date("1982-01-01").getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  static getOutcomes(chapterTheme: string, category: string, activePlanets: string[], confidence: number, peakStart: Date, seenMilestones: Set<string>, birthDate: Date): RealWorldOutcome[] {
+    const age = (peakStart.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
     
     interface EventDef { 
       event: string; 
@@ -1692,9 +1587,154 @@ export interface FutureForecast {
 }
 
 export class FutureRiskAnalyzer {
+  private static buildRiskItem(
+    stressedDomain: string,
+    rank: number,
+    mdLord: string, adLord: string, natal: NatalChart, promiseScore: number,
+    now: Date
+  ): FutureForecast {
+    const peakOffset = [45, 30, 20][rank] ?? 30;
+    const conf = ConfidenceEngine.calculate(mdLord, adLord, natal, promiseScore);
+    const baseRisk = Math.max(50, Math.min(88, Math.round(65 + (75 - promiseScore) * 0.3)));
+
+    const jd: "career" | "finance" | "relationships" | "health" | "property" =
+      ["Career", "Business", "Leadership", "Education"].includes(stressedDomain) ? "career" :
+      stressedDomain === "Wealth" ? "finance" :
+      ["Marriage", "Children", "Family"].includes(stressedDomain) ? "relationships" :
+      stressedDomain === "Health" ? "health" : "property";
+
+    switch (jd) {
+      case "finance": {
+        let riskTitle = "Financial Pressure (Salary delays & variable income)";
+        let mostLikely = ["Temporary payment delays", "Variable contract commission cycles", "Income timeline variability"];
+        let possible = ["Short-term cash flow timing gaps", "Budget restructuring needs"];
+        let blockers = ["Administrative delays", "Client billing / invoice approval lags"];
+        if (adLord === "Saturn" || adLord === "Ketu") {
+          riskTitle = "Financial Pressure (Family obligations & home expenses)";
+          mostLikely = ["Family obligation allocations", "Domestic maintenance costs", "Home repair outflows"];
+          possible = ["Personal capital consolidation", "Utility / property tax timing gaps"];
+          blockers = ["Ambiguous contractor estimates", "Unanticipated family emergencies"];
+        } else if (adLord === "Rahu" || adLord === "Mars") {
+          riskTitle = "Financial Pressure (Speculation risk & asset volatility)";
+          mostLikely = ["Speculative asset volatility", "Rushed financial mistakes", "Portfolio value corrections"];
+          possible = ["Over-leveraged capital setbacks", "Day-trading capital depletion"];
+          blockers = ["Market shifts", "Impulsive trading decisions"];
+        }
+        const score = Math.max(55, Math.min(88, baseRisk + (adLord === "Saturn" || adLord === "Ketu" ? 5 : 0)));
+        return {
+          domain: "finance", type: "focus_area",
+          title: riskTitle, score,
+          validationLabel: (score >= 85 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any,
+          why: "Transit alignments inside your financial sectors stimulate temporary liquidity consolidation requirements.",
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 30) * 24 * 60 * 60 * 1000),
+          potential: ["Unexpected domestic expenses", "Cash flow timing gaps", "Investment volatility risks"],
+          mostLikelyManifestations: mostLikely, possibleManifestations: possible, blockers,
+          whyThisWindow: "Active Antardasha lord transits activate the 12th house of expenditure, triggering peak liquid outflows.",
+          natalPromiseRelation: `Wealth has a natal promise of ${promiseScore}/100. Defensive budgeting is essential during this Bhukti.`,
+          suggestedActions: ["Maintain a defensive cash buffer", "Document investment commitments carefully"],
+          thingsToAvoid: ["High-risk speculative investments", "Impulsive debt purchases"],
+          confidenceContributors: conf.contributors,
+          drivers: ["8th/12th house stress transits", "Challenging Bhukti influences", "Weak divisional support"]
+        };
+      }
+
+      case "career": {
+        const score = Math.max(50, Math.min(84, baseRisk + (adLord === "Saturn" || adLord === "Rahu" ? 8 : 0)));
+        return {
+          domain: "career", type: "focus_area",
+          title: "Career Stabilization Constraints", score,
+          validationLabel: (score >= 85 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any,
+          why: "Transit configurations require defensive consolidation over premature expansion.",
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 30) * 24 * 60 * 60 * 1000),
+          potential: ["Workload expansion limits", "Corporate reorganization pressure", "Team communication friction"],
+          mostLikelyManifestations: ["Workplace structural realignment", "Defensive corporate posture", "Delayed project approvals"],
+          possibleManifestations: ["Minor team alignment struggles", "Administrative reorganization delays"],
+          blockers: ["Internal corporate politics", "Delayed leadership feedback"],
+          whyThisWindow: "Transit Saturn aspects your career sector while active Antardasha undergoes a consolidation transit.",
+          natalPromiseRelation: `Career holds a natal promise of ${promiseScore}/100, protecting long-term stability while requiring consolidation over expansion now.`,
+          suggestedActions: ["Focus on structured task execution", "Keep transparent documentation of accomplishments"],
+          thingsToAvoid: ["Premature professional pivots", "Corporate debate involvement"],
+          confidenceContributors: conf.contributors,
+          drivers: ["Transit Saturn/Rahu aspects", "Active Antardasha limitations", "Corporate house tension"]
+        };
+      }
+
+      case "health": {
+        const score = Math.max(50, Math.min(86, baseRisk + (adLord === "Mars" || adLord === "Rahu" ? 10 : 2)));
+        return {
+          domain: "health", type: "focus_area",
+          title: "Wellness & Stress Restraints", score,
+          validationLabel: (score >= 85 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any,
+          why: "Celestial transits emphasize preventive self-care. Focus on rest and routine consistency.",
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 30) * 24 * 60 * 60 * 1000),
+          potential: ["Elevated stress potential", "Fatigue cycles", "Need for preventive routine care"],
+          mostLikelyManifestations: ["Stamina fluctuations", "Mental fatigue from coordination cycles", "Need for dietary and rest consistency"],
+          possibleManifestations: ["Minor sleep pattern disruption", "Exercise time constraints"],
+          blockers: ["Ignoring fatigue signs", "Over-exerting beyond personal stamina"],
+          whyThisWindow: "Transit Mars moves through the 6th house of wellness, requiring proactive energy conservation.",
+          natalPromiseRelation: `Health has a natal promise of ${promiseScore}/100. Consistent self-care prevents temporary celestial exhaustion.`,
+          suggestedActions: ["Prioritize sleep hygiene", "Incorporate gentle recovery exercises daily"],
+          thingsToAvoid: ["Ignoring fatigue symptoms", "Over-exertion beyond personal limits"],
+          confidenceContributors: conf.contributors,
+          drivers: ["6th house transit stress", "Antardasha depletion factors", "Sun coordination shifts"]
+        };
+      }
+
+      case "relationships": {
+        const score = Math.max(50, Math.min(82, baseRisk + (adLord === "Saturn" || adLord === "Ketu" ? 8 : 2)));
+        return {
+          domain: "relationships", type: "focus_area",
+          title: "Relationship Friction & Communication Delays", score,
+          validationLabel: (score >= 85 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any,
+          why: "Saturn or Ketu transits through relational houses create communication friction and delays.",
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 30) * 24 * 60 * 60 * 1000),
+          potential: ["Partnership communication gaps", "Family obligation conflicts", "Decision delays in relationships"],
+          mostLikelyManifestations: ["Unresolved family discussions", "Communication friction with partner", "Delayed relational commitments"],
+          possibleManifestations: ["External opinion pressure", "Minor conflicts escalating due to poor communication"],
+          blockers: ["Ego involvement", "Withholding transparent communication"],
+          whyThisWindow: "Challenging transit aspects the 7th house of partnerships during this window.",
+          natalPromiseRelation: `Relationships hold a natal promise of ${promiseScore}/100. Patience and clear communication are key during this Bhukti.`,
+          suggestedActions: ["Communicate openly and early", "Resolve disagreements before they compound"],
+          thingsToAvoid: ["Suppressing concerns", "Making major relationship decisions in anger"],
+          confidenceContributors: conf.contributors,
+          drivers: ["7th house transit stress", "Saturn aspect challenges", "Communication house friction"]
+        };
+      }
+
+      default: {
+        const score = Math.max(50, Math.min(80, baseRisk));
+        return {
+          domain: "property" as any, type: "focus_area",
+          title: "Property & Domestic Obligations", score,
+          validationLabel: (score >= 85 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any,
+          why: "Domestic and property sectors face temporary stress requiring careful planning.",
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 30) * 24 * 60 * 60 * 1000),
+          potential: ["Unanticipated repair costs", "Domestic reorganization stress", "Property decision delays"],
+          mostLikelyManifestations: ["Home maintenance obligations", "Renovation cost overruns", "Tenancy or ownership disputes"],
+          possibleManifestations: ["Relocation friction", "Property title delays"],
+          blockers: ["Contractor reliability issues", "Legal documentation delays"],
+          whyThisWindow: "4th house domestic sector faces transit challenges during this window.",
+          natalPromiseRelation: `Property holds a natal promise of ${promiseScore}/100. Careful budgeting prevents unexpected domestic outflows.`,
+          suggestedActions: ["Budget for maintenance contingencies", "Verify all legal documents before committing"],
+          thingsToAvoid: ["Rushed property decisions", "Skipping due diligence"],
+          confidenceContributors: conf.contributors,
+          drivers: ["4th house stress transits", "Mars/Saturn domestic aspects", "Chaturthamsa D4 challenge"]
+        };
+      }
+    }
+  }
+
   static analyze(natal: NatalChart, dasha: any, now: Date = new Date()): FutureForecast[] {
-    const results: FutureForecast[] = [];
-    const lagnaSign = natal.lagna.sign;
     const mdLord = dasha?.stack?.mahadasha || "Saturn";
     const adLord = dasha?.stack?.antardasha || "Jupiter";
 
@@ -1704,113 +1744,164 @@ export class FutureRiskAnalyzer {
       return acc;
     }, {} as Record<string, number>);
 
-    // Risk 1: Financial Pressure & Cash Flow (Top Risk)
-    const financePromise = promiseMap["Wealth"] || 75;
-    const financeRiskScore = Math.max(55, Math.min(88, Math.round(65 + (75 - financePromise) * 0.3 + (adLord === "Saturn" || adLord === "Ketu" ? 10 : 0))));
-    const financeConf = ConfidenceEngine.calculate(mdLord, adLord, natal, financePromise);
-    
-    // Evaluate highly localized financial risk themes based on active planetary bhuktis
-    let riskTitle = "Financial Pressure (Salary delays & variable income)";
-    let mostLikelyManifestations = ["Temporary corporate accounts delays", "Variable client contract commission cycles", "Income timeline variability constraints"];
-    let possibleManifestations = ["Short-term liquid cash flow timing gaps", "Budget restructuring requirements"];
-    let blockers = ["Organizational administrative delays", "Client billing / invoice approval delays"];
-    
-    if (adLord === "Saturn" || adLord === "Ketu") {
-      riskTitle = "Financial Pressure (Family obligations & home expenses)";
-      mostLikelyManifestations = ["Family obligation allocations", "Domestic maintenance or renovation costs", "Home repair cash outflow obligations"];
-      possibleManifestations = ["Personal liquid capital consolidation", "Utility / property tax timing gaps"];
-      blockers = ["Ambiguous repair contractor estimates", "Unanticipated family domestic emergencies"];
-    } else if (adLord === "Rahu" || adLord === "Mars") {
-      riskTitle = "Financial Pressure (Speculation risk & asset volatility)";
-      mostLikelyManifestations = ["Speculative asset coordinate volatility", "Rushed financial allocation mistakes", "Asset portfolio value consolidations"];
-      possibleManifestations = ["Over-leveraged capital setbacks", "Short-term trading capital depletion"];
-      blockers = ["Speculative market coordinate shifts", "Impulsive day-trading decisions"];
-    }
+    // Select most stressed domains (lowest natal promise) as risk areas
+    const RISK_DOMAINS = ["Wealth", "Career", "Health", "Marriage", "Property"];
+    const stressedDomains = RISK_DOMAINS
+      .map(d => ({ domain: d, promise: promiseMap[d] || 70 }))
+      .sort((a, b) => a.promise - b.promise)  // lowest promise = most stressed
+      .slice(0, 3);
 
-    results.push({
-      domain: "finance",
-      type: "focus_area",
-      title: riskTitle,
-      score: financeRiskScore,
-      validationLabel: (financeRiskScore >= 85 ? "Very Strong" : financeRiskScore >= 70 ? "Strong" : "Moderate") as any,
-      why: "Transit alignments inside your financial sectors stimulate temporary liquidity consolidation requirements.",
-      start: now,
-      end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
-      peakStart: new Date(now.getTime() + 45 * 24 * 60 * 60 * 1000), // ~1.5 months in
-      peakEnd: new Date(now.getTime() + 75 * 24 * 60 * 60 * 1000),
-      potential: ["Unexpected domestic expenses", "Cash flow timing gaps", "Investment volatility risks", "Delayed commercial payments"],
-      mostLikelyManifestations,
-      possibleManifestations,
-      blockers,
-      whyThisWindow: "Active Antardasha lord transits activate the 12th house of expenditure, triggering peak liquid outflows.",
-      natalPromiseRelation: `Wealth is a supportive natal promise domain (${financePromise}/100) supported by Venus placements, which acts as a protective shield but requires defensive budgeting during active Dusthana bhuktis.`,
-      suggestedActions: ["Maintain a defensive cash buffer", "Review and document investment commitments carefully"],
-      thingsToAvoid: ["High-risk speculative investments", "Impulsive luxury debt purchases"],
-      confidenceContributors: financeConf.contributors,
-      drivers: ["Financial 8th/12th house stress transits", "Challenging Bhukti transit influences", "Weak divisional support"]
-    });
+    return stressedDomains.map((sd, rank) =>
+      FutureRiskAnalyzer.buildRiskItem(sd.domain, rank, mdLord, adLord, natal, sd.promise, now)
+    );
 
-    // Risk 2: Career Stabilization
-    const careerPromise = promiseMap["Career"] || 75;
-    const careerRiskScore = Math.max(50, Math.min(84, Math.round(62 + (75 - careerPromise) * 0.2 + (adLord === "Saturn" || adLord === "Rahu" ? 8 : 0))));
-    const careerConf = ConfidenceEngine.calculate(mdLord, adLord, natal, careerPromise);
-    results.push({
-      domain: "career",
-      type: "focus_area",
-      title: "Career Stabilization Constraints",
-      score: careerRiskScore,
-      validationLabel: (careerRiskScore >= 85 ? "Very Strong" : careerRiskScore >= 70 ? "Strong" : "Moderate") as any,
-      why: "Transit configurations of active planetary currents require defensive consolidation over premature expansion.",
-      start: now,
-      end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
-      peakStart: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-      peakEnd: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000),
-      potential: ["Workload expansion limits", "Corporate reorganization pressure", "Temporary team communication friction"],
-      mostLikelyManifestations: ["Workplace structural realignment mandates", "Defensive corporate posture constraints", "Delayed departmental project approvals"],
-      possibleManifestations: ["Minor team alignment struggles", "Administrative reorganization delays"],
-      blockers: ["Internal corporate politics", "Delayed leadership feedback cycles"],
-      whyThisWindow: "Transit Saturn aspects your Career sector while active Antardasha lord coordinates undergo a consolidation transit.",
-      natalPromiseRelation: `Career holds a supportive natal promise of ${careerPromise}/100, which protects long-term stability while requiring consolidation over expansion right now.`,
-      suggestedActions: ["Focus on structured task execution", "Keep transparent documentation of accomplishments"],
-      thingsToAvoid: ["Premature professional pivots", "Corporate debate involvement"],
-      confidenceContributors: careerConf.contributors,
-      drivers: ["Transit Saturn/Rahu aspect alignments", "Active Antardasha Lord limitations", "Corporate house tension"]
-    });
-
-    // Risk 3: Stress Management & Wellness (Health Focus Area)
-    const healthPromise = promiseMap["Health"] || 75;
-    const healthRiskScore = Math.max(50, Math.min(86, Math.round(60 + (75 - healthPromise) * 0.3 + (adLord === "Mars" || adLord === "Rahu" ? 12 : 2))));
-    const healthConf = ConfidenceEngine.calculate(mdLord, adLord, natal, healthPromise);
-    results.push({
-      domain: "health",
-      type: "focus_area",
-      title: "Wellness & Stress Restraints",
-      score: healthRiskScore,
-      validationLabel: (healthRiskScore >= 85 ? "Very Strong" : healthRiskScore >= 70 ? "Strong" : "Moderate") as any,
-      why: "Celestial transits emphasize preventive self-care. Focus on rest and routine consistency.",
-      start: now,
-      end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
-      peakStart: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
-      peakEnd: new Date(now.getTime() + 50 * 24 * 60 * 60 * 1000),
-      potential: ["Elevated stress potential", "Fatigue cycles due to workload", "Need for preventive routine care"],
-      mostLikelyManifestations: ["Stamina fluctuations due to elevated workload", "Mental fatigue from intense coordination cycles", "Need for dietary and rest routine consistency"],
-      possibleManifestations: ["Minor sleep pattern disruption", "Routine exercise time constraints"],
-      blockers: ["Ignoring fatigue signs", "Over-exerting beyond personal stamina boundaries"],
-      whyThisWindow: "Transit Mars moves through the 6th house of wellness, requiring proactive energy conservation.",
-      natalPromiseRelation: `Health parameters hold a supportive baseline score of ${healthPromise}/100, meaning consistency in self-care prevents temporary celestial exhaustion.`,
-      suggestedActions: ["Prioritize sleep hygiene cycles", "Incorporate gentle recovery exercises daily"],
-      thingsToAvoid: ["Ignoring fatigue symptoms", "Over-exertion beyond personal limits"],
-      confidenceContributors: healthConf.contributors,
-      drivers: ["6th house transit stress factors", "Antardasha Mars depletion", "Sun coordination shifts"]
-    });
-
-    return results;
   }
 }
 
 export class OpportunityAnalyzer {
+  private static domainToJournalType(domain: string): "career" | "finance" | "relationships" | "health" | "property" {
+    if (["Career", "Business", "Leadership", "Education"].includes(domain)) return "career";
+    if (domain === "Wealth") return "finance";
+    if (["Marriage", "Children", "Family"].includes(domain)) return "relationships";
+    if (domain === "Health") return "health";
+    return "property";
+  }
+
+  private static buildItem(
+    activationDomain: string,
+    journalType: "career" | "finance" | "relationships" | "health" | "property",
+    rank: number,
+    mdLord: string, adLord: string, natal: NatalChart, promiseScore: number,
+    now: Date
+  ): FutureForecast {
+    const peakOffset = [15, 25, 35][rank] ?? 20;
+    const conf = ConfidenceEngine.calculate(mdLord, adLord, natal, promiseScore);
+    let base = Math.round(65 + (promiseScore - 55) * 0.4);
+
+    switch (journalType) {
+      case "career": {
+        base += (["Jupiter", "Sun", "Mercury"].includes(adLord) || ["Jupiter", "Sun", "Mercury"].includes(mdLord)) ? 10 : 3;
+        const score = Math.max(60, Math.min(94, base));
+        const label = (score >= 90 ? "Exceptional" : score >= 80 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any;
+        return {
+          domain: "career", type: "opportunity",
+          title: "Career Growth & Promotion", score, validationLabel: label,
+          why: `${mdLord}–${adLord} Dasha activates your 10th house of profession, creating a window for visible growth.`,
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 45) * 24 * 60 * 60 * 1000),
+          potential: ["Promotion or role upscaling", "Increased executive visibility", "Leadership opportunities"],
+          mostLikelyManifestations: ["Increased responsibility and project ownership", "High-visibility leadership projects", "Management recognition"],
+          possibleManifestations: ["Promotion advancement milestones", "Lateral role upgrade with better mandate"],
+          blockers: ["Delayed departmental approvals", "Communication friction", "Internal politics"],
+          whyThisWindow: `${adLord} Antardasha activates the 10th house career sector with divisional D10 support.`,
+          natalPromiseRelation: `Career holds a natal promise of ${promiseScore}/100. Current Dasha actively amplifies this natal strength.`,
+          suggestedActions: ["Apply for higher responsibility", "Present strategic solutions proactively"],
+          thingsToAvoid: ["Remaining passive", "Hesitating to display expertise"],
+          confidenceContributors: conf.contributors,
+          drivers: ["Dasha Lord career support", "10th/11th House activations", "D10 Dasamsa confirmation"]
+        };
+      }
+
+      case "finance": {
+        base += (adLord === "Venus" || adLord === "Jupiter") ? 10 : 2;
+        const score = Math.max(60, Math.min(93, base));
+        const label = (score >= 90 ? "Exceptional" : score >= 80 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any;
+        return {
+          domain: "finance", type: "opportunity",
+          title: "Asset Expansion & Wealth Growth", score, validationLabel: label,
+          why: `Benefic forces in ${mdLord}–${adLord} Dasha support calculated wealth generation and capital accumulation.`,
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 45) * 24 * 60 * 60 * 1000),
+          potential: ["Calculated investment gains", "Secondary income setup", "Property or vehicle acquisition"],
+          mostLikelyManifestations: ["Long-term asset growth", "Strategic budget restructure success", "Stable portfolio expansion"],
+          possibleManifestations: ["Property purchase milestone", "Additional revenue channel"],
+          blockers: ["Lending without contracts", "High-risk trading", "Unplanned outflows"],
+          whyThisWindow: "Benefic transits across 2nd and 11th houses of accumulated gains, backed by Navamsa D9 support.",
+          natalPromiseRelation: `Wealth holds a natal promise of ${promiseScore}/100, protecting capital reserves during active investment windows.`,
+          suggestedActions: ["Review long-term wealth assets", "Establish structured savings plan"],
+          thingsToAvoid: ["Lending without contracts", "High-risk speculative trades"],
+          confidenceContributors: conf.contributors,
+          drivers: ["Benefic transit reinforcements", "2nd/11th house support", "Navamsa D9 alignment"]
+        };
+      }
+
+      case "relationships": {
+        base += (adLord === "Venus" || adLord === "Jupiter") ? 12 : 4;
+        const score = Math.max(60, Math.min(94, base));
+        const label = (score >= 90 ? "Exceptional" : score >= 80 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any;
+        return {
+          domain: "relationships", type: "opportunity",
+          title: "Harmony & Relational Wins", score, validationLabel: label,
+          why: `${mdLord}–${adLord} period activates relational sectors, supporting mutual understanding and collaborative steps.`,
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 45) * 24 * 60 * 60 * 1000),
+          potential: ["Relational bonding successes", "Improved family communication", "Productive alliances"],
+          mostLikelyManifestations: ["Clear family discussions", "Collaborative long-term planning", "Increased mutual support"],
+          possibleManifestations: ["Formal marriage or alliance discussions", "Commercial partnership consolidation"],
+          blockers: ["Minor ego clashes", "Withholding emotional communication", "External opinion pressure"],
+          whyThisWindow: "Venusian transits align with your D9 Navamsa relational houses, dissolving prior friction coordinates.",
+          natalPromiseRelation: `Relationships hold a natal promise of ${promiseScore}/100, providing emotional resilience for resolving friction.`,
+          suggestedActions: ["Dedicate quality time to family and partners", "Resolve historical tension patiently"],
+          thingsToAvoid: ["Ego clashes compounding", "Bottling constructive feedback"],
+          confidenceContributors: conf.contributors,
+          drivers: ["7th House lord aspect", "Transit Venus compatibility", "Navamsa D9 charts"]
+        };
+      }
+
+      case "health": {
+        base += (adLord === "Moon" || adLord === "Jupiter") ? 8 : 2;
+        const score = Math.max(60, Math.min(90, base));
+        const label = (score >= 85 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any;
+        return {
+          domain: "health", type: "opportunity",
+          title: "Vitality & Energy Renewal", score, validationLabel: label,
+          why: `${mdLord}–${adLord} Dasha favors health-restorative transits supporting stamina and consistent energy.`,
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 45) * 24 * 60 * 60 * 1000),
+          potential: ["Improved physical stamina", "Consistent energy levels", "Recovery from prior fatigue"],
+          mostLikelyManifestations: ["Sustained energy through daily routines", "Better sleep and recovery cycles", "Improved stress resilience"],
+          possibleManifestations: ["Meaningful fitness milestones", "Reduced health disruptions"],
+          blockers: ["Irregular routines", "Overcommitting without rest", "Skipping preventive care"],
+          whyThisWindow: "Benefic transits strengthen the ascendant lord and 6th house recovery sector during this window.",
+          natalPromiseRelation: `Health holds a natal promise of ${promiseScore}/100. This is a window to capitalize on vitality gains.`,
+          suggestedActions: ["Establish consistent sleep and exercise routines", "Prioritize restorative activities"],
+          thingsToAvoid: ["Ignoring fatigue signals", "Over-exerting beyond personal limits"],
+          confidenceContributors: conf.contributors,
+          drivers: ["Lagna lord strength", "6th house recovery transits", "Moon nakshatra support"]
+        };
+      }
+
+      default: {
+        base += (adLord === "Mars" || adLord === "Venus") ? 10 : 3;
+        const score = Math.max(60, Math.min(90, base));
+        const label = (score >= 85 ? "Very Strong" : score >= 70 ? "Strong" : "Moderate") as any;
+        return {
+          domain: "property" as any, type: "opportunity",
+          title: "Property & Real Estate Opportunity", score, validationLabel: label,
+          why: `${mdLord}–${adLord} Dasha activates 4th house domestic and property sectors.`,
+          start: now, end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+          peakStart: new Date(now.getTime() + peakOffset * 24 * 60 * 60 * 1000),
+          peakEnd: new Date(now.getTime() + (peakOffset + 45) * 24 * 60 * 60 * 1000),
+          potential: ["Property purchase or upgrade", "Domestic renovation", "Family home decisions"],
+          mostLikelyManifestations: ["Real estate purchase discussions", "Home improvement milestones", "Family domestic stability"],
+          possibleManifestations: ["Vehicle acquisition", "Relocation opportunity"],
+          blockers: ["Rushed purchase decisions", "Title or legal delays", "Renovation cost overruns"],
+          whyThisWindow: "Mars and Venus transits through the 4th house activate domestic and real estate opportunities.",
+          natalPromiseRelation: `Property holds a natal promise of ${promiseScore}/100, supporting productive domestic investment decisions.`,
+          suggestedActions: ["Research property options carefully", "Consult trusted advisors before committing"],
+          thingsToAvoid: ["Rushed purchase without due diligence", "Over-leveraging for property"],
+          confidenceContributors: conf.contributors,
+          drivers: ["4th House activation", "Mars/Venus transit support", "Chaturthamsa D4 confirmation"]
+        };
+      }
+    }
+  }
+
   static analyze(natal: NatalChart, dasha: any, now: Date = new Date()): FutureForecast[] {
-    const results: FutureForecast[] = [];
     const mdLord = dasha?.stack?.mahadasha || "Saturn";
     const adLord = dasha?.stack?.antardasha || "Jupiter";
 
@@ -1820,143 +1911,34 @@ export class OpportunityAnalyzer {
       return acc;
     }, {} as Record<string, number>);
 
-    // Opportunity 1: Career Expansion (Top Opportunity)
-    const careerPromise = promiseMap["Career"] || 75;
-    const careerOppScore = Math.round(68 + (careerPromise - 55) * 0.4 + (adLord === "Jupiter" || adLord === "Sun" || adLord === "Mercury" ? 14 : 4));
-    
-    // Evaluate five confirmations required to go above 90%
-    const hasNatalPromise = careerPromise >= 80;
-    const hasDashaSupport = ["Saturn", "Sun", "Mercury", "Jupiter"].includes(adLord) || ["Saturn", "Sun", "Mercury", "Jupiter"].includes(mdLord);
-    const hasTransitSupport = ["Jupiter", "Sun", "Mars"].includes(adLord) || natal.lagna.sign % 2 === 0;
+    // Rank all domains by chart activation, select top 3 distinct journal types
+    const OPPORTUNITY_DOMAINS = ["Career", "Wealth", "Marriage", "Property", "Health", "Business", "Education", "Children"];
+    const activations = LifeDomainActivationEngine.evaluate(mdLord, adLord, natal, promiseMap);
+    const ranked = activations
+      .filter(a => OPPORTUNITY_DOMAINS.includes(a.domain))
+      .sort((a, b) => b.score - a.score);
 
-    const d10Lord = getHouseLord(10, natal.lagna.sign);
-    const d10LordPlanet = natal.planets.find(p => p.name === d10Lord);
-    const d10Sign = d10LordPlanet ? getDasamsaSign(d10LordPlanet.longitude) : 1;
-    const hasDivisionalConfirmation = d10LordPlanet && (
-      getRuledSigns(d10Lord).includes(d10Sign) || d10Sign === getExaltedSign(d10Lord) || d10LordPlanet.strengthLevel === "Dominant"
-    );
-
-    const adLordPlanet = natal.planets.find(p => p.name === adLord);
-    const adD10Sign = adLordPlanet ? getDasamsaSign(adLordPlanet.longitude) : 1;
-    const hasDivisionalTransitSupport = adLordPlanet && (
-      getRuledSigns(adLord).includes(adD10Sign) || adD10Sign === getExaltedSign(adLord) || adLordPlanet.strengthLevel === "Supportive"
-    );
-
-    const confirmations = [
-      hasNatalPromise,
-      hasDashaSupport,
-      hasTransitSupport,
-      hasDivisionalConfirmation,
-      hasDivisionalTransitSupport
-    ];
-    const confirmationCount = confirmations.filter(Boolean).length;
-
-    let scoreVal = careerOppScore;
-    if (scoreVal >= 90 && confirmationCount < 4) {
-      scoreVal = 89; // Cap below 90% unless at least 4 confirmations are present
+    const results: FutureForecast[] = [];
+    const seenTypes = new Set<string>();
+    for (const a of ranked) {
+      const jType = OpportunityAnalyzer.domainToJournalType(a.domain);
+      if (!seenTypes.has(jType)) {
+        seenTypes.add(jType);
+        results.push(OpportunityAnalyzer.buildItem(a.domain, jType, results.length, mdLord, adLord, natal, promiseMap[a.domain] || 70, now));
+      }
+      if (results.length === 3) break;
     }
 
-    const finalCareerScore = Math.max(60, Math.min(96, scoreVal));
-    const careerLabel = (
-      finalCareerScore >= 93 ? "Exceptional" :
-      finalCareerScore >= 85 ? "Very Strong" :
-      finalCareerScore >= 70 ? "Strong" :
-      finalCareerScore >= 60 ? "Moderate" : "Weak"
-    ) as any;
-
-    const careerConf = ConfidenceEngine.calculate(mdLord, adLord, natal, careerPromise);
-    results.push({
-      domain: "career",
-      type: "opportunity",
-      title: "Career Growth & Promotion",
-      score: finalCareerScore,
-      validationLabel: careerLabel,
-      why: "Auspicious planetary currents align inside professional houses to support long-term role expansion.",
-      start: now,
-      end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
-      peakStart: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000),
-      peakEnd: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000),
-      potential: ["Promotion or role upscaling", "Increased executive visibility", "Leadership opportunities", "Professional public recognition"],
-      mostLikelyManifestations: ["Increased responsibility and project ownership", "High-visibility leadership projects", "Executive and management recognition"],
-      possibleManifestations: ["Promotion advancement milestones", "Supportive lateral job change options"],
-      blockers: ["Delayed departmental approvals", "Communication and reporting friction", "Internal organizational politics", "Administrative transition delays"],
-      whyThisWindow: "Dasha activation is strongest with active Jupiter support, triggering a career-house transit peak and D10 divisional confirmations.",
-      natalPromiseRelation: `Career is a strong natal promise domain (${careerPromise}/100) with supporting planetary transits. The current period actively amplifies these existing structural chart strengths.`,
-      suggestedActions: ["Apply for higher-responsibility professional pivots", "Present strategic solutions proactively"],
-      thingsToAvoid: ["Remaining passive during administrative discussions", "Hesitating to display expertise"],
-      confidenceContributors: careerConf.contributors,
-      drivers: ["Dasha Lord career support", "10th/11th House activations", "Divisional D10 Dasamsa confirmation"]
-    });
-
-    // Opportunity 2: Asset Expansion & Investments
-    const wealthPromise = promiseMap["Wealth"] || 75;
-    const wealthOppScore = Math.round(66 + (wealthPromise - 55) * 0.3 + (adLord === "Venus" || adLord === "Jupiter" ? 12 : 2));
-    const finalWealthScore = Math.max(60, Math.min(94, wealthOppScore));
-    const wealthLabel = (
-      finalWealthScore >= 93 ? "Exceptional" :
-      finalWealthScore >= 85 ? "Very Strong" :
-      finalWealthScore >= 70 ? "Strong" :
-      finalWealthScore >= 60 ? "Moderate" : "Weak"
-    ) as any;
-
-    const wealthConf = ConfidenceEngine.calculate(mdLord, adLord, natal, wealthPromise);
-    results.push({
-      domain: "finance",
-      type: "opportunity",
-      title: "Asset Expansion & Investments",
-      score: finalWealthScore,
-      validationLabel: wealthLabel,
-      why: "Benefic forces support calculated wealth generation and strategic capital accumulation.",
-      start: now,
-      end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
-      peakStart: new Date(now.getTime() + 25 * 24 * 60 * 60 * 1000),
-      peakEnd: new Date(now.getTime() + 55 * 24 * 60 * 60 * 1000),
-      potential: ["Calculated investment gains", "Secondary income setups", "Property/Vehicle acquisition milestones"],
-      mostLikelyManifestations: ["Calculated long-term asset growth", "Strategic budget restructure success", "Stable portfolio value expansion"],
-      possibleManifestations: ["Property/Vehicle purchase milestone", "Additional secondary revenue channel generation"],
-      blockers: ["Lending capital without contracts", "High-risk day-trading temptation", "Unplanned domestic outflow obligations"],
-      whyThisWindow: "Benefic Venusian transits transit your 2nd and 11th houses of accumulated gains, backed by D9 Navamsa support.",
-      natalPromiseRelation: `Wealth is a stable and supportive natal promise domain (${wealthPromise}/100) protecting your capital reserves during proactive investment windows.`,
-      suggestedActions: ["Investigate long-term wealth assets", "Establish solid budgets to increase active savings"],
-      thingsToAvoid: ["Lending money without contract guarantees", "High-risk trading setups"],
-      confidenceContributors: wealthConf.contributors,
-      drivers: ["Benefic transit reinforcements", "2nd/11th Lord house support", "Navamsa D9 wealth alignment"]
-    });
-
-    // Opportunity 3: Relational Harmony & Alliances
-    const marriagePromise = promiseMap["Marriage"] || 75;
-    const relOppScore = Math.round(65 + (marriagePromise - 55) * 0.4 + (adLord === "Venus" || adLord === "Jupiter" ? 15 : 5));
-    const finalRelScore = Math.max(60, Math.min(95, relOppScore));
-    const relLabel = (
-      finalRelScore >= 93 ? "Exceptional" :
-      finalRelScore >= 85 ? "Very Strong" :
-      finalRelScore >= 70 ? "Strong" :
-      finalRelScore >= 60 ? "Moderate" : "Weak"
-    ) as any;
-
-    const relConf = ConfidenceEngine.calculate(mdLord, adLord, natal, marriagePromise);
-    results.push({
-      domain: "relationships",
-      type: "opportunity",
-      title: "Harmony & Relational Wins",
-      score: finalRelScore,
-      validationLabel: relLabel,
-      why: "Venusian transits across relational sectors stimulate mutual understanding and collaborative steps.",
-      start: now,
-      end: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
-      peakStart: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-      peakEnd: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000),
-      potential: ["Relational bonding successes", "Improved family communication flow", "Productive commercial alliances"],
-      mostLikelyManifestations: ["Clear and constructive family discussions", "Collaborative long-term relational planning", "Increased mutual support and agreements"],
-      possibleManifestations: ["Formal marriage or alliance discussions", "Commercial alliance consolidation"],
-      blockers: ["Unnecessary minor ego clashes", "Withholding clear emotional communication", "External familial opinion pressure"],
-      whyThisWindow: "Auspicious Venusian transits align with your D9 Navamsa relational houses, dissolving previous friction coordinates.",
-      natalPromiseRelation: `Relationships hold a baseline natal promise of ${marriagePromise}/100, which provides emotional resilience and supports resolving historical friction.`,
-      suggestedActions: ["Dedicate quality hours to family and partners", "Resolve historical friction points patiently"],
-      thingsToAvoid: ["Allowing minor ego clashes to compound", "Bottling up constructive feedback"],
-      confidenceContributors: relConf.contributors,
-      drivers: ["7th House lord aspect support", "Transit Venus compatibility", "Auspicious Navamsa D9 charts"]
-    });
+    // Fill remaining slots if chart didn't yield 3 distinct types
+    const fallback: Array<"career" | "finance" | "relationships"> = ["career", "finance", "relationships"];
+    for (const fb of fallback) {
+      if (results.length >= 3) break;
+      if (!seenTypes.has(fb)) {
+        seenTypes.add(fb);
+        const key = fb === "career" ? "Career" : fb === "finance" ? "Wealth" : "Marriage";
+        results.push(OpportunityAnalyzer.buildItem(key, fb, results.length, mdLord, adLord, natal, promiseMap[key] || 70, now));
+      }
+    }
 
     return results;
   }
@@ -2093,10 +2075,6 @@ export class OneThingToWatchCalculator {
 
 export class SixMonthOutlookCalculator {
   static calculate(opps: FutureForecast[], risks: FutureForecast[]): OutlookItem[] {
-    const careerOpp = opps.find(o => o.domain === "career");
-    const financeRisk = risks.find(r => r.domain === "finance");
-    const relOpp = opps.find(o => o.domain === "relationships");
-
     const getConfLabel = (score: number) => {
       if (score >= 85) return "Very Strong";
       if (score >= 70) return "Strong";
@@ -2104,29 +2082,49 @@ export class SixMonthOutlookCalculator {
       return "Weak";
     };
 
-    return [
-      {
-        title: "Career Progression",
-        confidence: getConfLabel(careerOpp?.score || 81) as any,
-        probability: careerOpp?.score || 81,
-        manifestations: ["Promotion", "Job change", "Leadership opportunity"],
-        peak: "Sep–Oct"
-      },
-      {
-        title: "Financial Caution",
-        confidence: getConfLabel(financeRisk?.score || 64) as any,
-        probability: financeRisk?.score || 64,
-        manifestations: ["Unexpected expenses", "Investment risk", "Defensive cash allocation"],
-        peak: "Aug–Sep"
-      },
-      {
-        title: "Relationship Stabilization",
-        confidence: getConfLabel(relOpp?.score || 76) as any,
-        probability: relOpp?.score || 76,
-        manifestations: ["Improved family dynamics", "Marriage discussions", "Important partnership"],
-        peak: "Oct–Nov"
-      }
-    ];
+    const peakLabel = (start?: Date, end?: Date): string => {
+      if (!start) return "Coming months";
+      const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "short" });
+      const s = fmt(start);
+      const e = end ? fmt(end) : "";
+      return s === e || !e ? s : `${s}–${e}`;
+    };
+
+    // Build items from whatever top opportunity and risk domains the chart produced
+    const items: OutlookItem[] = [];
+    const topOpp = opps[0];
+    const topRisk = risks[0];
+    const secondOpp = opps.find(o => o.domain !== topOpp?.domain);
+
+    if (topOpp) {
+      items.push({
+        title: topOpp.title,
+        confidence: getConfLabel(topOpp.score) as any,
+        probability: topOpp.score,
+        manifestations: topOpp.mostLikelyManifestations?.slice(0, 3) || topOpp.potential?.slice(0, 3) || [],
+        peak: peakLabel(topOpp.peakStart, topOpp.peakEnd)
+      });
+    }
+    if (topRisk) {
+      items.push({
+        title: topRisk.title,
+        confidence: getConfLabel(topRisk.score) as any,
+        probability: topRisk.score,
+        manifestations: topRisk.mostLikelyManifestations?.slice(0, 3) || topRisk.potential?.slice(0, 3) || [],
+        peak: peakLabel(topRisk.peakStart, topRisk.peakEnd)
+      });
+    }
+    if (secondOpp) {
+      items.push({
+        title: secondOpp.title,
+        confidence: getConfLabel(secondOpp.score) as any,
+        probability: secondOpp.score,
+        manifestations: secondOpp.mostLikelyManifestations?.slice(0, 3) || secondOpp.potential?.slice(0, 3) || [],
+        peak: peakLabel(secondOpp.peakStart, secondOpp.peakEnd)
+      });
+    }
+
+    return items;
   }
 }
 
@@ -2251,10 +2249,54 @@ export class LifeScoreCalculator {
 // 7. PREDICTION JOURNAL SERVICE
 // ----------------------------------------------------
 export class PredictionJournalService {
-  static async syncUpcomingForecasts(userId: string, natal: NatalChart, dasha: any) {
-    const months = ["June 2026", "July 2026", "August 2026"];
-    const domains: ("career" | "finance" | "relationships" | "health")[] = ["career", "finance", "relationships", "health"];
+  // Generate next N month labels from today, e.g. ["July 2026", "August 2026", "September 2026"]
+  private static nextMonths(n: number): string[] {
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 1; i <= n; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      months.push(d.toLocaleDateString("en-US", { month: "long", year: "numeric" }));
+    }
+    return months;
+  }
 
+  // Map internal domain names from LifeDomainActivationEngine to journal domain types
+  private static toJournalDomain(domain: string): "career" | "finance" | "relationships" | "health" {
+    if (["Career", "Business", "Leadership", "Education"].includes(domain)) return "career";
+    if (["Wealth", "Property"].includes(domain)) return "finance";
+    if (["Marriage", "Children", "Family"].includes(domain)) return "relationships";
+    if (domain === "Health") return "health";
+    return "career";
+  }
+
+  // Domain-specific prediction templates using active MD/AD context
+  private static buildPrediction(domain: "career" | "finance" | "relationships" | "health", mdLord: string, adLord: string, month: string): { title: string; predictionText: string } {
+    const md = mdLord, ad = adLord;
+    switch (domain) {
+      case "career":
+        return {
+          title: "Career Advancement Window",
+          predictionText: `During ${month}, the active ${md}–${ad} Dasha combination activates your 10th house of profession. This is a window for taking on higher visibility, applying for advancement, or securing a meaningful mandate expansion. Focus on demonstrating capability rather than waiting to be noticed.`
+        };
+      case "finance":
+        return {
+          title: "Financial Growth & Consolidation",
+          predictionText: `During ${month}, ${ad} Antardasha activates your 2nd and 11th house sectors. This supports calculated wealth growth — structured savings, investment review, and reducing unnecessary outflows. Avoid impulsive financial decisions. A structured approach yields the most during this period.`
+        };
+      case "relationships":
+        return {
+          title: "Relational Harmony Window",
+          predictionText: `During ${month}, the ${md}–${ad} period activates your 7th house of partnership. Communication with close family and partners flows more easily. This is a good time to resolve lingering tensions, deepen commitments, or initiate important relationship conversations you have been postponing.`
+        };
+      case "health":
+        return {
+          title: "Wellness & Energy Focus",
+          predictionText: `During ${month}, planetary transits through your health sectors call for proactive self-care. Energy levels may fluctuate — prioritize rest, consistent routines, and preventive care. This is not a period to push through fatigue. Small consistent habits compound significantly during this window.`
+        };
+    }
+  }
+
+  static async syncUpcomingForecasts(userId: string, natal: NatalChart, dasha: any) {
     const existingCount = await prisma.lifeInsightPredictionJournal.count({
       where: { userId }
     });
@@ -2275,28 +2317,37 @@ export class PredictionJournalService {
       return acc;
     }, {} as Record<string, number>);
 
+    // Rank domains by actual chart activation, pick top 3 distinct journal domains
+    const POSITIVE_DOMAINS = ["Career", "Wealth", "Marriage", "Health", "Business", "Property", "Education", "Leadership", "Children"];
+    const activations = LifeDomainActivationEngine.evaluate(mdLord, adLord, natal, promiseMap);
+    const rankedDomains = activations
+      .filter(a => POSITIVE_DOMAINS.includes(a.domain))
+      .sort((a, b) => b.score - a.score);
+
+    // Pick top 3 ensuring distinct journal domain types
+    const months = PredictionJournalService.nextMonths(3);
+    const selectedDomains: ("career" | "finance" | "relationships" | "health")[] = [];
+    for (const a of rankedDomains) {
+      const jd = PredictionJournalService.toJournalDomain(a.domain);
+      if (!selectedDomains.includes(jd)) selectedDomains.push(jd);
+      if (selectedDomains.length === 3) break;
+    }
+    // Fill remaining slots if needed
+    const fallback: ("career" | "finance" | "relationships" | "health")[] = ["career", "finance", "relationships", "health"];
+    for (const fd of fallback) {
+      if (selectedDomains.length >= 3) break;
+      if (!selectedDomains.includes(fd)) selectedDomains.push(fd);
+    }
+
     const newEntries = [];
     for (let i = 0; i < months.length; i++) {
       const month = months[i];
-      const domain = domains[i % domains.length];
+      const domain = selectedDomains[i];
+      const { title, predictionText } = PredictionJournalService.buildPrediction(domain, mdLord, adLord, month);
 
-      let title = "";
-      let predictionText = "";
-      if (domain === "career") {
-        title = "Career Expansion Pivot";
-        predictionText = "Favorable planetary transits trigger long-term growth. An optimal window for leadership steps or promotions.";
-      } else if (domain === "finance") {
-        title = "Financial Consolidation Step";
-        predictionText = "Focus on asset accumulation and safe budget layouts. Avoid speculative shortcuts or impulsive lending.";
-      } else if (domain === "relationships") {
-        title = "Relationship Rapport Window";
-        predictionText = "Venusian aspects favor deep communication and partnership stability. Favorable for resolving familial discussions.";
-      } else {
-        title = "Wellness & Recovery Focus";
-        predictionText = "Preventive care transits are active. Focus on restorative sleep cycles and consistent health habits.";
-      }
-
-      const conf = ConfidenceEngine.calculate(mdLord, adLord, natal, promiseMap["Career"]);
+      // Use domain-specific promise score for accurate confidence
+      const domainPromiseKey = domain === "career" ? "Career" : domain === "finance" ? "Wealth" : domain === "relationships" ? "Marriage" : "Health";
+      const conf = ConfidenceEngine.calculate(mdLord, adLord, natal, promiseMap[domainPromiseKey] || 65);
 
       const entry = await prisma.lifeInsightPredictionJournal.create({
         data: {
@@ -2348,17 +2399,18 @@ export class FeedbackCollector {
     });
   }
 
-  static async getValidationRates(userId: string) {
+  static async getValidationRates(userId: string): Promise<Record<string, number | null>> {
     const feedbacks = await prisma.lifeInsightFeedback.findMany({
       where: { userId }
     });
 
-    const rates: Record<string, number> = {
-      career: 80,
-      finance: 72,
-      relationships: 68,
-      property: 75,
-      overall: 74
+    // Return null for all domains when there is no feedback yet — honest, not fake
+    const rates: Record<string, number | null> = {
+      career: null,
+      finance: null,
+      relationships: null,
+      property: null,
+      overall: null
     };
 
     if (feedbacks.length === 0) {
@@ -2424,7 +2476,7 @@ export class LifeInsightsService {
     // B. Past Timeline Events — run raw analysis then consolidate into life chapters
     const rawTimelineEvents = HistoricalPeriodAnalyzer.analyze(chart, timeline, birthDate);
     const consolidatedEvents = NarrativeConsolidationEngine.consolidate(rawTimelineEvents);
-    const timelineEvents = ChapterMeaningEngine.enrich(consolidatedEvents);
+    const timelineEvents = ChapterMeaningEngine.enrich(consolidatedEvents, birthDate);
 
     // Dynamic major years — scan consolidated chapters (not raw Antardasha periods)
     const majorYearsSet = new Set<number>();
