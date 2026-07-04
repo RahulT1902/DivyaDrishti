@@ -12,6 +12,7 @@ import { buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
 import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
 import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
 import { buildV5Prompt } from "@/lib/intelligence/v5/promptBuilder";
+import { NatalPromiseAnalyzer, LifeDomainActivationEngine } from "@/lib/intelligence/lifeInsights/services";
 
 export async function POST(req: NextRequest) {
   try {
@@ -160,6 +161,48 @@ export async function POST(req: NextRequest) {
         topRisks = getTopRisks(bodyRiskProfile, 3);
       }
 
+      // ── Vedic Chart-Specific Context ─────────────────────────────────────
+      // Compute genuine per-user astrological facts from the natal chart.
+      // These differ between users and make the LLM response chart-specific.
+      const CHAT_TO_VEDIC: Record<string, string> = {
+        career: "Career", finance: "Wealth", relationship: "Marriage",
+        family: "Marriage", health: "Health", business: "Business",
+        education: "Education", spirituality: "Spirituality", general: "Career"
+      };
+      const vedaDomainKey = CHAT_TO_VEDIC[targetDomain] || "Career";
+      const mdLordVedic = temporal?.stack?.mahadasha || "Saturn";
+      const adLordVedic = temporal?.stack?.antardasha || "Jupiter";
+
+      const natalPromises = NatalPromiseAnalyzer.evaluate(chart as any);
+      const promiseMapVedic = natalPromises.reduce((acc, p) => { acc[p.domain] = p.score; return acc; }, {} as Record<string, number>);
+      const domainPromise = natalPromises.find(p => p.domain === vedaDomainKey);
+      const activations = LifeDomainActivationEngine.evaluate(mdLordVedic, adLordVedic, chart as any, promiseMapVedic);
+      const domainActivation = activations.find(a => a.domain === vedaDomainKey) || activations.sort((a, b) => b.score - a.score)[0];
+
+      // Build a concise kundali context string the LLM will narrate from
+      let kundaliContext = "";
+      if (domainPromise) {
+        const supportingFacts = domainPromise.supporting.slice(0, 3).map(s => `  • ${s}`).join("\n");
+        const weakeningFacts = domainPromise.weakening.slice(0, 2).map(s => `  • ${s}`).join("\n");
+        const activationLine = domainActivation
+          ? `\nCURRENT ACTIVATION   : ${domainActivation.score}/100 — ${domainActivation.score >= 80 ? "Strongly active" : domainActivation.score >= 65 ? "Active" : domainActivation.score >= 50 ? "Moderately active" : "Subdued"}`
+          : "";
+        kundaliContext = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KUNDALI-SPECIFIC READING (this is unique to this person's chart — use these facts, never generic ones)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMAIN ASSESSED      : ${vedaDomainKey}
+NATAL PROMISE SCORE  : ${domainPromise.potential}/100 (${domainPromise.confidenceLabel})${activationLine}
+CHART INTERPRETATION : ${domainPromise.interpretation}
+CONFIDENCE BASIS     : ${domainPromise.confidenceReason}
+
+WHAT SUPPORTS THIS PERSON IN ${vedaDomainKey.toUpperCase()}:
+${supportingFacts || "  • Chart analysis in progress"}
+${weakeningFacts ? `\nWHAT CREATES FRICTION OR CAUTION:\n${weakeningFacts}` : ""}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These facts are computed from this person's actual birth chart. A different person would see different scores and reasons. Do NOT use generic phrases that would apply to anyone — use the specific scores, interpretation, and supporting factors above as the backbone of your answer.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+      }
+
       // ── V5 Pipeline ───────────────────────────────────────────────────────
       // Layer 1: Rich intent classification
       let richIntent = classifyQuestion(question, targetDomain);
@@ -205,6 +248,7 @@ export async function POST(req: NextRequest) {
         moonTransitNote,
         topRisks: topRisks.length > 0 ? topRisks : undefined,
         bodyRiskProfile: bodyRiskProfile ? (bodyRiskProfile as unknown as Record<string, number>) : undefined,
+        kundaliContext: kundaliContext || undefined,
       });
 
       try {

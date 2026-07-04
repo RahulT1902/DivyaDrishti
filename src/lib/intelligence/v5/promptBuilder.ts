@@ -29,7 +29,8 @@ export interface V5PromptParams {
   todayLabel: string;
   moonTransitNote: string;
   topRisks?: Array<{ system: string; score: number }>;
-  bodyRiskProfile?: Record<string, number>; // full profile for health status computation
+  bodyRiskProfile?: Record<string, number>;
+  kundaliContext?: string; // chart-specific Vedic reading unique to this user
 }
 
 // ─── Block builders ────────────────────────────────────────────────────────────
@@ -368,7 +369,7 @@ export function buildV5Prompt(params: V5PromptParams): string {
     question, richIntent, brief,
     lagnaSignName, natalMoonSignName, dashaStack,
     transitSummary, conversationHistory,
-    todayLabel, moonTransitNote, topRisks, bodyRiskProfile,
+    todayLabel, moonTransitNote, topRisks, bodyRiskProfile, kundaliContext,
   } = params;
 
   // Select opening mode now that we have the brief (hasBothForces is known)
@@ -432,7 +433,7 @@ Mahadasha: ${dashaStack.mahadasha} | Antardasha: ${dashaStack.antardasha}${dasha
 Current Planetary Positions (by house from Lagna):
 ${transitSummary}
 
-${healthBlock}${briefBlock}
+${kundaliContext ? kundaliContext + "\n\n" : ""}${healthBlock}${briefBlock}
 
 ${historyBlock}
 ${probabilityBlock}${timingBlock}
