@@ -12,6 +12,7 @@ export type QuestionType =
   | "decision"         // "Should I resign?" "Should I invest?"
   | "explanation"      // "Why am I not getting recognition?"
   | "planet_inquiry"   // "Which planet is helping me?"
+  | "body_parts"       // "Which body parts will be affected?" — list areas first
   | "challenge"        // "Why is nothing working?" (premise needs gentle examination)
   | "general";
 
@@ -105,7 +106,7 @@ function extractTimeframe(q: string): { key: string; label: string } {
 }
 
 // Detect follow-up questions: short, no strong domain keyword, references continuation
-function detectFollowUp(q: string, domain: string): boolean {
+function detectFollowUp(q: string, _domain: string): boolean {
   const hasDomainKeyword = /career|job|promot|salary|hike|health|body|finance|money|income|relationship|marriage|family|business|education|spirituality/i.test(q);
   const isShort = q.trim().split(/\s+/).length <= 12;
   const startsLikeContinuation = /^(how about|what about|and (in|for|about)|but (what|how)|so (in|for|what)|tell me more|what if|going forward|in that case|ok (so|but)|what (are|is) (my|the))/i.test(q.trim());
@@ -140,7 +141,7 @@ export function classifyQuestion(
   if (P.probability.test(q))       questionType = "probability";
   else if (P.challenge.test(q))    questionType = "challenge";
   else if (P.timing.test(q))       questionType = "timing";
-  else if (P.body_parts.test(q))   questionType = "planet_inquiry"; // reuses list-style response structure
+  else if (P.body_parts.test(q))   questionType = "body_parts";
   else if (P.planet.test(q))       questionType = "planet_inquiry";
   else if (P.decision.test(q))     questionType = "decision";
   else if (P.explanation.test(q))  questionType = "explanation";

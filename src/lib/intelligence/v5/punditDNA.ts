@@ -186,6 +186,11 @@ After the astrological explanation, provide the practical, human takeaway — wh
 Begin with a reframe: "You are asking which planet is helping you. What I think is more useful is understanding what FORCE or THEME is most active in your life right now."
 Then name the planet and explain what it is creating in their life — not in the sky.`,
 
+  body_parts:
+    `This is a BODY PARTS question. The user wants to know WHICH SPECIFIC AREAS of the body need attention today.
+Do NOT restate the question. Do NOT open with planets or general health themes.
+Name the top 3 body areas directly in your very first sentence, then explain each briefly.`,
+
   challenge:
     `This is a CHALLENGE question — the user is asking why something isn't working.
 Gently examine the premise. The chart may show a timing issue, a visibility gap, or a phase requirement rather than an external block.

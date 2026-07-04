@@ -286,6 +286,21 @@ Then follow this order:
   5. How to work with this energy
   6. Pundit's Closing Thought`,
 
+  body_parts: `MANDATORY STRUCTURE — BODY PARTS QUESTION:
+Do NOT open with planetary context. Do NOT restate the question. Do NOT give a general health overview first.
+Your VERY FIRST SENTENCE must name the specific body areas directly.
+
+Example CORRECT opening: "Today, the areas most worth watching are your lower back, eyes, and digestive system."
+Example WRONG opening: "What I think is more worth exploring is how planetary influences..." ← FORBIDDEN
+
+Then follow this order:
+  1. NAME the top 3 body areas directly (first sentence — no preamble)
+  2. For each area: one sentence on what the person may notice or feel today
+  3. Why — brief astrological reason in plain experience-based language (no house numbers, no raw planet names)
+  4. One practical care suggestion
+  5. Pundit's Closing Thought — specific to physical wellbeing, not life advice
+LENGTH: 180–250 words. Precise and direct.`,
+
   general_status: `STRUCTURE: Observation first → The story unfolding → What the user may experience → Why → Guidance → Pundit's Closing Thought
 LENGTH: 300–380 words.`,
 };
