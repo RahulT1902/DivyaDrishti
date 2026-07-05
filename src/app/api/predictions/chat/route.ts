@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
-import { 
-  getNakshatra, 
-  getBalanceYears, 
-  buildMahadashaTimeline, 
-  getCurrentDasha 
+import {
+  getNakshatra,
+  getBalanceYears,
+  buildMahadashaTimeline,
+  getCurrentDasha
 } from "@/lib/astrology/dasha";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
 import { Intent, IntentDomain } from "@/lib/intelligence/types";
@@ -72,9 +72,9 @@ export async function POST(req: NextRequest) {
 
     // 4. Generate DeepInsight JSON
     const insight = generateNarrative(
-      intent, 
-      timeframe as any, 
-      chart, 
+      intent,
+      timeframe as any,
+      chart,
       { stack: currentDasha, transits: transits.positions }
     );
 
@@ -234,7 +234,7 @@ Your response MUST adhere strictly to the following Vedic-Financial Consult 5.0 
 - If the chart shows severe friction or if the user is in distress, do not attempt to sugar-coat the reality or find a silver lining. Be comfortable leaving interpretations stark or blunt.
 
 2. THE HIGH-FIDELITY VEDIC-FINANCIAL CONSULTATIVE REPORT BLUEPRINT:
-- When a user asks about career/financial recovery, timelines, or general astrological guidance, deliver a **masterfully detailed, deeply personalized, and beautifully spaced Jyotish Consultative Report** that sounds natural like a wise Pundit-strategist. 
+- When a user asks about career/financial recovery, timelines, or general astrological guidance, deliver a **masterfully detailed, deeply personalized, and beautifully spaced Jyotish Consultative Report** that sounds natural like a wise Pundit-strategist.
 - You MUST completely hide framework seams, structural placeholders, or sterile corporate terminology (avoid clinical words like "Paragraph 1", "Strategic Risk Window", "Psychological Layer", "Invisible Friction" - manifest all these concepts implicitly).
 - **ABSOLUTE BAN ON ALPHABETICAL/CLINICAL HEADINGS**: Never use letters or numbers to prefix headings (do NOT write "A. Holistic...", "B. Multi-Phase..."). Banish formal blueprint titles in favor of warm, human-understandable, and Pundit-like headings:
   * Instead of "Holistic Chart Signature & Diagnosis" -> Use: "What Your Chart is Saying Right Now" or "The Story in Your Chart".
@@ -326,7 +326,7 @@ ${JSON.stringify(insight, null, 2)}`;
         answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "AI gateway timeout."}\n\n[Deterministic Fallback]: ${insight.heroInsight}\n\n${insight.realityTranslation}`;
       }
     }
-    
+
     chatResponseText = answerText;
 
     // 6. Save conversation to database

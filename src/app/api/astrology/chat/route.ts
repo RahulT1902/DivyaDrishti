@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Intent Extraction
     const extractedIntent = extractIntent(question);
-    
+
     // Determine domain — fall back to history scan when current question is ambiguous
     let targetDomain = forcedDomain || extractedIntent.domain;
     if (!targetDomain || targetDomain === "general") {
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       }
     }
     targetDomain = targetDomain || "general";
-    
+
     // Map extracted timeframe or timing query to corresponding API timeframes
     let targetTimeframe = "this-week";
     if (forcedTimeframe) {
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     } else if (extractedIntent.timeframe === "year") {
       targetTimeframe = "this-year";
     } else if (
-      extractedIntent.type === "timing" || 
+      extractedIntent.type === "timing" ||
       /when|clear|expect|month|year|date|future|timeline/i.test(question)
     ) {
       // For general timing questions, expand scope to month or year to allow broader forecast horizons
@@ -102,13 +102,13 @@ export async function POST(req: NextRequest) {
 
     const moon = chart.planets.find(p => p.name === "Moon");
     if (!moon) throw new Error("Moon data required");
-    
+
     const nakshatra = getNakshatra(moon.longitude);
     const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
     const timeline = buildMahadashaTimeline(birthDetails.dateOfBirth, nakshatra.lord, balance);
     const temporal = getDashaContext(timeline, new Date());
     const currentTransits = await calculateCurrentTransits();
-    
+
     // 4. Intelligence Logic
     const narrative = generateNarrative(intent as any, targetTimeframe as any, chart, {
       ...temporal,

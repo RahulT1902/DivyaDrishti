@@ -13,6 +13,7 @@ import {
   getNakshatra,
   type Period,
 } from "@/lib/astrology/dasha";
+import { callAI, hasAnyProvider } from "@/lib/ai/provider";
 
 type Domain = "career" | "finance" | "health" | "relationships" | "growth" | "mind";
 type Timeframe = "today" | "this-week" | "this-month" | "this-year";
@@ -258,6 +259,54 @@ export async function GET(req: NextRequest) {
       dashaContext,
       mode
     );
+
+    // ── LLM Narrative Enrichment ─────────────────────────────────────────────
+    // Use Gemini (primary) / DeepSeek (fallback) to generate a rich, personalised
+    // narrative that replaces the hardcoded template text.
+    if (hasAnyProvider()) {
+      const lagnaSign = getSignName(chart.lagna.sign);
+      const satHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Saturn");
+      const jupHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Jupiter");
+      const rahuHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Rahu");
+      const moonHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Moon");
+      const md = dashaContext.md.planet;
+      const ad = dashaContext.ad.planet;
+      const pd = dashaContext.pd.planet;
+      const score = predictions.detailedReport?.finalVerdict?.content?.match(/([\d.]+) \/ 10/)?.[1] || "?";
+
+      const llmPrompt = `You are DivyaDrishti, an elite Vedic Astrology Intelligence Engine and wise strategic advisor. 
+Generate a deeply personalised, richly detailed ${timeframe.replace("-", " ")} ${domain} prediction for ${user.name ?? "the user"}.
+
+Chart Context:
+- Lagna (Ascendant): ${lagnaSign}
+- Active Dasha: ${md} Mahadasha → ${ad} Antardasha → ${pd} Pratyantar
+- Saturn transit: House ${satHouse ?? "unknown"}
+- Jupiter transit: House ${jupHouse ?? "unknown"}
+- Rahu transit: House ${rahuHouse ?? "unknown"}
+- Moon transit: House ${moonHouse ?? "unknown"}
+- Domain strength score: ${score}/10
+- Language mode: ${mode === "PANDIT" ? "Hindi/Hinglish (Pundit style)" : "Simple English"}
+
+Base guidance from deterministic engine:
+${predictions.narrative}
+
+IMPORTANT RULES:
+- Speak as a wise Jyotish Pundit-advisor, NOT as an AI system. Never mention JSON, data, API, or system.
+- Make the reading feel deeply personal to THIS specific chart combination — not generic.
+- Reference actual planetary positions (e.g. "With Saturn in the ${satHouse}th house and Jupiter moving through the ${jupHouse}th...").
+- ${mode === "PANDIT" ? "Write in warm Hindi/Hinglish Pundit style — conversational, grounded, wise. Mix Hindi phrases naturally." : "Write in clear, grounded, conversational English. Avoid jargon."}
+- Keep length: 3-5 rich paragraphs. No bullet points in the narrative — flowing prose only.
+- Do NOT repeat the base guidance word for word. Expand, personalise, and deepen it.
+- End with one memorable closing line (no heading needed).`;
+
+      try {
+        const { text } = await callAI({ prompt: llmPrompt, temperature: 0.82 });
+        predictions.narrative = text;
+      } catch (llmErr) {
+        // LLM failed — keep deterministic narrative as is
+        console.warn("[predictions/analyze] LLM enrichment failed, using deterministic narrative:", llmErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,
