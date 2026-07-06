@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Target, Briefcase, Wallet, Heart, Activity, Sparkles, ArrowRight, ArrowLeft, Loader2, Shield, Zap, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 type Timeframe = "today" | "this-week" | "this-month" | "year";
 type Domain = "career" | "finance" | "health" | "relationships" | "general";
@@ -216,7 +217,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
       const tf = period === "year" ? "this-year" : period;
       const dm = domain === "general" ? "growth" : domain;
       const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
-      const res = await fetch(`/api/predictions/analyze?timeframe=${tf}&domain=${dm}&mode=${currentMode}&email=${encodeURIComponent(userEmail)}`);
+      const res = await authFetch(`/api/predictions/analyze?timeframe=${tf}&domain=${dm}&mode=${currentMode}`);
       const data = await res.json();
       if (data.success) {
         setDetailedData(data.predictions);

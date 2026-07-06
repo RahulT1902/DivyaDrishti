@@ -18,7 +18,7 @@ function HeaderRight() {
           text: isHindi ? 'लॉग आउट' : 'Log Out',
           style: 'destructive',
           onPress: async () => {
-            await AsyncStorage.multiRemove(['divya:loggedIn', 'divya:userEmail']);
+            await AsyncStorage.multiRemove(['divya:loggedIn', 'divya:userEmail', 'divya:token']);
             router.replace('/login');
           },
         },

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
@@ -51,9 +52,7 @@ export async function GET(req: NextRequest) {
     };
     const timeframe = timeframeParam as Timeframe;
 
-    const emailParam = searchParams.get("email") || "";
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (emailParam || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
 
     // 1. Get User by email (or fall back to most recent for backward compat)
     const user = await prisma.user.findFirst({

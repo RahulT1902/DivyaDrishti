@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Brain, TrendingUp, Sparkles, Loader2, Info } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface ReflectionHistoryItem {
   id: string;
@@ -23,7 +24,7 @@ export default function WeeklyRhythmPage({ chartData, user }: { chartData?: any;
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/reflections/history?email=${encodeURIComponent(user.email)}`);
+      const res = await authFetch("/api/reflections/history");
       const data = await res.json();
       if (data.success) {
         setHistory(data.history || []);

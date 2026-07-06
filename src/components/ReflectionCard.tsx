@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Lock, Unlock, Save, CheckCircle, RefreshCw, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface Props {
   userEmail: string;
@@ -56,7 +57,7 @@ export default function ReflectionCard({ userEmail, themeMode }: Props) {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/reflections?email=${encodeURIComponent(userEmail)}`);
+      const res = await authFetch("/api/reflections");
       const data = await res.json();
       
       if (data.success && data.reflection) {

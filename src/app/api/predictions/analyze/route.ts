@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import {
@@ -196,9 +197,7 @@ export async function GET(req: NextRequest) {
     const domain = (searchParams.get("domain") as Domain) || "career";
     const mode = normalizeOutputMode(searchParams.get("mode"));
 
-    const emailParam = searchParams.get("email") || "";
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (emailParam || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
 
     const user = await prisma.user.findFirst({
       where: userEmail ? { email: userEmail } : undefined,
@@ -265,10 +264,10 @@ export async function GET(req: NextRequest) {
     // narrative that replaces the hardcoded template text.
     if (hasAnyProvider()) {
       const lagnaSign = getSignName(chart.lagna.sign);
-      const satHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Saturn");
-      const jupHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Jupiter");
-      const rahuHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Rahu");
-      const moonHouse = getTransitHouseForEnrich(currentTransits, chart.lagna.sign, "Moon");
+      const satHouse = getTransitHouse(currentTransits, chart.lagna.sign, "Saturn");
+      const jupHouse = getTransitHouse(currentTransits, chart.lagna.sign, "Jupiter");
+      const rahuHouse = getTransitHouse(currentTransits, chart.lagna.sign, "Rahu");
+      const moonHouse = getTransitHouse(currentTransits, chart.lagna.sign, "Moon");
       const md = dashaContext.md.planet;
       const ad = dashaContext.ad.planet;
       const pd = dashaContext.pd.planet;

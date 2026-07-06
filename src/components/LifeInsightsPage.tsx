@@ -26,6 +26,7 @@ import {
   Copy
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface UserProps {
   user: {
@@ -66,7 +67,7 @@ export default function LifeInsightsPage({ user }: UserProps) {
   const fetchPayload = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/life-insights?email=${encodeURIComponent(user.email)}`);
+      const res = await authFetch("/api/life-insights");
       const data = await res.json();
       if (data.success && data.data) {
         setPayload(data.data);

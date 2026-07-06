@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Zap, ChevronDown, ChevronUp, Loader2, Sparkles, Star, Navigation } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface TransitEffect {
   planet: string; symbol: string; sign: string; house: number;
@@ -291,7 +292,7 @@ export default function TransitsPage({ chartData }: { chartData?: any }) {
     setLoading(true);
     try {
       const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
-      const res = await fetch(`/api/predictions/analyze?timeframe=this-month&domain=growth&mode=${apiMode}&email=${encodeURIComponent(userEmail)}`);
+      const res = await authFetch(`/api/predictions/analyze?timeframe=this-month&domain=growth&mode=${apiMode}`);
       const data = await res.json();
       if (data.success && data.predictions?.lifeDomainPredictions) {
         setDomains(data.predictions.lifeDomainPredictions);

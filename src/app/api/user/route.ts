@@ -2,12 +2,12 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 
 export async function GET(req: NextRequest) {
   try {
-    const emailParam = req.nextUrl.searchParams.get("email");
-    const emailHeader = req.headers.get("x-user-email");
-    const email = (emailParam || emailHeader || "").trim().toLowerCase();
+    const authUser = getAuthUser(req);
+    const email = authUser?.email ?? "";
 
     const user = await prisma.user.findFirst({
       where: email ? { email } : undefined,
@@ -43,10 +43,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const emailHeader = req.headers.get("x-user-email");
+    const authUser = getAuthUser(req);
     const body = await req.json();
     const { name, date: dateStr, time, latitude, longitude, timezone } = body;
-    const email = (body.email || emailHeader || "").trim().toLowerCase();
+    const email = authUser?.email || (body.email || "").trim().toLowerCase();
 
     if (!email) {
       return NextResponse.json(

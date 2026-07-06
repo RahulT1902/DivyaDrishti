@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const email = searchParams.get("email") || req.headers.get("x-user-email");
+    const email = getAuthUser(req)?.email || "";
 
     if (!email) {
       return NextResponse.json({ success: false, error: "Missing email" }, { status: 400 });
