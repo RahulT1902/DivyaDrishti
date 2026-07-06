@@ -16,6 +16,7 @@ import PlanetsDetailsPage from "./PlanetsDetailsPage";
 import WeeklyRhythmPage from "./WeeklyRhythmPage";
 import LifeInsightsPage from "./LifeInsightsPage";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 type Tab = "daily" | "home" | "kundali" | "transit" | "dasha" | "predictions" | "planets" | "chat" | "remedies" | "weekly" | "life-insights";
 
@@ -30,8 +31,7 @@ export default function DashboardHub({ user }: { user: any }) {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const emailQuery = user?.email ? `?email=${encodeURIComponent(user.email)}` : "";
-      const res = await fetch(`/api/astrology/chart${emailQuery}`);
+      const res = await authFetch("/api/astrology/chart");
       const result = await res.json();
       if (result.success && result.data) {
         setData(result.data);

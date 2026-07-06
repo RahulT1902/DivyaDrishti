@@ -45,8 +45,25 @@ const DOMAINS: { id: Domain; label: string; sub: string; icon: any }[] = [
 ];
 
 
+/** Derive the highest-opportunity domain from chart data for the "PEAK" badge. */
+function getTopActiveDomain(chartData: any): Domain | null {
+  const domains: Array<{ id: Domain; score: number }> = [];
+  const di = chartData?.domainIntelligence;
+  if (!di) return null;
+  const list: any[] = Array.isArray(di) ? di : Object.values(di);
+  for (const item of list) {
+    if (item?.domain && typeof item.opportunityLevel === "number") {
+      domains.push({ id: item.domain as Domain, score: item.opportunityLevel });
+    }
+  }
+  if (domains.length === 0) return null;
+  domains.sort((a, b) => b.score - a.score);
+  return domains[0].score >= 6 ? domains[0].id : null;
+}
+
 export default function PredictionsPage({ chartData }: { chartData?: any }) {
   const { isHindi, mode: globalMode } = useLanguage();
+  const topActiveDomain = getTopActiveDomain(chartData);
   const [step, setStep] = useState<"period" | "domain" | "result">("period");
   const [period, setPeriod] = useState<Timeframe | null>(null);
   const [domain, setDomain] = useState<Domain | null>(null);
@@ -416,23 +433,36 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
             <button onClick={() => setStep("period")} className={`flex items-center gap-2 text-[10px] text-amber-600 uppercase font-bold hover:text-amber-800 transition-colors ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>
               <ArrowLeft className="w-3 h-3" /> {isHindi ? `समय-सीमा बदलें (${period === "this-week" ? "यह सप्ताह" : period === "this-month" ? "मासिक" : period === "today" ? "आज" : "वार्षिक"})` : `Change Period (${period?.toUpperCase()})`}
             </button>
+            {topActiveDomain && (
+              <p className="text-[10px] text-amber-700/60 uppercase tracking-widest font-bold pb-1 border-b border-amber-100">
+                {isHindi ? "✦ ग्रहों के अनुसार सर्वाधिक सक्रिय क्षेत्र नीचे दर्शाया गया है" : "✦ Most active life area according to your current planetary cycles"}
+              </p>
+            )}
             {DOMAINS.map(d => {
               const Icon = d.icon;
-              const domainLabel = isHindi 
-                ? (d.id === "career" ? "कर्म एवं आजीविका" : d.id === "finance" ? "धन एवं समृद्धि" : d.id === "health" ? "स्वास्थ्य एवं ऊर्जा" : d.id === "relationships" ? "पारस्परिक संबंध" : "सामान्य जीवन प्रवाह") 
+              const isTop = d.id === topActiveDomain;
+              const domainLabel = isHindi
+                ? (d.id === "career" ? "कर्म एवं आजीविका" : d.id === "finance" ? "धन एवं समृद्धि" : d.id === "health" ? "स्वास्थ्य एवं ऊर्जा" : d.id === "relationships" ? "पारस्परिक संबंध" : "सामान्य जीवन प्रवाह")
                 : d.label;
-              const domainSub = isHindi 
-                ? (d.id === "career" ? "कार्यक्षेत्र एवं महत्वाकांक्षा" : d.id === "finance" ? "वैभव एवं स्थिरता" : d.id === "health" ? "दैहिक जुड़ाव एवं प्राण" : d.id === "relationships" ? "स्नेह एवं पारिवारिक संबंध" : "जीवन का समग्र प्रवाह") 
+              const domainSub = isHindi
+                ? (d.id === "career" ? "कार्यक्षेत्र एवं महत्वाकांक्षा" : d.id === "finance" ? "वैभव एवं स्थिरता" : d.id === "health" ? "दैहिक जुड़ाव एवं प्राण" : d.id === "relationships" ? "स्नेह एवं पारिवारिक संबंध" : "जीवन का समग्र प्रवाह")
                 : d.sub;
               return (
                 <button key={d.id} onClick={() => selectDomain(d.id)}
-                  className="w-full p-5 bg-white border border-[#F1E7D0] rounded-2xl flex items-center justify-between hover:border-amber-400 hover:shadow-md transition-all group shadow-sm">
+                  className={`w-full p-5 bg-white rounded-2xl flex items-center justify-between hover:border-amber-400 hover:shadow-md transition-all group shadow-sm border ${isTop ? "border-amber-400 ring-1 ring-amber-400/30" : "border-[#F1E7D0]"}`}>
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                    <div className={`w-11 h-11 rounded-xl border flex items-center justify-center group-hover:bg-amber-100 transition-colors ${isTop ? "bg-amber-100 border-amber-300" : "bg-amber-50 border-amber-100"}`}>
                       <Icon className="w-5 h-5 text-amber-600" />
                     </div>
                     <div className="text-left">
-                      <p className="text-base font-serif font-semibold text-amber-900">{domainLabel}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-base font-serif font-semibold text-amber-900">{domainLabel}</p>
+                        {isTop && (
+                          <span className="text-[8px] bg-amber-500 text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest">
+                            {isHindi ? "सक्रिय" : "PEAK"}
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-[10px] text-amber-700/40 uppercase ${isHindi ? 'tracking-normal text-xs' : 'tracking-widest'}`}>{domainSub}</p>
                     </div>
                   </div>
