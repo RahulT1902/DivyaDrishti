@@ -292,6 +292,9 @@ export default function LoginScreen() {
         </TouchableOpacity>
 
         <Text style={styles.footerText}>Vedic wisdom, modern intelligence.</Text>
+        <Text style={[styles.footerText, { fontSize: 10, marginTop: 4 }]}>
+          By signing up you agree to our Terms of Service and Privacy Policy
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

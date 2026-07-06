@@ -178,6 +178,12 @@ export default function LoginPage() {
         <p className="text-center text-xs text-amber-700/30 mt-6">
           Vedic wisdom, modern intelligence.
         </p>
+        <p className="text-center text-[10px] text-amber-700/40 mt-2">
+          By signing up you agree to our{" "}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-600">Terms of Service</a>
+          {" "}and{" "}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-600">Privacy Policy</a>
+        </p>
       </motion.div>
     </div>
   );
