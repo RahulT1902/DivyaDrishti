@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
+import { computePanchang } from "@/lib/astrology/panchang";
 import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
@@ -149,9 +150,34 @@ export async function POST(req: NextRequest) {
       const moonNakshatraName = moonTransit
         ? NAKSHATRAS[Math.min(26, Math.floor((moonTransit.longitude % 360) / (360 / 27)))]
         : null;
+      // Panchang context — Tithi, Yoga, Rahu Kaal derived from current transit positions
+      let panchangNote = "";
+      try {
+        const now = new Date();
+        const todayStr = now.toISOString().split("T")[0];
+        const sunPos = currentTransits.positions.find(p => p.name === "Sun");
+        const moonPos = currentTransits.positions.find(p => p.name === "Moon");
+        if (sunPos && moonPos) {
+          const panchangData = computePanchang({
+            sunLongitude: sunPos.longitude,
+            moonLongitude: moonPos.longitude,
+            date: todayStr,
+            lat: Number(birthDetails.latitude),
+            lng: Number(birthDetails.longitude),
+            timezone: birthDetails.timezone || "Asia/Kolkata",
+          });
+          const rahuKaal = panchangData.rahuKaal
+            ? `, Rahu Kaal ${panchangData.rahuKaal.start}–${panchangData.rahuKaal.end}`
+            : "";
+          panchangNote = `\nPanchang: Tithi ${panchangData.tithi} | Yoga ${panchangData.yoga}${rahuKaal}`;
+        }
+      } catch {
+        // Panchang is enrichment — don't block the chat on failure
+      }
+
       const moonTransitNote = moonSignName
-        ? `\nToday's Moon: ${moonSignName} at ${moonDeg}°${moonNakshatraName ? `, Nakshatra ${moonNakshatraName}` : ""}`
-        : "";
+        ? `\nToday's Moon: ${moonSignName} at ${moonDeg}°${moonNakshatraName ? `, Nakshatra ${moonNakshatraName}` : ""}${panchangNote}`
+        : panchangNote;
 
       // ── Body Risk Profile (health domain only) ───────────────────────────
       let bodyRiskProfile: BodyRiskProfile | null = null;
