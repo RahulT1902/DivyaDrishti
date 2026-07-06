@@ -18,115 +18,60 @@ export default function WeeklyRhythmPage({ chartData, user }: { chartData?: any;
   const { isHindi } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<ReflectionHistoryItem[]>([]);
+  const [panchang, setPanchang] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchHistory = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await authFetch("/api/reflections/history");
-      const data = await res.json();
-      if (data.success) {
-        setHistory(data.history || []);
-      } else {
-        throw new Error(data.error || "Failed to load reflection history");
-      }
+      const [historyRes, panchangRes] = await Promise.all([
+        authFetch("/api/reflections/history"),
+        authFetch("/api/panchang/today"),
+      ]);
+      const historyData = await historyRes.json();
+      const panchangData = await panchangRes.json();
+      if (historyData.success) setHistory(historyData.history || []);
+      if (panchangData.success) setPanchang(panchangData.panchang);
     } catch (err: any) {
-      console.error("Error loading weekly rhythm history:", err);
-      setError(err.message || "Failed to fetch somatic correlation history.");
+      console.error("Error loading weekly rhythm:", err);
+      setError(err.message || "Failed to fetch weekly rhythm data.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user?.email) {
-      fetchHistory();
-    }
-  }, [user?.email]);
+    fetchData();
+  }, []);
 
   // Generate last 7 calendar days starting from 6 days ago up to today
   const getCalendarDays = () => {
     const days = [];
-    const weekdays = isHindi 
+    const weekdays = isHindi
       ? ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"]
       : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    
-    // Vedic friendly transits mock-mapped based on natal Moon or general transits
-    const mockVedicTransits = [
-      { 
-        moonSign: isHindi ? "वृषभ" : "Taurus", 
-        speed: isHindi ? "द्रुत एवं सामंजस्यपूर्ण" : "Swift & Harmonious", 
-        score: 85, 
-        transitName: isHindi ? "चंद्र उच्च स्थिति" : "Moon in Exaltation", 
-        nature: "SUPPORTIVE" 
-      },
-      { 
-        moonSign: isHindi ? "मिथुन" : "Gemini", 
-        speed: isHindi ? "द्रुत एवं संचारात्मक" : "Swift & Communicative", 
-        score: 78, 
-        transitName: isHindi ? "बुध सक्रियता" : "Mercury Activity", 
-        nature: "SUPPORTIVE" 
-      },
-      { 
-        moonSign: isHindi ? "कर्क" : "Cancer", 
-        speed: isHindi ? "मध्यम रूप से केंद्रित" : "Moderately Centering", 
-        score: 72, 
-        transitName: isHindi ? "चंद्र स्वराशि" : "Moon in Home Sign", 
-        nature: "GROUNDING" 
-      },
-      { 
-        moonSign: isHindi ? "सिंह" : "Leo", 
-        speed: isHindi ? "द्रुत एवं अभिव्यक्तिशील" : "Swift & Expressive", 
-        score: 80, 
-        transitName: isHindi ? "सूर्य युति" : "Sun Conjunction", 
-        nature: "SUPPORTIVE" 
-      },
-      { 
-        moonSign: isHindi ? "कन्या" : "Virgo", 
-        speed: isHindi ? "विचारशील एवं विश्लेषणात्मक" : "Deliberate & Analytical", 
-        score: 65, 
-        transitName: isHindi ? "शनि दृष्टि" : "Saturn Aspect", 
-        nature: "SENSITIVE" 
-      },
-      { 
-        moonSign: isHindi ? "तुला" : "Libra", 
-        speed: isHindi ? "संतुलित एवं सामाजिक" : "Symmetric & Social", 
-        score: 82, 
-        transitName: isHindi ? "शुक्र त्रिकोण" : "Venus Trine", 
-        nature: "SUPPORTIVE" 
-      },
-      { 
-        moonSign: isHindi ? "वृश्चिक" : "Scorpio", 
-        speed: isHindi ? "मन्द एवं गहन स्थिरता दायक" : "Slow & Deeply Grounding", 
-        score: 55, 
-        transitName: isHindi ? "मंगल/राहु प्रवाह" : "Mars/Rahu Current", 
-        nature: "SENSITIVE" 
-      },
-    ];
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       d.setUTCHours(0, 0, 0, 0);
 
-      // Find if we have a real reflection for this date
       const realLog = history.find(item => {
         const itemDate = new Date(item.date);
         itemDate.setUTCHours(0, 0, 0, 0);
         return itemDate.getTime() === d.getTime();
       });
 
-      // Use deterministic index for mock transits based on date
-      const transitIdx = d.getDate() % 7;
-      const transit = mockVedicTransits[transitIdx];
+      // Real Panchang data available only for today
+      const todayPanchang = i === 0 ? panchang : null;
 
       days.push({
         dateObject: d,
         dayLabel: weekdays[d.getDay()],
         dayNum: d.getDate(),
-        transit,
-        log: realLog || null
+        panchang: todayPanchang,
+        log: realLog || null,
       });
     }
     return days;
@@ -241,13 +186,6 @@ export default function WeeklyRhythmPage({ chartData, user }: { chartData?: any;
           <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
             {days.map((day, idx) => {
               const isToday = idx === 6;
-              
-              // Colors for transits
-              const transitColor = day.transit.nature === "SUPPORTIVE" 
-                ? "border-emerald-200 text-emerald-800 bg-emerald-50/50" 
-                : day.transit.nature === "GROUNDING" 
-                  ? "border-amber-200 text-amber-800 bg-amber-50/50" 
-                  : "border-rose-200 text-rose-800 bg-rose-50/50";
 
               return (
                 <div
@@ -269,18 +207,26 @@ export default function WeeklyRhythmPage({ chartData, user }: { chartData?: any;
                     )}
                   </div>
 
-                  {/* Transit Element */}
-                  <div className={`p-2.5 rounded-xl border text-[10px] font-sans ${transitColor}`}>
-                    <span className="font-bold block text-[9px] uppercase tracking-wider mb-0.5">
-                      {day.transit.moonSign}
-                    </span>
-                    <span className="block font-medium leading-tight opacity-90">
-                      {day.transit.speed}
-                    </span>
-                    <span className="block text-[8px] font-bold mt-1 uppercase tracking-widest text-right opacity-60">
-                      {day.transit.score}% {isHindi ? "अंक" : "score"}
-                    </span>
-                  </div>
+                  {/* Panchang / Transit — real data for today, archived label for past */}
+                  {day.panchang ? (
+                    <div className="p-2.5 rounded-xl border text-[10px] font-sans border-emerald-200 text-emerald-800 bg-emerald-50/50">
+                      <span className="font-bold block text-[9px] uppercase tracking-wider mb-0.5">
+                        {day.panchang.nakshatra?.name ?? (isHindi ? "नक्षत्र" : "Nakshatra")}
+                      </span>
+                      <span className="block font-medium leading-tight opacity-90">
+                        {day.panchang.tithi?.name ?? ""}
+                      </span>
+                      {day.panchang.yoga?.name && (
+                        <span className="block text-[8px] font-bold mt-1 uppercase tracking-widest text-right opacity-60">
+                          {day.panchang.yoga.name}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl border text-[10px] font-sans border-[#F1E7D0] text-[#3F2D1D]/40 bg-[#F8F5EF]/60 text-center italic">
+                      {isHindi ? "गोचर डेटा अनुपलब्ध" : "Transit archived"}
+                    </div>
+                  )}
 
                   {/* Reflection Log Correlation */}
                   <div className="border-t border-[#F1E7D0]/60 pt-3 space-y-2">

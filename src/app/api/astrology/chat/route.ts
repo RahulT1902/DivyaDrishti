@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
@@ -16,7 +17,7 @@ import { NatalPromiseAnalyzer, LifeDomainActivationEngine } from "@/lib/intellig
 
 export async function POST(req: NextRequest) {
   try {
-    const { question, domain: forcedDomain, timeframe: forcedTimeframe, email: bodyEmail, conversationHistory } = await req.json();
+    const { question, domain: forcedDomain, timeframe: forcedTimeframe, conversationHistory } = await req.json();
     const history: Array<{ role: 'user' | 'assistant'; content: string }> = Array.isArray(conversationHistory)
       ? conversationHistory.map((m: any) => ({
           role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
@@ -28,8 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Get User Context
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (bodyEmail || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
 
     const user = await prisma.user.findFirst({
       where: userEmail ? { email: userEmail } : undefined,

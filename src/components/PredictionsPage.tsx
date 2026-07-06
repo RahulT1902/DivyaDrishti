@@ -44,39 +44,6 @@ const DOMAINS: { id: Domain; label: string; sub: string; icon: any }[] = [
   { id: "general", label: "General", sub: "Overall Life Flow", icon: Sparkles },
 ];
 
-// Static mock predictions per domain
-const MOCK_PREDICTIONS: Record<Domain, Record<Timeframe, { headline: string; summary: string; dos: string[]; donts: string[]; verdict: string }>> = {
-  career: {
-    today: { headline: "Saturn favours steady, methodical work today.", summary: "Avoid rushing into new decisions. Your discipline today plants seeds for next month's harvest. Communication with seniors could open a door.", dos: ["Complete pending tasks before starting new ones", "Have a one-on-one with a mentor or senior"], donts: ["Avoid reactive decisions under pressure", "Don't overcommit to new deadlines"], verdict: "Low action day. Consolidate what you have." },
-    "this-week": { headline: "A structurally significant week for professional growth.", summary: "Jupiter's aspect on your 10th house brings quiet recognition. A conversation mid-week could plant seeds for a major opportunity in 30 days.", dos: ["Document your recent achievements", "Schedule a senior-level meeting this week"], donts: ["Avoid impulsive career pivots", "Don't make financial commitments without clarity"], verdict: "Medium action. Plan and position, don't execute yet." },
-    "this-month": { headline: "October is your most strategically important month.", summary: "Saturn rewards all the groundwork laid since June. A major project or role clarification is likely. Discipline in the first two weeks unlocks the opportunity in the last two.", dos: ["Finalise long-pending proposals", "Build systems, not just outputs"], donts: ["Avoid ego conflicts with authority figures", "Don't scatter focus across too many projects"], verdict: "High action month. This is the window to consolidate gains." },
-    year: { headline: "The Saturn Mahadasha is rewriting your professional foundations.", summary: "2025–2026 is not about speed — it's about depth. The careers and reputations built this year will sustain you for the next decade. Favour specialisation over breadth.", dos: ["Invest in one deep skill", "Take on roles with long-term equity, not just short-term pay"], donts: ["Avoid frequent job-hopping", "Don't ignore health for professional targets"], verdict: "Foundational year. Build structures that last." },
-  },
-  finance: {
-    today: { headline: "Conservative financial day — avoid impulsive spending.", summary: "Moon's position suggests emotional spending tendencies today. Review your budget and hold on large commitments.", dos: ["Review monthly expenses", "Transfer to savings if possible"], donts: ["Avoid major purchases", "Don't take financial advice from unreliable sources"], verdict: "Hold position. Nothing urgent today." },
-    "this-week": { headline: "Financial clarity improves mid-week.", summary: "A pending receivable or income confirmation is likely by Thursday. Keep your documentation ready.", dos: ["Follow up on pending payments", "Audit subscriptions and recurring costs"], donts: ["Avoid lending money this week", "Don't make speculative investments"], verdict: "Cautiously optimistic. Receive before you deploy." },
-    "this-month": { headline: "Strong month for budgeting and wealth building.", summary: "Jupiter supports income stability while Saturn keeps spending disciplined. Ideal month to start a SIP or close a long-pending financial plan.", dos: ["Start or increase a systematic investment", "Consult a financial advisor for annual planning"], donts: ["Avoid high-risk speculations", "Don't delay tax planning any further"], verdict: "Action month for financial systems. Build, don't gamble." },
-    year: { headline: "Wealth accumulation phase — slow but certain.", summary: "This year favours conservative, compounding strategies. Real estate or long-term equity will outperform speculative plays. Avoid leverage.", dos: ["Max out tax-saving instruments", "Build a 6-month emergency fund"], donts: ["Avoid crypto or highly speculative assets", "Don't co-sign loans for others"], verdict: "Conservative wealth-building year. Patience pays." },
-  },
-  health: {
-    today: { headline: "Low energy possible — prioritise rest.", summary: "Moon in Taurus suggests a slower, more embodied day. Don't push through exhaustion. Hydration and grounding activities help.", dos: ["Take a 20-minute walk outdoors", "Prioritise 7-8 hours of sleep tonight"], donts: ["Avoid heavy late-night meals", "Don't skip meals or over-caffeinate"], verdict: "Rest and restore. Don't override your body today." },
-    "this-week": { headline: "Build sustainable health habits this week.", summary: "Saturn's discipline energy supports forming new routines. A habit started this week is likely to stick. Focus on consistency over intensity.", dos: ["Start a morning routine (even 15 minutes)", "Add one wholesome meal to your day"], donts: ["Avoid skipping exercise to catch up on work", "Don't neglect mental health signals"], verdict: "Foundation week for health. Start small, stay consistent." },
-    "this-month": { headline: "Monthly health check-in recommended.", summary: "With Saturn active, joints, bones, and chronic conditions need attention. A doctor visit for a routine check-up is well-timed this month.", dos: ["Schedule a health check-up", "Add a Vitamin D and B12 supplement check"], donts: ["Avoid ignoring persistent aches", "Don't delay dental or eye care"], verdict: "Preventive care month. Catch issues early." },
-    year: { headline: "Structural health maintenance year.", summary: "Saturn's influence asks you to treat your body like a long-term asset. Invest in sleep, posture, and stress management. Ignore vanity metrics, fix the foundations.", dos: ["Build a consistent sleep schedule", "Explore yoga or strength training as lifetime habits"], donts: ["Avoid fad diets or extreme fitness regimes", "Don't neglect mental health as performance pressures increase"], verdict: "Vitality investment year. Your body needs discipline, not punishment." },
-  },
-  relationships: {
-    today: { headline: "Emotional warmth available — receive it gracefully.", summary: "Moon in Taurus brings a stable, nurturing energy to close relationships today. A heart-to-heart conversation will feel natural.", dos: ["Spend quality time with a close person", "Express appreciation to someone you often take for granted"], donts: ["Avoid unnecessary arguments or defensiveness", "Don't bring up old grievances today"], verdict: "Nurturing day. Give and receive warmth." },
-    "this-week": { headline: "Communication in relationships gets clearer.", summary: "Mercury's position supports honest, clear communication. If you've been delaying a difficult conversation, this week is the right time.", dos: ["Have the conversation you've been avoiding", "Listen more than you speak in conflicts"], donts: ["Avoid passive-aggressive behaviour", "Don't make relationship decisions when emotionally triggered"], verdict: "Clarity week. Communicate what matters." },
-    "this-month": { headline: "Relationship reflection month — not action month.", summary: "Saturn asks you to evaluate what's sustainable in your personal relationships. Quality over quantity. Who genuinely supports your growth?", dos: ["Invest time in relationships that feel mutual", "Set healthy boundaries where you feel drained"], donts: ["Avoid people-pleasing at your own expense", "Don't make permanent relationship decisions in haste"], verdict: "Evaluation month. Prune gently, nurture what matters." },
-    year: { headline: "Long-term relationship bonds deepen or clarify.", summary: "Saturn's presence tests the authenticity of bonds. Superficial connections fall away; meaningful ones solidify. A year for loyalty and depth.", dos: ["Invest in a few deep relationships", "For couples: build shared goals and rituals"], donts: ["Avoid entering new relationships out of loneliness", "Don't neglect your primary relationship for work"], verdict: "Depth over breadth year. Real bonds strengthen under Saturn." },
-  },
-  general: {
-    today: { headline: "A grounded, introspective day.", summary: "Today favours reflection over action. Your intuition is sharp — use it to assess situations rather than react to them.", dos: ["Meditate or journal for 10 minutes", "Review your current priorities honestly"], donts: ["Avoid major decisions under emotional pressure", "Don't compare your timeline to others"], verdict: "Observe and prepare. Clarity before action." },
-    "this-week": { headline: "Productive week with moderate energy.", summary: "A balanced week — good for steady progress on existing commitments rather than new launches. Mid-week brings good problem-solving energy.", dos: ["Focus on completing tasks already in progress", "Connect with a mentor or guide"], donts: ["Avoid impulsive commitments", "Don't overload your schedule"], verdict: "Steady progress week. Finish before you start." },
-    "this-month": { headline: "A pivotal month in your Saturn journey.", summary: "This month consolidates the work of the last three. Expect one clarity breakthrough and one unexpected challenge. Both are part of the same growth arc.", dos: ["Maintain your routines even when motivation dips", "Document insights — they're valuable now"], donts: ["Avoid shortcuts that compromise long-term goals", "Don't let one hard week derail the whole month"], verdict: "Consolidation month. Stay steady through the dip." },
-    year: { headline: "A defining year of foundation-building.", summary: "2025 is not about peak moments — it's about roots. The decisions made quietly this year will echo for the next decade. Focus on depth, discipline, and authenticity.", dos: ["Build one major habit or skill this year", "Simplify your life — fewer commitments, deeper execution"], donts: ["Avoid chasing external validation", "Don't sacrifice health or relationships for ambition"], verdict: "Root year. Grow down before you grow up." },
-  },
-};
 
 export default function PredictionsPage({ chartData }: { chartData?: any }) {
   const { isHindi, mode: globalMode } = useLanguage();
@@ -125,9 +92,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
     try {
       const tf = period === "year" ? "this-year" : period;
       const dm = d === "general" ? "growth" : d;
-      const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
-      const fetchUrl = `/api/predictions/analyze?timeframe=${tf}&domain=${dm}&mode=${globalMode}&email=${encodeURIComponent(userEmail)}`;
-      const res = await fetch(fetchUrl);
+      const res = await authFetch(`/api/predictions/analyze?timeframe=${tf}&domain=${dm}&mode=${globalMode}`);
       const data = await res.json();
       if (data.success) {
         setDetailedData(data.predictions);
@@ -167,15 +132,12 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
     setChatLoading(true);
 
     try {
-      const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
-      const res = await fetch("/api/astrology/chat", {
+      const res = await authFetch("/api/astrology/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: text,
           domain: domain,
           timeframe: period === "year" ? "this-year" : period,
-          email: userEmail
         }),
       });
       const result = await res.json();
@@ -256,8 +218,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
       };
     }
 
-    // Default mock lookup
-    return MOCK_PREDICTIONS[d]?.[p] || MOCK_PREDICTIONS.general.today;
+    return null;
   };
 
   const prediction = period && domain ? getLivePrediction(period, domain) : null;
@@ -493,7 +454,7 @@ export default function PredictionsPage({ chartData }: { chartData?: any }) {
         )}
 
         {/* Step 3: Result (Progressive Disclosure Layout) */}
-        {step === "result" && !loading && prediction && (
+        {step === "result" && !loading && (prediction || detailedData) && (
           <motion.div key="result" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             
             {/* Top Navigation */}
