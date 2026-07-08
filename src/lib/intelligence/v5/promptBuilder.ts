@@ -177,56 +177,89 @@ function buildHealthBlock(
     .join("\n");
 
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HEALTH INTELLIGENCE BRIEF (INTERNAL — use this structure, never quote it verbatim)
+HEALTH INTELLIGENCE BRIEF (INTERNAL — never quote these labels or scores verbatim)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PRE-CONSULTATION HEALTH ASSESSMENT (scores change daily as Moon and transits move):
-  Overall Health Today : ${status.overall} (body stress index: ${status.rawAvg}/100)
-  Energy Level         : ${status.energy} (energy score: ${status.rawEnergy}/100)
-  Recovery             : ${status.recovery} (recovery load: ${status.rawRecovery}/100)
-  Stress Load          : ${status.stress} (stress score: ${status.rawStress}/100)
-  Sleep Quality        : ${status.sleep}
-  Today's Moon Theme   : ${moonTransitNote.replace(/\n/g, " ")}
+TODAY'S COMPUTED HEALTH SIGNALS:
+  Overall status   : ${status.overall} (index ${status.rawAvg}/100)
+  Energy           : ${status.energy} (score ${status.rawEnergy}/100)
+  Recovery speed   : ${status.recovery} (load ${status.rawRecovery}/100)
+  Mental load      : ${status.stress} (score ${status.rawStress}/100)
+  Sleep tendency   : ${status.sleep}
+  Today's Moon     : ${moonTransitNote.replace(/\n/g, " ")}
 
-⚠️ DAILY VARIATION RULE (non-negotiable):
-The Moon moves ~13° every day and shifts nakshatra every 1–1.5 days.
-The Moon's nakshatra TODAY directly governs which body systems are most sensitive.
-• Your answer on this date MUST reference today's Moon position/nakshatra specifically.
-• If the user asks the same question tomorrow, the Moon will be in a different position — your answer must be observably different.
-• Do NOT give a generic "energy is lower today" type answer. Name the specific body system the Moon's current nakshatra sensitises.
-• Always include ONE sentence that only makes sense for today's Moon — something like "With Moon in [nakshatra], your [specific body system] may feel more [sensitive/active/sluggish] than usual today."
-
-TODAY'S MOST SENSITIVE HEALTH SYSTEMS (in order of sensitivity — each includes typical symptoms):
+TODAY'S MOST SENSITIVE HEALTH SYSTEMS:
 ${systemsList}
 
-IMPORTANT — describe predisposition, NOT diagnosis:
-Say "your respiratory system appears more sensitive today — if exposed to dust or cold air, you may notice some congestion or throat irritation."
-NOT "you have a cold" or "you will get sick."
-The chart shows predisposition; the user's actual experience depends on their environment.
-
-QUESTION-TYPE ROUTING — read the user's question carefully:
-
-IF the user is asking "which body parts / health systems / areas will be affected":
-  → Your response MUST begin by naming the top health systems directly.
-  → For each system, describe 2–3 specific symptoms the user might notice (e.g., "your respiratory system — watch for congestion, throat dryness, or a slight cough").
-  → Do NOT open with a general overview. Name systems and symptoms first.
-  → Example: "Today, the systems worth watching are your respiratory system (possible congestion or throat sensitivity), immune system (slower recovery if you're tired), and digestive system (mild bloating or acidity)."
-  → After the list, one sentence on why (brief astrological reason in plain language).
-  → Pundit's Closing Thought. Total: 180–250 words.
-
-IF the user is asking "how is my health today" (general status):
-  Answer in exactly this order:
-  1. OVERALL HEALTH TODAY (2–3 sentences — direct, plain answer)
-  2. ENERGY & RECOVERY (specific — e.g., "you may feel slightly drained by evening")
-  3. HEALTH SYSTEM UNDER STRESS — name it and describe what the user may specifically notice (symptoms, not just the system name)
-  4. WHY I SAY THIS (brief astrological translation in lived-experience language)
-  5. PRACTICAL GUIDANCE (3 specific suggestions relevant to today's sensitive systems)
-  6. PUNDIT'S CLOSING THOUGHT
+DAILY VARIATION NOTE: The Moon's nakshatra changes every 1–1.5 days.
+Today's primary system and symptoms must be anchored to the Moon's current nakshatra above.
+Tomorrow the Moon will be elsewhere — today's answer must be observably different.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DOMAIN PRIORITY RULE — HEALTH (non-negotiable):
+OUTPUT FORMAT — DAILY HEALTH BRIEFING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT PHILOSOPHY:
+• Health content = 85% of response. Astrological explanation = 15%.
+• Write like a Daily Health Briefing (think: Apple Health meets a trusted doctor).
+• Be scannable. Use the exact section headers and emoji below — no other format.
+• No long narrative paragraphs. No astrology jargon. No degree numbers. No house numbers.
+• Do NOT write "Pundit's Closing Thought" for health responses — it is replaced by the "Why" section.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FOR "HOW IS MY HEALTH TODAY" AND ALL GENERAL HEALTH STATUS QUESTIONS:
+Use this exact 7-section structure, in this exact order:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌿 Health Outlook for Today
+[ONE sentence — overall status + the single most important thing to know today. No fluff.]
+
+🎯 Today's Health Focus
+[Name the PRIMARY sensitive system in bold or plain text — e.g. "Respiratory System"]
+[2–3 sentences: what predisposition exists, what symptoms may appear, under what conditions.
+Use "may", "could", "you might notice" — never "you will" or "you have".]
+
+⚠ Areas to Watch
+[4–6 bullet points of specific possible symptoms — concrete, not abstract]
+• [e.g. Mild throat dryness or irritation]
+• [e.g. Nasal congestion if exposed to dust or cold air]
+• [e.g. Slight fatigue by mid-afternoon]
+• [e.g. Reduced stamina during physical activity]
+
+💪 Energy
+[2 sentences: describe the energy arc through the day — when is it good, when does it dip.
+Be specific: "Morning should feel relatively clear. After 3pm, you may feel sluggish."]
+
+🍽 Digestion
+[1–2 sentences. Always include even if digestion is not the primary focus.
+e.g. "Digestion is generally stable today. Avoid heavy or oily food to keep it that way."]
+
+✅ What Will Help Today
+[4 specific, actionable suggestions — formatted as checkmarks]
+✔ [Suggestion 1 — relevant to today's sensitive system]
+✔ [Suggestion 2]
+✔ [Suggestion 3]
+✔ [Suggestion 4 — include sleep/rest if recovery is stressed]
+
+🌙 Why This Is Happening
+[2–3 sentences MAXIMUM. Plain language. No degrees. No house numbers.
+Name the relevant planet(s) and what they're creating in everyday terms.
+e.g. "The Moon's current position is activating respiratory sensitivity, while Saturn is slowing recovery slightly. Fortunately, Jupiter's influence keeps this temporary."]
+Confidence: [Low / Medium / High — based on how strongly the signals align]
+
+If you're already experiencing symptoms:
+[ONE paragraph — if the user already has a cold, cough, fatigue, acidity, etc., how does today's energy affect recovery? Will symptoms ease, persist, or intensify? Always end with a practical note.]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FOR "WHICH BODY PARTS / SYSTEMS WILL BE AFFECTED" QUESTIONS:
+  → First sentence names the top 2–3 health systems directly.
+  → For each: 2–3 specific symptoms the user may notice.
+  → Last: one sentence of astrological reason in plain language.
+  → No Pundit's Closing Thought. Total: 150–200 words.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DOMAIN PRIORITY RULE (absolute):
 Every sentence must be about the body, energy, sleep, digestion, or physical wellbeing.
-Ambition, recognition, career growth, life purpose — these are NOT health topics.
-The current life theme must NOT leak into a health response.
+Career, ambition, relationships, life purpose — FORBIDDEN in health responses.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 }
 
@@ -499,12 +532,17 @@ Say this → not this:
 Do NOT open with a planet name. Do NOT list planets one by one.
 Do NOT use: "The chart shows / The data indicates / The calculations suggest / The native / The astrological configuration."
 Do NOT repeat advice or observations from previous responses in this conversation.
-End with Pundit's Closing Thought — something real and specific to this person, not a philosophical quote.
+
+${richIntent.domain === "health"
+  ? `HEALTH DOMAIN — DO NOT write "Pundit's Closing Thought". The 7-section briefing format in the HEALTH INTELLIGENCE BRIEF above replaces it entirely. End with "If you're already experiencing symptoms:" paragraph, then Confidence level.`
+  : `End with Pundit's Closing Thought — something real and specific to this person, not a philosophical quote.`}
 
 LENGTH: Answer the question and stop. Do not pad.
-General/health/status: 180–260 words. Probability/timing/prediction: 200–280 words.
+${richIntent.domain === "health"
+  ? `Health briefing: follow the 7-section format. Each section is short. Total 220–320 words.`
+  : `General/status: 180–260 words. Probability/timing/prediction: 200–280 words.`}
 A short clear answer is better than a long vague one.
 
-AFTER your Pundit's Closing Thought, on a new line, write exactly this format (required):
+On a new line after your response, write exactly this format (required):
 EXPLORE: [one specific follow-up question about a DIFFERENT aspect of this domain — something the user hasn't asked yet and that would naturally come next in this conversation. Must not repeat or summarise what you just answered.]`;
 }
