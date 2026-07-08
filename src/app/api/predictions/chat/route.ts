@@ -117,7 +117,7 @@ The user asked: "${message}"
 Timeframe: ${timeframe}
 Conversation History: ${JSON.stringify(conversationHistory)}
 
-You have been given a bodyRiskProfile — an internal model that scores 24 body systems (0–100) for health sensitivity over the ${timeframe} window based on the user's natal chart, active Dasha, and current transits. Higher score = more astrological stress on that system.
+You have been given a bodyRiskProfile — an internal model that scores 20 health intelligence categories (0–100) for sensitivity over the ${timeframe} window based on the user's natal chart, active Dasha, and current transits. Higher score = more astrological predisposition / sensitivity in that system today. These are predisposition indicators, NOT diagnoses — always describe what the user "may notice" or "may be more sensitive to", never what they "will have".
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL — SCORES ARE STRICTLY INTERNAL

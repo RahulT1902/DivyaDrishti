@@ -1,42 +1,57 @@
 /**
- * Body Risk Profile Engine
+ * Health Risk Profile Engine — V2
  *
- * Computes Vedic-astrology-derived health risk scores (0–100) for 24 body
- * systems by combining natal chart strength, active Dasha lords, and current
- * planetary transits.
+ * Computes Vedic-astrology-derived health sensitivity scores (0–100) across
+ * 20 health intelligence categories, organised into five groups:
  *
- * Weighting: Mahadasha 40% | Antardasha 25% | Pratyantar 15% | Transits 15% | Baseline 5%
+ *   Structural      — head, throat, back, joints
+ *   Internal Organs — heart, stomach, liver, kidneys
+ *   Functional      — respiratory, immune, digestive, nervous
+ *   Symptom Domains — inflammation, coldViral, allergy, skin
+ *   Functional States — energy, mentalWellness, sleep, recovery
+ *
+ * Higher score = more astrological sensitivity / predisposition today.
+ * These are predisposition indicators, NOT diagnoses.
+ *
+ * Weighting: Mahadasha 40% | Antardasha 25% | Pratyantar 15% | Transits 15% | Nakshatra 5%
  */
 
+// ── Interface ──────────────────────────────────────────────────────────────────
+
 export interface BodyRiskProfile {
-  head: number;
-  eyes: number;
-  sinuses: number;
-  throat: number;
-  neck: number;
-  shoulders: number;
-  upperBack: number;
-  lowerBack: number;
-  spine: number;
-  heart: number;
-  lungs: number;
-  stomach: number;
-  digestiveSystem: number;
-  liver: number;
-  kidneys: number;
-  nervousSystem: number;
-  muscles: number;
-  joints: number;
-  knees: number;
-  legs: number;
-  feet: number;
-  sleep: number;
-  recovery: number;
-  stress: number;
+  // Structural
+  head: number;               // headache, dizziness, head pressure, brain fog
+  throat: number;             // sore throat, ENT (ear, nose, throat), voice
+  back: number;               // back pain, spine, posture, lumbar
+  joints: number;             // joint pain, stiffness, musculoskeletal
+
+  // Internal Organs
+  heart: number;              // cardiac vitality, palpitations, circulation
+  stomach: number;            // nausea, acidity, appetite disruption
+  liver: number;              // metabolism, detox capacity, sluggishness
+  kidneys: number;            // fluid balance, urinary sensitivity
+
+  // Functional Systems
+  respiratorySystem: number;  // cold, cough, congestion, breathing difficulty
+  immuneSystem: number;       // infection resistance, healing speed, susceptibility
+  digestiveSystem: number;    // bloating, indigestion, gut disturbance
+  nervousSystem: number;      // anxiety, brain fog, nerve sensitivity
+
+  // Symptom Domains
+  inflammation: number;       // fever, body ache, heat, inflammatory response
+  coldViralSusceptibility: number; // cold/flu/viral/bacterial risk
+  allergySensitivity: number; // skin rash, nasal allergy, seasonal reactions
+  skinHealth: number;         // skin dryness, eruptions, complexion issues
+
+  // Functional States
+  energyStamina: number;      // fatigue risk, reduced endurance, exhaustion
+  mentalWellness: number;     // stress, anxiety, emotional fatigue, mood
+  sleep: number;              // sleep quality, insomnia, restlessness
+  recovery: number;           // physical recovery speed, healing time
 }
 
-// Natural base stress each planet contributes when activated in a dasha/transit.
-// Higher = more health pressure when that planet is dominant.
+// ── Planetary base stress ──────────────────────────────────────────────────────
+
 const PLANET_BASE_STRESS: Record<string, number> = {
   Sun:     52,
   Moon:    42,
@@ -49,54 +64,77 @@ const PLANET_BASE_STRESS: Record<string, number> = {
   Ketu:    60,
 };
 
-// Which body systems each planet governs (primary rulership)
+// ── Planet → health system mapping ────────────────────────────────────────────
+// Based on classical Vedic Karakatva (natural significations).
+
 const PLANET_BODY_MAP: Record<string, (keyof BodyRiskProfile)[]> = {
-  Sun:     ["head", "heart"],
-  Moon:    ["stomach", "digestiveSystem", "sleep"],
-  Mars:    ["muscles", "head"],
-  Mercury: ["nervousSystem", "eyes"],
-  Jupiter: ["liver", "recovery"],
-  Venus:   ["kidneys"],
-  Saturn:  ["joints", "knees", "lowerBack", "spine", "recovery"],
-  Rahu:    ["stress", "sleep", "eyes"],
-  Ketu:    ["nervousSystem", "recovery"],
+  // Sun: pitta/heat; governs head, heart, vitality, immune strength
+  Sun:     ["head", "heart", "energyStamina", "inflammation"],
+
+  // Moon: kapha/fluids; governs gut, immunity (body fluids), emotional mind, sleep
+  Moon:    ["stomach", "digestiveSystem", "immuneSystem", "sleep", "mentalWellness"],
+
+  // Mars: fire/blood; governs inflammation, fever, muscles, joints, energy drive
+  Mars:    ["inflammation", "joints", "energyStamina", "head"],
+
+  // Mercury: nervous system, skin, speech; governs ENT, skin, cognition, allergies
+  Mercury: ["nervousSystem", "throat", "skinHealth", "allergySensitivity"],
+
+  // Jupiter: expansion, liver, fat metabolism, overall immunity
+  Jupiter: ["liver", "immuneSystem", "digestiveSystem", "recovery"],
+
+  // Venus: water/kidneys, skin, reproductive; governs fluid balance, skin, allergy
+  Venus:   ["kidneys", "skinHealth", "allergySensitivity"],
+
+  // Saturn: cold/dry/chronic; governs joints, back, slow recovery, viral vulnerability
+  Saturn:  ["joints", "back", "recovery", "coldViralSusceptibility", "energyStamina"],
+
+  // Rahu: foreign substances, viral/bacterial agents, unusual illness, anxiety
+  Rahu:    ["coldViralSusceptibility", "mentalWellness", "allergySensitivity", "sleep", "respiratorySystem"],
+
+  // Ketu: mysterious/chronic illness, immune dysregulation, nervous sensitivity
+  Ketu:    ["immuneSystem", "nervousSystem", "recovery", "inflammation"],
 };
+
+// ── Moon Nakshatra → health system mapping ─────────────────────────────────────
+// Moon transits one Nakshatra (~13.33°) every ~24–27 hours — primary daily differentiator.
+// Index 0–26 corresponds to Ashwini → Revati.
+
+const NAKSHATRA_BODY_MAP: (keyof BodyRiskProfile)[][] = [
+  ["head", "nervousSystem", "energyStamina"],                    // 0  Ashwini (horse-healers, speed)
+  ["throat", "respiratorySystem"],                               // 1  Bharani (throat, neck, restraint)
+  ["head", "inflammation", "immuneSystem"],                      // 2  Krittika (fire/knife = fever, heat)
+  ["throat", "stomach", "digestiveSystem"],                      // 3  Rohini (nourishment, vocal)
+  ["joints", "back", "respiratorySystem"],                       // 4  Mrigashira (searching, dryness)
+  ["head", "respiratorySystem", "coldViralSusceptibility"],      // 5  Ardra (storm = illness onset, congestion)
+  ["stomach", "liver", "immuneSystem"],                          // 6  Punarvasu (restoration, renewal)
+  ["stomach", "digestiveSystem", "heart"],                       // 7  Pushya (nourishment, expansion)
+  ["stomach", "coldViralSusceptibility", "digestiveSystem"],     // 8  Ashlesha (clinging = mucus, cold)
+  ["heart", "back", "energyStamina"],                           // 9  Magha (throne = core vitality)
+  ["heart", "skinHealth", "energyStamina"],                      // 10 Purva Phalguni (creative fire)
+  ["heart", "digestiveSystem", "back"],                          // 11 Uttara Phalguni (sustenance)
+  ["digestiveSystem", "nervousSystem", "skinHealth"],            // 12 Hasta (hands = skin, nervous)
+  ["digestiveSystem", "skinHealth", "allergySensitivity"],       // 13 Chitra (brightness, skin)
+  ["respiratorySystem", "throat", "mentalWellness"],             // 14 Swati (wind = breathing, air)
+  ["kidneys", "mentalWellness", "digestiveSystem"],              // 15 Vishakha (branching, over-reach)
+  ["heart", "immuneSystem", "stomach"],                          // 16 Anuradha (devotion, heart)
+  ["back", "nervousSystem", "mentalWellness"],                   // 17 Jyeshtha (elder, spine, stress)
+  ["back", "joints", "digestiveSystem"],                         // 18 Moola (roots, elimination)
+  ["joints", "back", "respiratorySystem"],                       // 19 Purva Ashadha (water = cold, joints)
+  ["joints", "back", "heart"],                                   // 20 Uttara Ashadha (sustained effort)
+  ["nervousSystem", "immuneSystem", "throat"],                   // 21 Shravana (listening, ENT)
+  ["joints", "heart", "energyStamina"],                          // 22 Dhanishtha (abundance, bones)
+  ["immuneSystem", "coldViralSusceptibility", "sleep"],          // 23 Shatabhisha (100 physicians, healing)
+  ["immuneSystem", "mentalWellness", "sleep"],                   // 24 Purva Bhadrapada (intense/purging)
+  ["immuneSystem", "recovery", "energyStamina"],                 // 25 Uttara Bhadrapada (depth, renewal)
+  ["digestiveSystem", "immuneSystem", "recovery"],               // 26 Revati (nourishment, completion)
+];
 
 const BASELINE = 25;
 const DUSTHANA_HOUSES = new Set([6, 8, 12]);
 const KENDRA_HOUSES   = new Set([1, 4, 7, 10]);
 
-// Moon's Nakshatra (~1 per day) governs different body systems — this is the
-// primary source of daily variation in health sensitivity.
-const NAKSHATRA_BODY_MAP: (keyof BodyRiskProfile)[][] = [
-  ["head", "nervousSystem"],              // 0  Ashwini
-  ["throat", "neck"],                     // 1  Bharani
-  ["eyes", "head", "sinuses"],            // 2  Krittika
-  ["throat", "neck", "shoulders"],        // 3  Rohini
-  ["shoulders", "neck", "upperBack"],     // 4  Mrigashira
-  ["head", "lungs", "sinuses"],           // 5  Ardra
-  ["stomach", "liver", "digestiveSystem"],// 6  Punarvasu
-  ["stomach", "digestiveSystem", "heart"],// 7  Pushya
-  ["stomach", "digestiveSystem"],         // 8  Ashlesha
-  ["heart", "spine", "lowerBack"],        // 9  Magha
-  ["heart", "spine", "upperBack"],        // 10 Purva Phalguni
-  ["heart", "digestiveSystem", "spine"],  // 11 Uttara Phalguni
-  ["digestiveSystem", "stomach", "nervousSystem"], // 12 Hasta
-  ["stomach", "digestiveSystem"],         // 13 Chitra
-  ["lungs", "stress", "throat"],          // 14 Swati
-  ["kidneys", "stress", "lowerBack"],     // 15 Vishakha
-  ["stomach", "heart", "kidneys"],        // 16 Anuradha
-  ["spine", "nervousSystem", "stress"],   // 17 Jyeshtha
-  ["lowerBack", "spine", "feet"],         // 18 Moola
-  ["joints", "lowerBack", "muscles"],     // 19 Purva Ashadha
-  ["knees", "spine", "joints"],           // 20 Uttara Ashadha
-  ["legs", "kidneys", "lowerBack"],       // 21 Shravana
-  ["legs", "nervousSystem", "stress"],    // 22 Dhanishtha
-  ["legs", "sleep", "stress"],            // 23 Shatabhisha
-  ["feet", "sleep", "recovery"],          // 24 Purva Bhadrapada
-  ["feet", "recovery", "sleep"],          // 25 Uttara Bhadrapada
-  ["feet", "recovery", "digestiveSystem"],// 26 Revati
-];
+// ── Helper functions ───────────────────────────────────────────────────────────
 
 interface NatalPlanet {
   name: string;
@@ -113,57 +151,39 @@ interface TransitPlanet {
   weight: number;
 }
 
-/**
- * How much health stress a planet generates based on its natal placement.
- */
 function computeNatalActivation(
   planetName: string,
   planets: NatalPlanet[],
   lagnaSign: number
 ): number {
   let score = PLANET_BASE_STRESS[planetName] ?? 45;
-
-  const p = planets.find((pl) => pl.name === planetName);
+  const p = planets.find(pl => pl.name === planetName);
   if (p) {
     if (p.strengthLevel === "strong") score -= 15;
     if (p.strengthLevel === "weak")   score += 20;
     if (p.isRetrograde)               score += 12;
     if (p.isCombust)                  score += 15;
-
     const house = ((p.sign - lagnaSign + 12) % 12) + 1;
     if (DUSTHANA_HOUSES.has(house)) score += 18;
     if (KENDRA_HOUSES.has(house))   score -= 8;
   }
-
   return Math.min(95, Math.max(10, Math.round(score)));
 }
 
-/**
- * How much stress a transiting planet contributes right now.
- * Uses longitude to detect sandhi (sign-boundary) positions which amplify
- * effects, giving the score daily variation as planets move.
- */
 function computeTransitActivation(planetName: string, speed: number, longitude: number): number {
   let score = PLANET_BASE_STRESS[planetName] ?? 45;
-  if (speed < 0) score += 12; // retrograde amplifies the effect
+  if (speed < 0) score += 12; // retrograde amplifies
 
-  // Sandhi: first/last 3° of a sign are transitional — heightened sensitivity
+  // Sandhi (first/last 3° of sign) — heightened sensitivity
   const degreeInSign = longitude % 30;
   if (degreeInSign < 3 || degreeInSign > 27) score += 10;
 
-  // Moon moves ~13°/day — use its degree within the sign for fine daily variation
-  if (planetName === "Moon") {
-    // Degrees 0-10 (rising), 10-20 (peak), 20-30 (waning) have different energies
-    if (degreeInSign >= 10 && degreeInSign <= 20) score += 5; // peak sensitization
-  }
+  // Moon: peak sensitization mid-sign (10°–20°)
+  if (planetName === "Moon" && degreeInSign >= 10 && degreeInSign <= 20) score += 5;
 
   return Math.min(90, Math.max(10, Math.round(score)));
 }
 
-/**
- * Distribute a planet's activation score across the body systems it rules,
- * scaled by the given dasha weight.
- */
 function applyPlanetContribution(
   profile: BodyRiskProfile,
   planetName: string,
@@ -177,50 +197,50 @@ function applyPlanetContribution(
   }
 }
 
+// ── Main exports ───────────────────────────────────────────────────────────────
+
 export interface DashaStack {
   mahadasha: string;
   antardasha: string;
   pratyantar?: string | null;
 }
 
-/**
- * Compute a full BodyRiskProfile from natal chart, active dasha, and transits.
- */
 export function computeBodyRiskProfile(
   chart: { planets: NatalPlanet[]; lagna: { sign: number } },
   dashaStack: DashaStack,
   transitPositions: TransitPlanet[]
 ): BodyRiskProfile {
   const profile: BodyRiskProfile = {
-    head: BASELINE, eyes: BASELINE, sinuses: BASELINE,
-    throat: BASELINE, neck: BASELINE, shoulders: BASELINE,
-    upperBack: BASELINE, lowerBack: BASELINE, spine: BASELINE,
-    heart: BASELINE, lungs: BASELINE, stomach: BASELINE,
-    digestiveSystem: BASELINE, liver: BASELINE, kidneys: BASELINE,
-    nervousSystem: BASELINE, muscles: BASELINE, joints: BASELINE,
-    knees: BASELINE, legs: BASELINE, feet: BASELINE,
-    sleep: BASELINE, recovery: BASELINE, stress: BASELINE,
+    head: BASELINE,                  throat: BASELINE,
+    back: BASELINE,                  joints: BASELINE,
+    heart: BASELINE,                 stomach: BASELINE,
+    liver: BASELINE,                 kidneys: BASELINE,
+    respiratorySystem: BASELINE,     immuneSystem: BASELINE,
+    digestiveSystem: BASELINE,       nervousSystem: BASELINE,
+    inflammation: BASELINE,          coldViralSusceptibility: BASELINE,
+    allergySensitivity: BASELINE,    skinHealth: BASELINE,
+    energyStamina: BASELINE,         mentalWellness: BASELINE,
+    sleep: BASELINE,                 recovery: BASELINE,
   };
 
   const { planets, lagna } = chart;
   const lagnaSign = lagna.sign;
 
-  // ── 1. Mahadasha (40%) ──────────────────────────────────────────────────
+  // 1. Mahadasha (40%)
   const mdScore = computeNatalActivation(dashaStack.mahadasha, planets, lagnaSign);
   applyPlanetContribution(profile, dashaStack.mahadasha, mdScore, 0.40);
 
-  // ── 2. Antardasha (25%) ─────────────────────────────────────────────────
+  // 2. Antardasha (25%)
   const adScore = computeNatalActivation(dashaStack.antardasha, planets, lagnaSign);
   applyPlanetContribution(profile, dashaStack.antardasha, adScore, 0.25);
 
-  // ── 3. Pratyantar (15%) ─────────────────────────────────────────────────
+  // 3. Pratyantar (15%)
   if (dashaStack.pratyantar) {
     const pdScore = computeNatalActivation(dashaStack.pratyantar, planets, lagnaSign);
     applyPlanetContribution(profile, dashaStack.pratyantar, pdScore, 0.15);
   }
 
-  // ── 4. Current Transits (15%) ───────────────────────────────────────────
-  // Each transit planet's share is proportional to its astrological impact weight
+  // 4. Current Transits (15%) — weight proportional to astrological impact
   const totalTransitWeight = transitPositions.reduce((s, t) => s + (t.weight || 1), 0);
   for (const transit of transitPositions) {
     const tScore  = computeTransitActivation(transit.name, transit.speed, transit.longitude);
@@ -228,19 +248,24 @@ export function computeBodyRiskProfile(
     applyPlanetContribution(profile, transit.name, tScore, tWeight);
   }
 
-  // ── 5. Moon Nakshatra Daily Effect (20 pts per governed system) ────────────
-  // Moon transits one Nakshatra (~13.33°) every ~24-27 hours, so this shifts
-  // which body systems rank highest day-to-day.
+  // 5. Moon Nakshatra daily effect (+20 pts to governed systems)
+  // Moon shifts nakshatra every ~24–27 hours — primary source of daily variation.
   const moonPos = transitPositions.find(p => p.name === "Moon");
   if (moonPos) {
     const nakshatraIndex = Math.min(26, Math.floor((moonPos.longitude % 360) / (360 / 27)));
-    const nakshatraSystems = NAKSHATRA_BODY_MAP[nakshatraIndex] ?? [];
-    for (const sys of nakshatraSystems) {
+    for (const sys of (NAKSHATRA_BODY_MAP[nakshatraIndex] ?? [])) {
       profile[sys] += 20;
     }
   }
 
-  // Clamp & round all values to 0–100
+  // 6. Compound: coldViralSusceptibility rises when both respiratory + immune are stressed
+  profile.coldViralSusceptibility = Math.min(98,
+    profile.coldViralSusceptibility * 0.6 +
+    profile.respiratorySystem     * 0.2 +
+    profile.immuneSystem          * 0.2
+  );
+
+  // Clamp all to 10–98
   for (const key of Object.keys(profile) as (keyof BodyRiskProfile)[]) {
     profile[key] = Math.min(98, Math.max(10, Math.round(profile[key])));
   }
@@ -248,9 +273,6 @@ export function computeBodyRiskProfile(
   return profile;
 }
 
-/**
- * Returns the top-N body systems ordered by risk score (highest first).
- */
 export function getTopRisks(
   profile: BodyRiskProfile,
   n = 5

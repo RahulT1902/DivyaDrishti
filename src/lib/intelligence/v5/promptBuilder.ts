@@ -101,17 +101,34 @@ TRANSIT ENVIRONMENT: ${brief.transitHighlight}`;
   return block;
 }
 
-// Human-readable labels for body system keys
+// Human-readable labels for health system keys — each label includes example symptoms
+// so the AI can naturally describe what the user may experience, not just name the system.
 const BODY_LABELS: Record<string, string> = {
-  head: "head and temples", eyes: "eyes and visual focus", sinuses: "sinuses and nasal passages",
-  throat: "throat and voice", neck: "neck and cervical region", shoulders: "shoulders and upper traps",
-  upperBack: "upper back", lowerBack: "lower back and lumbar region", spine: "spine and posture",
-  heart: "heart and circulation", lungs: "lungs and breathing", stomach: "stomach and appetite",
-  digestiveSystem: "digestion and gut", liver: "liver and metabolism", kidneys: "kidneys and fluid balance",
-  nervousSystem: "nervous system and mental clarity", muscles: "muscles and physical stamina",
-  joints: "joints and flexibility", knees: "knees", legs: "legs and lower limbs", feet: "feet",
-  sleep: "sleep quality and depth", recovery: "physical recovery and restoration",
-  stress: "stress response and mental load",
+  // Structural
+  head:                    "head and neurological (headache, dizziness, brain fog, head pressure)",
+  throat:                  "ENT — ear, nose, throat (sore throat, congestion, voice issues, nasal sensitivity)",
+  back:                    "back and spine (back pain, stiffness, posture fatigue, lumbar pressure)",
+  joints:                  "joints and musculoskeletal (joint pain, stiffness, aches, inflexibility)",
+  // Internal Organs
+  heart:                   "heart and circulation (palpitations, chest tightness, circulatory vitality)",
+  stomach:                 "stomach (nausea, acidity, appetite disruption, bloating)",
+  liver:                   "liver and metabolism (sluggishness, bile sensitivity, slow detox)",
+  kidneys:                 "kidneys and fluid balance (fluid retention, urinary sensitivity, lower-back pressure)",
+  // Functional Systems
+  respiratorySystem:       "respiratory system (cough, congestion, breathing difficulty, sinus pressure)",
+  immuneSystem:            "immune system (infection susceptibility, slower healing, fatigue from minor illness)",
+  digestiveSystem:         "digestive system (bloating, indigestion, irregular bowel, gut sensitivity)",
+  nervousSystem:           "nervous system (anxiety, nerve sensitivity, brain fog, overthinking)",
+  // Symptom Domains
+  inflammation:            "inflammation and fever (body aches, heat sensation, fever tendency, joint swelling)",
+  coldViralSusceptibility: "cold and viral susceptibility (cold, flu, sore throat, runny nose, mild fever)",
+  allergySensitivity:      "allergy sensitivity (skin rash, nasal allergy, seasonal reactions, itching)",
+  skinHealth:              "skin health (dryness, eruptions, rashes, dull complexion)",
+  // Functional States
+  energyStamina:           "energy and stamina (fatigue, reduced endurance, low motivation, exhaustion)",
+  mentalWellness:          "mental wellness (stress, anxiety, emotional fatigue, mood dips)",
+  sleep:                   "sleep quality (insomnia, restless sleep, difficulty winding down, early waking)",
+  recovery:                "physical recovery (slow healing, prolonged soreness, body taking longer to bounce back)",
 };
 
 function computeHealthStatus(profile: Record<string, number> | undefined): {
@@ -122,19 +139,22 @@ function computeHealthStatus(profile: Record<string, number> | undefined): {
 
   const all = Object.values(profile);
   const avg = all.reduce((a, b) => a + b, 0) / (all.length || 1);
-  const stressScore  = profile["stress"]   ?? avg;
-  const recovScore   = profile["recovery"] ?? avg;
-  const sleepScore   = profile["sleep"]    ?? avg;
-  const energyScore  = 100 - (stressScore * 0.4 + recovScore * 0.4 + avg * 0.2);
+  // V2 field names: mentalWellness replaces stress; energyStamina is direct risk score
+  const mentalScore  = profile["mentalWellness"]          ?? profile["stress"]   ?? avg;
+  const recovScore   = profile["recovery"]                ?? avg;
+  const sleepScore   = profile["sleep"]                   ?? avg;
+  const energyRisk   = profile["energyStamina"]           ?? (avg);
+  // Convert energyStamina risk score to a positive "energy score" (higher = more energy)
+  const energyScore  = 100 - energyRisk;
 
   return {
     overall:  avg < 40 ? "excellent" : avg < 52 ? "good" : avg < 65 ? "average — some areas need attention" : "somewhat stressed — care is warranted",
-    energy:   energyScore > 62 ? "good" : energyScore > 44 ? "moderate" : "lower than usual — rest helps",
+    energy:   energyScore > 65 ? "good" : energyScore > 48 ? "moderate" : "lower than usual — rest helps",
     recovery: recovScore < 45 ? "good" : recovScore < 62 ? "moderate — recovery is slower than ideal" : "poor — the body needs more rest than it is getting",
-    stress:   stressScore < 40 ? "low" : stressScore < 58 ? "moderate" : "elevated — the nervous system is under load",
+    stress:   mentalScore < 40 ? "low" : mentalScore < 58 ? "moderate" : "elevated — the nervous system is under load",
     sleep:    sleepScore  < 45 ? "restful" : sleepScore  < 62 ? "neutral — quality could improve" : "disrupted — prioritize rest tonight",
     rawAvg:      Math.round(avg),
-    rawStress:   Math.round(stressScore),
+    rawStress:   Math.round(mentalScore),
     rawRecovery: Math.round(recovScore),
     rawEnergy:   Math.round(energyScore),
   };
@@ -148,13 +168,12 @@ function buildHealthBlock(
   if (!topRisks || topRisks.length === 0) return "";
 
   const status = computeHealthStatus(profile);
-  const primary   = BODY_LABELS[topRisks[0]?.system ?? "stress"]       ?? topRisks[0]?.system ?? "stress";
-  const secondary = BODY_LABELS[topRisks[1]?.system ?? "recovery"]     ?? topRisks[1]?.system ?? "recovery";
-  const tertiary  = BODY_LABELS[topRisks[2]?.system ?? "digestiveSystem"] ?? topRisks[2]?.system ?? "digestion";
+  const primary   = BODY_LABELS[topRisks[0]?.system ?? "energyStamina"]        ?? topRisks[0]?.system ?? "energy";
+  const secondary = BODY_LABELS[topRisks[1]?.system ?? "recovery"]              ?? topRisks[1]?.system ?? "recovery";
+  const tertiary  = BODY_LABELS[topRisks[2]?.system ?? "coldViralSusceptibility"] ?? topRisks[2]?.system ?? "immune";
 
-  // Named list of top body areas for direct body-parts questions
-  const bodyPartsList = [primary, secondary, tertiary]
-    .map((area, i) => `  ${i + 1}. ${area}`)
+  const systemsList = [primary, secondary, tertiary]
+    .map((sys, i) => `  ${i + 1}. ${sys}`)
     .join("\n");
 
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -176,26 +195,31 @@ The Moon's nakshatra TODAY directly governs which body systems are most sensitiv
 • Do NOT give a generic "energy is lower today" type answer. Name the specific body system the Moon's current nakshatra sensitises.
 • Always include ONE sentence that only makes sense for today's Moon — something like "With Moon in [nakshatra], your [specific body system] may feel more [sensitive/active/sluggish] than usual today."
 
-TODAY'S MOST SENSITIVE BODY AREAS (in order of sensitivity):
-${bodyPartsList}
+TODAY'S MOST SENSITIVE HEALTH SYSTEMS (in order of sensitivity — each includes typical symptoms):
+${systemsList}
+
+IMPORTANT — describe predisposition, NOT diagnosis:
+Say "your respiratory system appears more sensitive today — if exposed to dust or cold air, you may notice some congestion or throat irritation."
+NOT "you have a cold" or "you will get sick."
+The chart shows predisposition; the user's actual experience depends on their environment.
 
 QUESTION-TYPE ROUTING — read the user's question carefully:
 
-IF the user is asking "which body parts / areas / systems will be affected":
-  → Your response MUST begin by directly listing the top areas by name.
-  → Format: name the area, then one sentence describing what the user may notice there.
-  → Do NOT open with a general health overview. List first. Explain after.
-  → Example opening: "Today, the areas most worth watching are your [area 1], [area 2], and [area 3]..."
-  → After the list, briefly explain why (astrological translation in plain English).
-  → Close with Pundit's Closing Thought. Total: 180–250 words.
+IF the user is asking "which body parts / health systems / areas will be affected":
+  → Your response MUST begin by naming the top health systems directly.
+  → For each system, describe 2–3 specific symptoms the user might notice (e.g., "your respiratory system — watch for congestion, throat dryness, or a slight cough").
+  → Do NOT open with a general overview. Name systems and symptoms first.
+  → Example: "Today, the systems worth watching are your respiratory system (possible congestion or throat sensitivity), immune system (slower recovery if you're tired), and digestive system (mild bloating or acidity)."
+  → After the list, one sentence on why (brief astrological reason in plain language).
+  → Pundit's Closing Thought. Total: 180–250 words.
 
 IF the user is asking "how is my health today" (general status):
   Answer in exactly this order:
-  1. OVERALL HEALTH TODAY (2–3 sentences — direct answer first)
-  2. ENERGY & RECOVERY (specific, not philosophical)
-  3. AREA WORTH WATCHING — name the primary area in plain language
-  4. WHY I SAY THIS (brief astrological translation)
-  5. PRACTICAL GUIDANCE (3 specific, actionable suggestions)
+  1. OVERALL HEALTH TODAY (2–3 sentences — direct, plain answer)
+  2. ENERGY & RECOVERY (specific — e.g., "you may feel slightly drained by evening")
+  3. HEALTH SYSTEM UNDER STRESS — name it and describe what the user may specifically notice (symptoms, not just the system name)
+  4. WHY I SAY THIS (brief astrological translation in lived-experience language)
+  5. PRACTICAL GUIDANCE (3 specific suggestions relevant to today's sensitive systems)
   6. PUNDIT'S CLOSING THOUGHT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
