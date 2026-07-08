@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
  * Enforces a strict contract between Backend and UI.
  */
 
-export type ErrorType = "NETWORK_ERROR" | "DATA_MALFORMATION" | "ENGINE_FAILURE" | "INTERNAL_ERROR";
+export type ErrorType = "NETWORK_ERROR" | "DATA_MALFORMATION" | "ENGINE_FAILURE" | "INTERNAL_ERROR" | "AUTH_REQUIRED";
 
 export function buildSuccessResponse(data: any) {
   return NextResponse.json({
