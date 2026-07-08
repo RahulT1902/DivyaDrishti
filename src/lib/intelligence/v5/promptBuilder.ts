@@ -10,6 +10,7 @@
 
 import type { RichIntent } from "./intentEngine";
 import type { AstrologicalBrief } from "./astrologicalBriefing";
+import type { HealthFindings } from "../health/healthFindingsEngine";
 import {
   getPunditDNABlock,
   getProbabilityTrustBlock,
@@ -30,6 +31,7 @@ export interface V5PromptParams {
   moonTransitNote: string;
   topRisks?: Array<{ system: string; score: number }>;
   bodyRiskProfile?: Record<string, number>;
+  healthFindings?: HealthFindings;
   kundaliContext?: string; // chart-specific Vedic reading unique to this user
 }
 
@@ -163,18 +165,111 @@ function computeHealthStatus(profile: Record<string, number> | undefined): {
 function buildHealthBlock(
   topRisks: Array<{ system: string; score: number }> | undefined,
   profile: Record<string, number> | undefined,
-  moonTransitNote: string
+  moonTransitNote: string,
+  findings?: HealthFindings
 ): string {
   if (!topRisks || topRisks.length === 0) return "";
 
   const status = computeHealthStatus(profile);
-  const primary   = BODY_LABELS[topRisks[0]?.system ?? "energyStamina"]        ?? topRisks[0]?.system ?? "energy";
-  const secondary = BODY_LABELS[topRisks[1]?.system ?? "recovery"]              ?? topRisks[1]?.system ?? "recovery";
-  const tertiary  = BODY_LABELS[topRisks[2]?.system ?? "coldViralSusceptibility"] ?? topRisks[2]?.system ?? "immune";
 
-  const systemsList = [primary, secondary, tertiary]
-    .map((sys, i) => `  ${i + 1}. ${sys}`)
-    .join("\n");
+  // If HealthFindings are available, use them as the authoritative source
+  if (findings) {
+    const activeList = findings.activeSystems
+      .map(s => BODY_LABELS[s]?.split(" (")[0] ?? s)
+      .join(", ") || "none above threshold";
+    const symptomList = findings.symptoms.map(s => `  • ${s}`).join("\n");
+    const secondaryLine = findings.secondaryFocus
+      ? `SECONDARY FOCUS  : ${findings.secondaryFocus.displayName} (score ${findings.secondaryFocus.score}/100)`
+      : "SECONDARY FOCUS  : None above sensitivity threshold";
+    const tertiaryLine = findings.tertiaryFocus
+      ? `TERTIARY FOCUS   : ${findings.tertiaryFocus.displayName} (score ${findings.tertiaryFocus.score}/100)`
+      : "";
+
+    return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRE-COMPUTED HEALTH FINDINGS (authoritative — chart-derived, fixed before this question was asked)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRIMARY FOCUS    : ${findings.primaryFocus.displayName} (score ${findings.primaryFocus.score}/100)
+${secondaryLine}
+${tertiaryLine}
+ACTIVE SYSTEMS   : ${activeList}
+CONFIRMED SYMPTOMS (these only — do not invent others):
+${symptomList}
+ENERGY TODAY     : ${findings.energyArc}
+DIGESTION        : ${findings.digestiveNote}
+RECOVERY         : ${findings.recoveryNote}
+CONFIDENCE       : ${findings.confidence}
+TODAY'S MOON     : ${moonTransitNote.replace(/\n/g, " ")}
+OVERALL INDEX    : ${status.overall} (${status.rawAvg}/100)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ANTI-QUERY-ANCHORING RULE (critical — read before writing a single word)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The findings above are determined by the chart — they are FIXED.
+They do NOT change based on what the user mentions in their question.
+
+If the user asks about a system that IS in ACTIVE SYSTEMS:
+  → Confirm it: "Yes, actually that area is showing sensitivity today..."
+  → Use the pre-computed symptoms above. Do not add new ones.
+
+If the user asks about a system that is NOT in ACTIVE SYSTEMS:
+  → Say clearly: "Your chart doesn't show heightened sensitivity there today."
+  → Do NOT confirm a health concern just because the user mentioned it.
+  → Do NOT pivot to that system as a new focus.
+
+This consistency is what makes the Pandit trustworthy.
+A real astrologer's reading doesn't change based on what the patient suggests.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT — DAILY HEALTH BRIEFING (use exact section headers)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Philosophy: Health content 85%, astrological explanation 15%.
+Be BRIEF. Each section is 1–3 lines. Total response: 200–260 words MAX.
+No long paragraphs. Users read for 15 seconds — every word must earn its place.
+Do NOT write "Pundit's Closing Thought" — health responses end with the "Why" section.
+
+🌿 Health Outlook for Today
+[ONE sentence. Overall status + the single most important theme.]
+
+🎯 Today's Health Focus
+[System name — bold or plain]
+[2 sentences: predisposition + what triggers it. Use "may", "could", "might".]
+
+⚠ Areas to Watch
+[Use ONLY the confirmed symptoms from the findings above — 4–5 bullets max]
+• [symptom]
+• [symptom]
+
+⚠ Secondary Focus (include only if secondaryFocus exists)
+[System name + 1–2 bullets of its symptoms]
+
+💪 Energy
+[1–2 sentences. Use the energyArc from findings. Morning vs afternoon.]
+
+🍽 Digestion
+[1 sentence. Use digestiveNote from findings verbatim or slightly rephrased.]
+
+✅ Today's Advice
+[4 short checkmarks — specific to today's active systems]
+✔ [action]
+✔ [action]
+✔ [action]
+✔ [action]
+
+🌙 Why This Is Happening
+[2 sentences MAX. No degree numbers. No house numbers. Plain language.]
+Confidence: ${findings.confidence}
+
+If you're already experiencing symptoms:
+[1 short paragraph — if they have a related existing symptom, how does today affect recovery?]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMAIN PRIORITY (absolute): Every sentence about body, energy, sleep, or digestion only.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  }
+
+  // Fallback (no findings object) — legacy format
+  const primary   = BODY_LABELS[topRisks[0]?.system ?? "energyStamina"]?.split(" (")[0] ?? "energy";
+  const secondary = BODY_LABELS[topRisks[1]?.system ?? "recovery"]?.split(" (")[0]      ?? "recovery";
+  const tertiary  = BODY_LABELS[topRisks[2]?.system ?? "coldViralSusceptibility"]?.split(" (")[0] ?? "immune";
+  const systemsList = [primary, secondary, tertiary].map((s, i) => `  ${i + 1}. ${s}`).join("\n");
 
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HEALTH INTELLIGENCE BRIEF (INTERNAL — never quote these labels or scores verbatim)
@@ -439,7 +534,7 @@ export function buildV5Prompt(params: V5PromptParams): string {
     question, richIntent, brief,
     lagnaSignName, natalMoonSignName, dashaStack,
     transitSummary, conversationHistory,
-    todayLabel, moonTransitNote, topRisks, bodyRiskProfile, kundaliContext,
+    todayLabel, moonTransitNote, topRisks, bodyRiskProfile, healthFindings, kundaliContext,
   } = params;
 
   // Select opening mode now that we have the brief (hasBothForces is known)
@@ -460,7 +555,7 @@ export function buildV5Prompt(params: V5PromptParams): string {
   const historyBlock  = buildHistoryBlock(conversationHistory);
   // Health block only injected for health domain — never for career, finance, etc.
   const healthBlock   = richIntent.domain === "health"
-    ? buildHealthBlock(topRisks, bodyRiskProfile, moonTransitNote)
+    ? buildHealthBlock(topRisks, bodyRiskProfile, moonTransitNote, healthFindings)
     : "";
   const orchestratorBlock = buildOrchestratorBlock(richIntent);
 

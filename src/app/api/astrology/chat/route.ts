@@ -10,6 +10,7 @@ import { extractIntent } from "@/lib/intelligence/intentExtractor";
 import { buildSuccessResponse, buildErrorResponse } from "@/lib/utils/apiResponse";
 import { callAI, hasAnyProvider } from "@/lib/ai/provider";
 import { computeBodyRiskProfile, getTopRisks, type BodyRiskProfile } from "@/lib/intelligence/health/bodyRiskProfile";
+import { buildHealthFindings, type HealthFindings } from "@/lib/intelligence/health/healthFindingsEngine";
 import { buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
 import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
 import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
@@ -184,9 +185,11 @@ export async function POST(req: NextRequest) {
       // ── Body Risk Profile (health domain only) ───────────────────────────
       let bodyRiskProfile: BodyRiskProfile | null = null;
       let topRisks: Array<{ system: string; score: number }> = [];
+      let healthFindings: HealthFindings | null = null;
       if (targetDomain === "health" && temporal?.stack) {
         bodyRiskProfile = computeBodyRiskProfile(chart, temporal.stack, currentTransits.positions);
         topRisks = getTopRisks(bodyRiskProfile, 3);
+        healthFindings = buildHealthFindings(bodyRiskProfile);
       }
 
       // ── Vedic Chart-Specific Context ─────────────────────────────────────
@@ -276,6 +279,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         moonTransitNote,
         topRisks: topRisks.length > 0 ? topRisks : undefined,
         bodyRiskProfile: bodyRiskProfile ? (bodyRiskProfile as unknown as Record<string, number>) : undefined,
+        healthFindings: healthFindings ?? undefined,
         kundaliContext: kundaliContext || undefined,
       });
 
