@@ -116,8 +116,9 @@ const BODY_LABELS: Record<string, string> = {
 
 function computeHealthStatus(profile: Record<string, number> | undefined): {
   overall: string; energy: string; recovery: string; stress: string; sleep: string;
+  rawAvg: number; rawStress: number; rawRecovery: number; rawEnergy: number;
 } {
-  if (!profile) return { overall: "stable", energy: "moderate", recovery: "moderate", stress: "moderate", sleep: "neutral" };
+  if (!profile) return { overall: "stable", energy: "moderate", recovery: "moderate", stress: "moderate", sleep: "neutral", rawAvg: 50, rawStress: 50, rawRecovery: 50, rawEnergy: 50 };
 
   const all = Object.values(profile);
   const avg = all.reduce((a, b) => a + b, 0) / (all.length || 1);
@@ -132,6 +133,10 @@ function computeHealthStatus(profile: Record<string, number> | undefined): {
     recovery: recovScore < 45 ? "good" : recovScore < 62 ? "moderate — recovery is slower than ideal" : "poor — the body needs more rest than it is getting",
     stress:   stressScore < 40 ? "low" : stressScore < 58 ? "moderate" : "elevated — the nervous system is under load",
     sleep:    sleepScore  < 45 ? "restful" : sleepScore  < 62 ? "neutral — quality could improve" : "disrupted — prioritize rest tonight",
+    rawAvg:      Math.round(avg),
+    rawStress:   Math.round(stressScore),
+    rawRecovery: Math.round(recovScore),
+    rawEnergy:   Math.round(energyScore),
   };
 }
 
@@ -155,13 +160,21 @@ function buildHealthBlock(
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HEALTH INTELLIGENCE BRIEF (INTERNAL — use this structure, never quote it verbatim)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PRE-CONSULTATION HEALTH ASSESSMENT:
-  Overall Health Today : ${status.overall}
-  Energy Level         : ${status.energy}
-  Recovery             : ${status.recovery}
-  Stress Load          : ${status.stress}
+PRE-CONSULTATION HEALTH ASSESSMENT (scores change daily as Moon and transits move):
+  Overall Health Today : ${status.overall} (body stress index: ${status.rawAvg}/100)
+  Energy Level         : ${status.energy} (energy score: ${status.rawEnergy}/100)
+  Recovery             : ${status.recovery} (recovery load: ${status.rawRecovery}/100)
+  Stress Load          : ${status.stress} (stress score: ${status.rawStress}/100)
   Sleep Quality        : ${status.sleep}
   Today's Moon Theme   : ${moonTransitNote.replace(/\n/g, " ")}
+
+⚠️ DAILY VARIATION RULE (non-negotiable):
+The Moon moves ~13° every day and shifts nakshatra every 1–1.5 days.
+The Moon's nakshatra TODAY directly governs which body systems are most sensitive.
+• Your answer on this date MUST reference today's Moon position/nakshatra specifically.
+• If the user asks the same question tomorrow, the Moon will be in a different position — your answer must be observably different.
+• Do NOT give a generic "energy is lower today" type answer. Name the specific body system the Moon's current nakshatra sensitises.
+• Always include ONE sentence that only makes sense for today's Moon — something like "With Moon in [nakshatra], your [specific body system] may feel more [sensitive/active/sluggish] than usual today."
 
 TODAY'S MOST SENSITIVE BODY AREAS (in order of sensitivity):
 ${bodyPartsList}
@@ -419,9 +432,10 @@ ${orchestratorBlock}
 ${punditDNABlock}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TODAY'S CONTEXT
+TODAY'S CONTEXT (these values are specific to this date — they change every day)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Date: ${todayLabel}${contextMoonNote}
+Note: Moon's nakshatra and Tithi above are TODAY's values. They were different yesterday and will be different tomorrow. Any response about today must anchor to these specific values — not to generic dasha themes that apply every day.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 USER'S ASTROLOGICAL PROFILE
