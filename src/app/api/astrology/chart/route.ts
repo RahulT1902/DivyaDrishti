@@ -53,11 +53,13 @@ export async function GET(req: NextRequest) {
     const timeframe = timeframeParam as Timeframe;
 
     const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
+      return buildErrorResponse("AUTH_REQUIRED", "Authentication required.", 401);
+    }
 
-    // 1. Get User by email (or fall back to most recent for backward compat)
+    // 1. Get User by email
     const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 

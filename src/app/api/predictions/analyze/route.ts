@@ -198,10 +198,12 @@ export async function GET(req: NextRequest) {
     const mode = normalizeOutputMode(searchParams.get("mode"));
 
     const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
+      return NextResponse.json({ success: false, error: "Authentication required." }, { status: 401 });
+    }
 
     const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 

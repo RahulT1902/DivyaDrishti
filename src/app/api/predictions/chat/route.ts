@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
 import {
@@ -15,7 +16,7 @@ import { computeBodyRiskProfile, getTopRisks, type BodyRiskProfile } from "@/lib
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, timeframe, domain, conversationHistory, email: bodyEmail } = await req.json();
+    const { message, timeframe, domain, conversationHistory } = await req.json();
 
     if (!message || !domain || !timeframe) {
       return NextResponse.json(
@@ -25,12 +26,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Get user context
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (bodyEmail || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
+      return NextResponse.json({ success: false, error: "Authentication required." }, { status: 401 });
+    }
 
     const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 

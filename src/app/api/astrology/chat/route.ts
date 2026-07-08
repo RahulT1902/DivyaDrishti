@@ -31,10 +31,12 @@ export async function POST(req: NextRequest) {
 
     // 1. Get User Context
     const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
+      return buildErrorResponse("AUTH_REQUIRED", "Authentication required.", 401);
+    }
 
     const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 
