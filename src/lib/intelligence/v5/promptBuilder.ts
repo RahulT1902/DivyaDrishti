@@ -421,97 +421,104 @@ const DOMAIN_NEIGHBORS: Record<string, string[]> = {
 
 const ALL_DOMAINS = ["career", "health", "finance", "relationship", "marriage", "family", "business", "education", "spirituality", "travel", "property", "children", "peace"];
 
-const QUESTION_STRUCTURES: Record<string, string> = {
-  probability: `MANDATORY STRUCTURE — PROBABILITY QUESTION:
-Your FIRST sentence must state the probability estimate. No preamble. No observation first.
-Example opening: "Looking at your chart, I would estimate roughly 55–65% likelihood..."
-Then follow this order:
-  1. Probability estimate (first sentence — what are the chances, in plain language)
-  2. Confidence level: "I say this with [high/medium/low] confidence because..."
-  3. Why I believe this: 2–3 astrological factors translated to lived experience
-  4. What supports this outcome
-  5. What could delay or reduce it
-  6. Most likely scenario (one concrete sentence)
-  7. Timing window (when is the strongest window?)
-  8. Pundit's Closing Thought — must be specific to this career/compensation moment, not generic life wisdom
-LENGTH: 280–360 words. Do not exceed. Probability responses must be precise, not expansive.`,
+// ─── AI Decision Intelligence Framework ──────────────────────────────────────
+// Every domain answers the same 5 questions: What's happening? / Why? /
+// What to do? / When does it change? / How confident?
+// Question-type routing shifts DEPTH within this framework, not the structure.
 
-  timing: `MANDATORY STRUCTURE — TIMING QUESTION:
-Your FIRST sentence must state where things stand right now.
-Then follow this order:
-  1. Current momentum (first sentence)
-  2. Immediate window: next 2–4 weeks
-  3. Near-term window: 1–3 months
-  4. Strongest window: the peak opportunity period with its astrological trigger
-  5. Astrological translation: what is creating this timing
-  6. What to do in each phase
-  7. Pundit's Closing Thought — specific to timing, not generic
-LENGTH: 260–340 words.`,
-
-  prediction: `MANDATORY STRUCTURE — PREDICTION QUESTION:
-Your FIRST sentence must directly assess likelihood — likely, unlikely, or conditional.
-Example: "Your chart does suggest this is possible, but the timing may not be immediate..."
-Then follow this order:
-  1. Direct assessment (first sentence)
-  2. What the chart supports
-  3. What is still building or not yet ready
-  4. Conditions that would change the outcome
-  5. Timing window
-  6. Guidance
-  7. Pundit's Closing Thought`,
-
-  decision: `MANDATORY STRUCTURE — DECISION QUESTION:
-Your FIRST sentence must state which direction the chart leans.
-Example: "Looking at the chart, there is a lean toward staying rather than moving right now..."
-Then follow this order:
-  1. The chart's leaning (first sentence)
-  2. What supports that path
-  3. What to watch out for
-  4. Timing consideration
-  5. The deeper question (what this decision is really about)
-  6. Guidance
-  7. Pundit's Closing Thought`,
-
-  explanation: `MANDATORY STRUCTURE — EXPLANATION QUESTION:
-Your FIRST sentence must name the primary cause in lived experience, not astrological terms.
-Example: "What is creating this pattern is a combination of..."
-Then follow this order:
-  1. Primary cause (first sentence — experiential, not planetary)
-  2. Why this is happening astrologically (translated to experience)
-  3. How long this pattern lasts
-  4. What would change it
-  5. Guidance
-  7. Pundit's Closing Thought`,
-
-  planet_inquiry: `MANDATORY STRUCTURE — PLANET INQUIRY:
-Your FIRST sentence must name the primary planetary influence and what it is creating.
-Example: "The planet working most actively in your favor right now is Jupiter..."
-Then follow this order:
-  1. Name the planet and its current effect (first sentence)
-  2. Which area of life it is strengthening
-  3. How long this influence lasts
-  4. What else is notable (secondary influence)
-  5. How to work with this energy
-  6. Pundit's Closing Thought`,
-
-  body_parts: `MANDATORY STRUCTURE — BODY PARTS QUESTION:
-Do NOT open with planetary context. Do NOT restate the question. Do NOT give a general health overview first.
-Your VERY FIRST SENTENCE must name the specific body areas directly.
-
-Example CORRECT opening: "Today, the areas most worth watching are your lower back, eyes, and digestive system."
-Example WRONG opening: "What I think is more worth exploring is how planetary influences..." ← FORBIDDEN
-
-Then follow this order:
-  1. NAME the top 3 body areas directly (first sentence — no preamble)
-  2. For each area: one sentence on what the person may notice or feel today
-  3. Why — brief astrological reason in plain experience-based language (no house numbers, no raw planet names)
-  4. One practical care suggestion
-  5. Pundit's Closing Thought — specific to physical wellbeing, not life advice
-LENGTH: 180–250 words. Precise and direct.`,
-
-  general_status: `STRUCTURE: Observation first → The story unfolding → What the user may experience → Why → Guidance → Pundit's Closing Thought
-LENGTH: 300–380 words.`,
+const DOMAIN_LABELS: Record<string, { headline: string; emoji: string; focus: string }> = {
+  career:       { headline: "Career & Professional",  emoji: "📊", focus: "career momentum, recognition, and opportunities" },
+  promotion:    { headline: "Career & Promotion",     emoji: "📊", focus: "promotion prospects, recognition, and career advancement" },
+  finance:      { headline: "Financial",              emoji: "💰", focus: "cash flow, savings, investments, and financial pressure" },
+  relationship: { headline: "Relationships",          emoji: "💫", focus: "communication, emotional connection, and harmony" },
+  marriage:     { headline: "Marriage & Partnership", emoji: "💍", focus: "partnership dynamics and long-term alignment" },
+  family:       { headline: "Family",                 emoji: "🏠", focus: "family dynamics, support, and home environment" },
+  business:     { headline: "Business",               emoji: "🏢", focus: "growth, decisions, partnerships, and business climate" },
+  education:    { headline: "Education & Learning",   emoji: "📚", focus: "learning pace, focus, exam performance, and skill growth" },
+  spirituality: { headline: "Spiritual",              emoji: "🕉️", focus: "inner clarity, purpose, and spiritual direction" },
+  travel:       { headline: "Travel",                 emoji: "✈️", focus: "travel suitability, timing, and precautions" },
+  general:      { headline: "Life",                   emoji: "🔮", focus: "overall life direction and key themes at play" },
 };
+
+// Which section to deepen based on what the user actually asked
+const DEPTH_EMPHASIS: Record<string, string> = {
+  probability:
+`DEPTH EMPHASIS — PROBABILITY QUESTION:
+• Section 1 (Outlook) must open with the probability estimate. First sentence. No preamble.
+  Example: "Looking at your chart, I would estimate roughly 60–70% likelihood..."
+• Section 5 (Confidence) must explain specifically what creates that confidence — not just a label.`,
+
+  timing:
+`DEPTH EMPHASIS — TIMING QUESTION:
+• Section 4 (When) must cover THREE windows: immediate (2–4 weeks), near-term (1–3 months), and the peak.
+• Name the specific astrological trigger for the peak window in plain language — what shifts, and when.`,
+
+  prediction:
+`DEPTH EMPHASIS — PREDICTION QUESTION:
+• Section 1 (Outlook) must open with a direct likelihood assessment: "likely", "unlikely", or "conditional on..."
+• Section 4 (When) must name the conditions that would confirm or shift the prediction.`,
+
+  decision:
+`DEPTH EMPHASIS — DECISION QUESTION:
+• Section 1 (Outlook) must state which direction the chart leans — first sentence.
+• Section 3 (What to do) is the most important section — name specific steps for the chart-supported path AND what to avoid.`,
+
+  explanation:
+`DEPTH EMPHASIS — EXPLANATION QUESTION:
+• Section 2 (Why) is the most important section — name the root cause in plain terms, its duration, and what would change it.
+• Section 1 (Outlook) can be brief (1–2 sentences) since the "why" is the point.`,
+
+  planet_inquiry:
+`DEPTH EMPHASIS — PLANET INQUIRY:
+• Section 2 (Why) must name the relevant planet(s) and translate their current position into lived experience.
+• Section 4 (When) must note how long this planetary influence lasts and what shifts it.`,
+
+  body_parts:
+`DEPTH EMPHASIS — SPECIFIC AREA QUESTION:
+• Section 1 (Outlook) must name specific areas directly — first sentence, no preamble.
+• Section 3 (What to do) must include body-specific care suggestions tied to those areas.`,
+
+  general_status:
+`DEPTH EMPHASIS — GENERAL STATUS:
+• Balanced across all 5 sections.
+• Section 3 (What to do) must have the most specific, actionable items — not generic advice.`,
+};
+
+function buildUniversalDomainFormat(domain: string, questionType: string): string {
+  const label = DOMAIN_LABELS[domain] ?? DOMAIN_LABELS["general"];
+  const depth = DEPTH_EMPHASIS[questionType] ?? DEPTH_EMPHASIS["general_status"];
+
+  return `MANDATORY RESPONSE FORMAT — AI DECISION INTELLIGENCE FRAMEWORK
+Write each section header exactly as shown. They are visible to the user — make the response scannable.
+
+${label.emoji} ${label.headline} Outlook
+[What is happening right now in this domain? 2–3 sentences. Direct. No preamble.]
+[Cover: ${label.focus}]
+
+🔍 Why This Is Happening
+[Translate dasha + transits into lived experience. 2–3 sentences. Plain language.]
+[No degree numbers. No house numbers. Name planets only when essential.]
+
+⚡ What You Should Do
+[3–4 specific, actionable items — tied to today's astrological phase, not generic advice]
+✔ [Action 1]
+✔ [Action 2]
+✔ [Action 3]
+✔ [Action 4 — optional but preferred]
+
+⏳ When This Is Likely to Change
+Near-term (2–4 weeks): [one sentence on what to expect soon]
+Shift window (1–3 months): [one sentence on the medium-term movement or peak opportunity]
+
+🎯 Confidence: [High / Medium / Low]
+[One sentence: what makes this read strong, or what limits certainty.]
+
+[Pundit's Closing Thought — 1 sentence. No label. Specific to this person's situation right now.]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${depth}
+TOTAL LENGTH: 220–300 words. Every word earns its place. Do not pad.`;
+}
 
 function buildOrchestratorBlock(richIntent: RichIntent): string {
   const domain  = richIntent.domain;
@@ -522,7 +529,9 @@ function buildOrchestratorBlock(richIntent: RichIntent): string {
   const forbidden = ALL_DOMAINS.filter(d => !activeDomains.includes(d));
   const forbiddenStr = forbidden.slice(0, 5).join(", ");
 
-  const structure = QUESTION_STRUCTURES[qType] ?? QUESTION_STRUCTURES["general_status"];
+  // Health format is handled entirely by buildHealthBlock — do not specify structure here.
+  // All other domains use the universal 5-question decision framework.
+  const structure = domain === "health" ? "" : buildUniversalDomainFormat(domain, qType);
 
   const hardForbids: string[] = [];
   if (domain !== "health") hardForbids.push("Do NOT discuss health, body, energy levels, sleep, physical wellbeing, or digestion — even briefly.");
@@ -687,14 +696,14 @@ ${richIntent.domain === "health"
   ? isHealthFollowUp
     ? `HEALTH FOLLOW-UP: End with ONE sentence of Pundit's Closing Thought — specific to this follow-up question only. Do NOT write "Pundit's Closing Thought" as a heading — just write the sentence naturally.`
     : `HEALTH DOMAIN — DO NOT write "Pundit's Closing Thought". The 7-section briefing format in the HEALTH INTELLIGENCE BRIEF above replaces it entirely. End with "If you're already experiencing symptoms:" paragraph, then Confidence level.`
-  : `End with Pundit's Closing Thought — something real and specific to this person, not a philosophical quote.`}
+  : `The 5-question framework above ends with an unlabeled Pundit's Closing Thought — write it naturally, without a heading. Make it specific to this person's situation, not a philosophical quote.`}
 
 LENGTH: Answer the question and stop. Do not pad.
 ${richIntent.domain === "health"
   ? isHealthFollowUp
     ? `Health follow-up: 80–180 words. Direct answer only. No section headers. No emoji titles.`
     : `Health briefing: follow the 7-section format. Each section is short. Total 200–260 words.`
-  : `General/status: 180–260 words. Probability/timing/prediction: 200–280 words.`}
+  : `5-question framework: 220–300 words. All 5 sections required. Depth emphasis follows the MANDATORY FORMAT block above.`}
 A short clear answer is better than a long vague one.
 
 On a new line after your response, write exactly this format (required):
