@@ -166,7 +166,8 @@ function buildHealthBlock(
   topRisks: Array<{ system: string; score: number }> | undefined,
   profile: Record<string, number> | undefined,
   moonTransitNote: string,
-  findings?: HealthFindings
+  findings?: HealthFindings,
+  isFollowUp?: boolean
 ): string {
   if (!topRisks || topRisks.length === 0) return "";
 
@@ -185,7 +186,7 @@ function buildHealthBlock(
       ? `TERTIARY FOCUS   : ${findings.tertiaryFocus.displayName} (score ${findings.tertiaryFocus.score}/100)`
       : "";
 
-    return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const findingsBlock = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PRE-COMPUTED HEALTH FINDINGS (authoritative — chart-derived, fixed before this question was asked)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PRIMARY FOCUS    : ${findings.primaryFocus.displayName} (score ${findings.primaryFocus.score}/100)
@@ -217,7 +218,48 @@ If the user asks about a system that is NOT in ACTIVE SYSTEMS:
   → Do NOT pivot to that system as a new focus.
 
 This consistency is what makes the Pandit trustworthy.
-A real astrologer's reading doesn't change based on what the patient suggests.
+A real astrologer's reading doesn't change based on what the patient suggests.`;
+
+    // Follow-up mode: user already received the full briefing — answer only the specific question
+    if (isFollowUp) {
+      return `${findingsBlock}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HEALTH FOLLOW-UP MODE — DO NOT REGENERATE THE FULL REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You already gave the complete Daily Health Briefing earlier in this consultation.
+The user is asking a specific follow-up question. Answer it directly — like a pandit answering mid-consultation.
+
+RULES:
+• Answer ONLY what was asked. Do NOT reintroduce the consultation.
+• Do NOT use section headers (🌿🎯⚠💪🍽✅🌙). No emoji section titles.
+• Do NOT repeat or regenerate: Overall Health, Energy, Digestion, Advice, Areas to Watch.
+• Begin with a direct answer to the question. Reference today's findings naturally.
+• Keep it 2–4 short paragraphs. Conversational, warm, specific.
+• End with ONE sentence of Pundit's Closing Thought — specific to this follow-up question only.
+
+EXAMPLE — fever question:
+"Based on today's chart, the chances of developing a fever are low. The primary sensitivity today is around the respiratory system, so if anything, symptoms are more likely to stay at the level of throat irritation or nasal congestion. A significant fever would suggest the immune system is under heavy load, and the chart doesn't show that strongly today. Keep warm, stay hydrated, and rest well tonight."
+
+EXAMPLE — workout question:
+"A gentle walk should be fine, especially in the morning when energy holds up better. Your chart is showing respiratory sensitivity today, so avoid exercising in cold air or dusty environments. Keep it light — a full intense workout may leave you more fatigued than usual given today's recovery picture."
+
+EXAMPLE — digestion question:
+"Digestion isn't the main concern today — the chart points more toward respiratory sensitivity. That said, ${findings.digestiveNote.toLowerCase()} Avoid anything too heavy or oily to keep things comfortable."
+
+FORBIDDEN for follow-up responses:
+❌ Starting with "🌿 Health Outlook for Today"
+❌ Regenerating the full 7-section briefing
+❌ Repeating Overall Health, Energy, or Advice sections
+❌ Opening with greetings, reintroductions, or context-setting
+
+LENGTH: 80–180 words. Direct. Conversational. Warm.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMAIN PRIORITY (absolute): Every sentence about body, energy, sleep, or digestion only.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    }
+
+    // Initial consultation: full 7-section briefing
+    return `${findingsBlock}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT — DAILY HEALTH BRIEFING (use exact section headers)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -551,11 +593,24 @@ export function buildV5Prompt(params: V5PromptParams): string {
     richIntent.questionType
   );
 
+  // Detect if this is a follow-up within an existing health consultation.
+  // If the conversation history already contains a full Health Briefing (🌿 header),
+  // switch to follow-up mode so Claude answers the specific question without
+  // regenerating the entire report.
+  const isHealthFollowUp = richIntent.domain === "health"
+    && conversationHistory.some(m =>
+        m.role === "assistant" && (
+          m.content.includes("🌿") ||
+          m.content.includes("Health Outlook") ||
+          m.content.includes("Health Focus")
+        )
+      );
+
   const briefBlock    = buildBriefBlock(brief);
   const historyBlock  = buildHistoryBlock(conversationHistory);
   // Health block only injected for health domain — never for career, finance, etc.
   const healthBlock   = richIntent.domain === "health"
-    ? buildHealthBlock(topRisks, bodyRiskProfile, moonTransitNote, healthFindings)
+    ? buildHealthBlock(topRisks, bodyRiskProfile, moonTransitNote, healthFindings, isHealthFollowUp)
     : "";
   const orchestratorBlock = buildOrchestratorBlock(richIntent);
 
@@ -629,12 +684,16 @@ Do NOT use: "The chart shows / The data indicates / The calculations suggest / T
 Do NOT repeat advice or observations from previous responses in this conversation.
 
 ${richIntent.domain === "health"
-  ? `HEALTH DOMAIN — DO NOT write "Pundit's Closing Thought". The 7-section briefing format in the HEALTH INTELLIGENCE BRIEF above replaces it entirely. End with "If you're already experiencing symptoms:" paragraph, then Confidence level.`
+  ? isHealthFollowUp
+    ? `HEALTH FOLLOW-UP: End with ONE sentence of Pundit's Closing Thought — specific to this follow-up question only. Do NOT write "Pundit's Closing Thought" as a heading — just write the sentence naturally.`
+    : `HEALTH DOMAIN — DO NOT write "Pundit's Closing Thought". The 7-section briefing format in the HEALTH INTELLIGENCE BRIEF above replaces it entirely. End with "If you're already experiencing symptoms:" paragraph, then Confidence level.`
   : `End with Pundit's Closing Thought — something real and specific to this person, not a philosophical quote.`}
 
 LENGTH: Answer the question and stop. Do not pad.
 ${richIntent.domain === "health"
-  ? `Health briefing: follow the 7-section format. Each section is short. Total 220–320 words.`
+  ? isHealthFollowUp
+    ? `Health follow-up: 80–180 words. Direct answer only. No section headers. No emoji titles.`
+    : `Health briefing: follow the 7-section format. Each section is short. Total 200–260 words.`
   : `General/status: 180–260 words. Probability/timing/prediction: 200–280 words.`}
 A short clear answer is better than a long vague one.
 
