@@ -1,7 +1,8 @@
 import {
   DivisionalChart, PlanetRole, PlanetStrength,
-  YogaDefinition, YogaResult, YogaCandidate, YogaStatus, YogaAnalysis,
-  AstrologicalEvidence, PlanetName, AstrologyEngine, EvaluationContext,
+  YogaDefinition, YogaBirthPromise, YogaCandidate,
+  YogaDetectionResult, AstrologicalEvidence, PlanetName,
+  AstrologyEngine, EvaluationContext,
 } from "../types";
 import { evaluateRule } from "./dsl/ruleEvaluator";
 import { ALL_YOGA_DEFINITIONS } from "./definitions";
@@ -9,41 +10,43 @@ import { detectConflicts } from "./yogaConflicts";
 
 // Input bundle for the Yoga Engine
 export interface YogaEngineInput {
-  chart:    DivisionalChart;
-  roles:    PlanetRole[];
+  chart:     DivisionalChart;
+  roles:     PlanetRole[];
   strengths: PlanetStrength[];
 }
 
-export class YogaEngine implements AstrologyEngine<YogaEngineInput, YogaAnalysis> {
-  evaluate(input: YogaEngineInput): YogaAnalysis {
+// The Yoga Engine detects natal promises only.
+// It does NOT assign status — that belongs to the Activation Engine.
+export class YogaEngine implements AstrologyEngine<YogaEngineInput, YogaDetectionResult> {
+  evaluate(input: YogaEngineInput): YogaDetectionResult {
     const ctx: EvaluationContext = {
       chart:    input.chart,
       roles:    input.roles,
       strengths: input.strengths,
     };
 
-    const detected:  YogaResult[]    = [];
-    const missed:    YogaCandidate[] = [];
+    const birthPromises: YogaBirthPromise[] = [];
+    const missed:        YogaCandidate[]    = [];
 
     for (const def of ALL_YOGA_DEFINITIONS) {
       const result = this.evaluateDefinition(def, ctx);
       if (result !== null) {
-        detected.push(result);
+        birthPromises.push(result);
       } else {
         missed.push(this.buildCandidate(def, ctx));
       }
     }
 
-    const conflictingYogas = detectConflicts(detected);
+    const conflictingYogas = detectConflicts(birthPromises);
 
-    const dominantYogas = [...detected]
-      .sort((a, b) => (b.strength * b.severity) - (a.strength * a.severity))
+    const dominantPromises = [...birthPromises]
+      .sort((a, b) => (b.birthStrength * b.severity) - (a.birthStrength * a.severity))
       .slice(0, 5);
 
-    const overallYogaStrength = computeOverallStrength(detected);
-    const evidence = buildSummaryEvidence(detected, dominantYogas);
+    const overallBirthStrength = computeOverallBirthStrength(birthPromises);
+    const evidence = buildSummaryEvidence(birthPromises, dominantPromises);
 
-    return { detected, missed, dominantYogas, conflictingYogas, overallYogaStrength, evidence };
+    return { birthPromises, missed, conflictingYogas, dominantPromises, overallBirthStrength, evidence };
   }
 
   // ── Per-definition evaluation ───────────────────────────────────────────────
@@ -51,20 +54,18 @@ export class YogaEngine implements AstrologyEngine<YogaEngineInput, YogaAnalysis
   private evaluateDefinition(
     def: YogaDefinition,
     ctx: EvaluationContext,
-  ): YogaResult | null {
-    // Use custom evaluateFn when provided; otherwise evaluate the DSL rule
+  ): YogaBirthPromise | null {
     const condResult = def.evaluateFn
       ? def.evaluateFn(ctx)
       : evaluateRule(def.conditions, ctx);
 
     if (!condResult.matches) return null;
 
-    // Base strength from supporting planets
-    const baseStrength = def.strengthFormula
+    const birthStrength = def.strengthFormula
       ? def.strengthFormula(ctx, condResult.supportingPlanets)
       : averageStrength(ctx, condResult.supportingPlanets);
 
-    // Apply modifiers
+    // Apply modifiers to birth strength
     let totalDelta = 0;
     const modifierDescriptions: string[] = [];
     for (const mod of def.modifiers) {
@@ -75,18 +76,15 @@ export class YogaEngine implements AstrologyEngine<YogaEngineInput, YogaAnalysis
       }
     }
 
-    const strength = Math.max(0, Math.min(100, baseStrength + totalDelta));
-    const status   = yogaStatus(strength);
-
-    const evidence = buildEvidence(def, condResult.descriptions, modifierDescriptions, strength);
+    const finalStrength = Math.max(0, Math.min(100, birthStrength + totalDelta));
+    const evidence = buildEvidence(def, condResult.descriptions, modifierDescriptions, finalStrength);
 
     return {
       id:               def.id,
       name:             def.name,
       sanskritName:     def.sanskritName,
       category:         def.category,
-      status,
-      strength,
+      birthStrength:    finalStrength,
       severity:         def.severity,
       supportingPlanets: condResult.supportingPlanets,
       affectedDomains:  def.domains,
@@ -98,7 +96,6 @@ export class YogaEngine implements AstrologyEngine<YogaEngineInput, YogaAnalysis
   // ── Near-miss candidate ─────────────────────────────────────────────────────
 
   private buildCandidate(def: YogaDefinition, ctx: EvaluationContext): YogaCandidate {
-    // For DSL nodes, collect which sub-conditions failed
     const failedConditions: string[] = [];
     let nearMiss = false;
 
@@ -116,8 +113,8 @@ export class YogaEngine implements AstrologyEngine<YogaEngineInput, YogaAnalysis
     }
 
     return {
-      yogaId:           def.id,
-      yogaName:         def.name,
+      yogaId:          def.id,
+      yogaName:        def.name,
       failedConditions,
       nearMiss,
     };
@@ -135,20 +132,13 @@ function averageStrength(ctx: EvaluationContext, planets: PlanetName[]): number 
   return Math.round(total / planets.length);
 }
 
-function yogaStatus(strength: number): YogaStatus {
-  if (strength >= 85) return "Peak";
-  if (strength >= 60) return "Active";
-  if (strength >= 40) return "Emerging";
-  return "Dormant";
-}
-
-function computeOverallStrength(detected: YogaResult[]): number {
-  if (detected.length === 0) return 0;
+function computeOverallBirthStrength(promises: YogaBirthPromise[]): number {
+  if (promises.length === 0) return 0;
   let weightedSum = 0;
   let totalWeight = 0;
-  for (const y of detected) {
+  for (const y of promises) {
     const w = y.severity / 100;
-    weightedSum += y.strength * w;
+    weightedSum += y.birthStrength * w;
     totalWeight += w;
   }
   return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
@@ -158,14 +148,14 @@ function buildEvidence(
   def: YogaDefinition,
   conditionDescs: string[],
   modifierDescs: string[],
-  strength: number,
+  birthStrength: number,
 ): AstrologicalEvidence[] {
-  const evidence: AstrologicalEvidence[] = [
+  return [
     {
       id:          `${def.id}-detection`,
       category:    "Yoga",
-      description: `${def.name} detected (severity ${def.severity}/100)`,
-      strength,
+      description: `${def.name} detected (severity ${def.severity}/100, birthStrength ${birthStrength}/100)`,
+      strength:    birthStrength,
       weight:      def.severity / 100,
       sourceChart: "D1",
     },
@@ -173,7 +163,7 @@ function buildEvidence(
       id:          `${def.id}-cond-${i}`,
       category:    "Yoga",
       description: desc,
-      strength,
+      strength:    birthStrength,
       weight:      0.5,
       sourceChart: "D1",
     })),
@@ -181,24 +171,23 @@ function buildEvidence(
       id:          `${def.id}-mod-${i}`,
       category:    "Yoga",
       description: desc,
-      strength,
+      strength:    birthStrength,
       weight:      0.3,
       sourceChart: "D1",
     })),
   ];
-  return evidence;
 }
 
 function buildSummaryEvidence(
-  detected: YogaResult[],
-  dominant: YogaResult[],
+  promises: YogaBirthPromise[],
+  dominant: YogaBirthPromise[],
 ): AstrologicalEvidence[] {
   return [
     {
       id:          "yoga-summary",
       category:    "Yoga",
-      description: `${detected.length} yoga(s) detected; dominant: ${dominant.map(y => y.name).join(", ") || "none"}`,
-      strength:    detected.length > 0 ? dominant[0]?.strength ?? 50 : 0,
+      description: `${promises.length} natal yoga promise(s) detected; dominant: ${dominant.map(y => y.name).join(", ") || "none"}`,
+      strength:    dominant[0]?.birthStrength ?? 0,
       weight:      1.0,
       sourceChart: "D1",
     },

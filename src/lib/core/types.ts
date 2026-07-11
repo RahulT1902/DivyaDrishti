@@ -184,29 +184,90 @@ export interface YogaConflict {
   netStrengthDelta: number;
 }
 
-// Full result for a detected yoga
-export interface YogaResult {
+// ── Immutable birth promise (what the natal chart contains) ──────────────────
+// Computed once, never changes.  Status is NOT here — that belongs to activation.
+
+export interface YogaBirthPromise {
   id: string;
   name: string;
   sanskritName?: string;
   category: YogaCategory;
-  status: YogaStatus;
-  strength: number;           // 0–100
-  severity: number;           // from definition — impact weight
+  birthStrength: number;      // 0–100 — how strongly formed in the natal chart
+  severity: number;           // 0–100 — impact weight used by domain engines
   supportingPlanets: PlanetName[];
   affectedDomains: string[];
   evidence: AstrologicalEvidence[];
   description: string;
 }
 
-// Full output from the Yoga Engine
-export interface YogaAnalysis {
-  detected: YogaResult[];
-  missed: YogaCandidate[];
-  dominantYogas: YogaResult[];      // top yogas by strength × severity
-  conflictingYogas: YogaConflict[];
-  overallYogaStrength: number;      // 0–100 weighted composite
+// ── Mutable activation state (whether/when the promise manifests) ─────────────
+// Recomputed whenever timing data changes.  Currently strength-based only;
+// dashaContribution and transitContribution become non-zero in Phase 5.
+
+export interface YogaActivation {
+  yogaId: string;
+  status: YogaStatus;          // Dormant | Emerging | Active | Peak
+  activationScore: number;     // 0–100 composite
+  strengthContribution: number; // from natal birth strength
+  dashaContribution: number;   // from active dasha (stub: 0 until DashaEngine)
+  transitContribution: number; // from current transit (stub: 0 until TransitEngine)
+  isDashaActive: boolean;
+  isTransitActive: boolean;
   evidence: AstrologicalEvidence[];
+}
+
+// ── Dasha period info — typed here so ActivationEngine can accept it ──────────
+export interface DashaInfo {
+  mahadasha: PlanetName;
+  antardasha: PlanetName;
+  periodStart: string;         // ISO date
+  periodEnd: string;           // ISO date
+}
+
+// ── YogaDetectionResult — raw output from the Yoga Engine ────────────────────
+// Activation Engine then adds YogaActivation[] to form the full YogaAnalysis.
+
+export interface YogaDetectionResult {
+  birthPromises:       YogaBirthPromise[];
+  missed:              YogaCandidate[];
+  conflictingYogas:    YogaConflict[];
+  dominantPromises:    YogaBirthPromise[];   // top by birthStrength × severity
+  overallBirthStrength: number;              // 0–100 weighted natal composite
+  evidence:            AstrologicalEvidence[];
+}
+
+// ── Full YogaAnalysis — assembled by AstrologyContextBuilder ──────────────────
+
+export interface YogaAnalysis {
+  // Detection phase (from YogaEngine) — immutable
+  birthPromises:        YogaBirthPromise[];
+  dominantPromises:     YogaBirthPromise[];
+  conflictingYogas:     YogaConflict[];
+  missed:               YogaCandidate[];
+  overallBirthStrength: number;
+
+  // Activation phase (from ActivationEngine) — mutable
+  activations:          YogaActivation[];
+  overallActivationScore: number;
+
+  evidence: AstrologicalEvidence[];
+}
+
+// ── Inference Engine types ────────────────────────────────────────────────────
+// Domain engines query these conclusions rather than re-implementing astrological logic.
+
+export interface InferenceConclusion {
+  id: string;
+  domain: string;                           // "Career" | "Wealth" | "Marriage" | "Health" | "General"
+  statement: string;                        // precise machine-readable description
+  confidence: number;                       // 0–100
+  probability: number;                      // 0–100 — likelihood of manifestation
+  direction: "Positive" | "Negative" | "Mixed";
+  timing: "Natal" | "Current";             // Natal = always true; Current = needs dasha/transit
+  supportingEvidence: string[];
+  conflictingEvidence: string[];
+  reasonCodes: string[];                    // machine codes for domain-engine filtering
+  planets: PlanetName[];                    // key planets involved
 }
 
 // ── Shared evidence model — every engine emits this format ──────────────────
@@ -277,7 +338,7 @@ export interface DivisionalChart {
   lords: HouseLord[];
   aspects: Aspect[];
   conjunctions: Conjunction[];
-  yogas: YogaResult[];         // populated by YogaEngine (Step 4)
+  yogas: YogaBirthPromise[];   // populated by YogaEngine
   strengths: PlanetStrength[]; // populated by StrengthEngine (Step 3)
   metadata: ChartMetadata;
 }
@@ -288,9 +349,10 @@ export interface AstrologyContext {
   chartSuite:      ChartSuite;
   planetRoles:     PlanetRole[];
   planetStrengths: PlanetStrength[];
-  yogaAnalysis:    YogaAnalysis;     // populated by YogaEngine (Step 4)
-  dasha?:          unknown;          // typed when DashaEngine integrates
-  transit?:        unknown;          // typed when TransitEngine integrates
+  yogaAnalysis:    YogaAnalysis;
+  inferences:      InferenceConclusion[];   // pre-derived conclusions for domain engines
+  dasha?:          DashaInfo;               // typed — populated when DashaEngine integrates
+  transit?:        unknown;                 // typed when TransitEngine integrates
 }
 
 // ── Chart suite — all divisional charts for one birth ───────────────────────

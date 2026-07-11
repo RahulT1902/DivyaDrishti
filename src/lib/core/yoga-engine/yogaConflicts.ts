@@ -1,4 +1,4 @@
-import { YogaResult, YogaConflict } from "../types";
+import { YogaBirthPromise, YogaConflict } from "../types";
 
 // A conflict rule: two detected yogas that interact negatively.
 interface ConflictRule {
@@ -41,7 +41,7 @@ const CONFLICT_RULES: ConflictRule[] = [
   },
 ];
 
-export function detectConflicts(detected: YogaResult[]): YogaConflict[] {
+export function detectConflicts(detected: YogaBirthPromise[]): YogaConflict[] {
   const detectedIds = new Set(detected.map(y => y.id));
   const conflicts: YogaConflict[] = [];
 
