@@ -6,7 +6,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 async function testDeepSeek() {
   try {
     const client = createOpenAI({ baseURL: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY });
-    await generateText({ model: client.chat("deepseek-chat"), prompt: "Say OK", maxTokens: 5 });
+    await generateText({ model: client.chat("deepseek-chat"), prompt: "Say OK", maxTokens: 5 } as any);
     return "OK";
   } catch (e: any) {
     return e?.message?.slice(0, 100) ?? "unknown error";
@@ -16,7 +16,7 @@ async function testDeepSeek() {
 async function testGroq() {
   try {
     const client = createOpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY });
-    await generateText({ model: client.chat("llama-3.3-70b-versatile"), prompt: "Say OK", maxTokens: 5 });
+    await generateText({ model: client.chat("llama-3.3-70b-versatile"), prompt: "Say OK", maxTokens: 5 } as any);
     return "OK";
   } catch (e: any) {
     return e?.message?.slice(0, 100) ?? "unknown error";
