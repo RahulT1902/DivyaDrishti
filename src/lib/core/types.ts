@@ -253,8 +253,31 @@ export interface YogaAnalysis {
   evidence: AstrologicalEvidence[];
 }
 
+// ── Rule versioning — every prediction records which engine version produced it ─
+
+export interface RuleSetMeta {
+  id: string;
+  version: string;         // semantic version e.g., "1.0.0"
+  effectiveDate: string;   // ISO date
+  author: string;
+}
+
+// ── Confidence provenance — where does the number come from? ─────────────────
+// Stores the raw contribution from each engine tier so the LLM can explain
+// *why* a confidence is at a given level, not just what it is.
+
+export interface ConfidenceProvenance {
+  natal:      number;   // 0–100 — contribution from natal chart quality (yoga/dignity)
+  activation: number;   // 0–100 — contribution from activation engine (dasha/transit)
+  strength:   number;   // 0–100 — contribution from planetary strength engine
+}
+
 // ── Inference Engine types ────────────────────────────────────────────────────
 // Domain engines query these conclusions rather than re-implementing astrological logic.
+
+// Rule authors return DraftConclusion — InferenceEngine stamps the three
+// bookkeeping fields (provenance, ruleId, ruleSetVersion) before storing.
+export type DraftConclusion = Omit<InferenceConclusion, "provenance" | "ruleId" | "ruleSetVersion">;
 
 export interface InferenceConclusion {
   id: string;
@@ -268,6 +291,78 @@ export interface InferenceConclusion {
   conflictingEvidence: string[];
   reasonCodes: string[];                    // machine codes for domain-engine filtering
   planets: PlanetName[];                    // key planets involved
+  provenance: ConfidenceProvenance;         // breakdown of confidence sources
+  ruleId: string;                           // which rule produced this
+  ruleSetVersion: string;                   // which engine version (for regression tracking)
+}
+
+// ── Hypothesis Layer — abstract concepts between inference and domains ────────
+// A hypothesis (e.g. "Leadership Potential") can feed multiple domains.
+// The same Saturn → Discipline hypothesis contributes to Career, Education, Spirituality.
+// Hypotheses are derived from InferenceConclusions — they cluster related conclusions
+// into a named, reusable symbolic concept.
+
+export interface Hypothesis {
+  id: string;
+  label: string;                            // e.g., "Leadership Potential"
+  confidence: number;                       // 0–100
+  domains: Record<string, number>;          // domain → relevance weight (0–1)
+  supportingPlanets: PlanetName[];
+  triggerReasonCodes: string[];             // which InferenceConclusion reasonCodes activated this
+  sourceInferenceIds: string[];             // which InferenceConclusion ids fed this
+  provenance: ConfidenceProvenance;
+  evidence: AstrologicalEvidence[];
+}
+
+// ── Inference Graph — bidirectional reasoning for "Why?" explanations ─────────
+// Every node records its parents (what it was derived from) and children
+// (what it contributes to).  Traversing backward from a domain conclusion
+// reveals the full explanation chain: Domain ← Hypothesis ← Inference ← Fact.
+
+export type InferenceNodeType = "Fact" | "Inference" | "Hypothesis" | "Decision";
+
+export interface InferenceNode {
+  id: string;
+  type: InferenceNodeType;
+  label: string;
+  confidence: number;
+  parents:  string[];   // node IDs this was derived from
+  children: string[];   // node IDs this contributes to
+  evidence: AstrologicalEvidence[];
+}
+
+// ── Decision Graph — structured output for domain engines and LLM narrator ───
+// Instead of a flat "Career: 87%" score, the DecisionGraph exposes the full
+// reasoning: what supports, what blocks, when to act, and why.
+
+export interface DecisionFactor {
+  label: string;
+  confidence: number;
+  direction: "Supporting" | "Blocking";
+  sourceHypothesisIds: string[];
+  reasonCodes: string[];
+}
+
+export interface TimingWindow {
+  label: string;             // e.g., "Growth Phase", "Consolidation", "Transformation"
+  startDate?: string;        // ISO date — populated when dasha data is present
+  endDate?: string;
+  isDashaSupported: boolean;
+  description: string;
+}
+
+export interface DecisionGraph {
+  domain: string;
+  currentState: string;           // e.g., "Growth Phase", "Stagnation", "Dormant Promise"
+  overallScore: number;           // 0–100 composite
+  supportingFactors: DecisionFactor[];
+  blockingFactors:   DecisionFactor[];
+  timing: TimingWindow;
+  recommendedAction: string;
+  confidence: number;
+  provenance: ConfidenceProvenance;
+  hypothesisIds: string[];        // which hypotheses drove this graph
+  ruleSetVersion: string;
 }
 
 // ── Shared evidence model — every engine emits this format ──────────────────
@@ -350,7 +445,9 @@ export interface AstrologyContext {
   planetRoles:     PlanetRole[];
   planetStrengths: PlanetStrength[];
   yogaAnalysis:    YogaAnalysis;
-  inferences:      InferenceConclusion[];   // pre-derived conclusions for domain engines
+  inferences:      InferenceConclusion[];   // fine-grained rule conclusions
+  hypotheses:      Hypothesis[];            // abstract concepts (leadership, discipline, etc.)
+  inferenceGraph:  InferenceNode[];         // bidirectional graph — enables "Why?" traversal
   dasha?:          DashaInfo;               // typed — populated when DashaEngine integrates
   transit?:        unknown;                 // typed when TransitEngine integrates
 }

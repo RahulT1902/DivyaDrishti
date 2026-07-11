@@ -6,7 +6,7 @@ import { PlanetIntelligenceEngine } from "../planet-intelligence";
 import { PlanetStrengthEngine } from "../strength-engine";
 import { YogaEngine } from "../yoga-engine";
 import { ActivationEngine } from "../activation-engine";
-import { InferenceEngine } from "../inference-engine";
+import { InferenceEngine, HypothesisEngine, InferenceGraphBuilder } from "../inference-engine";
 
 export interface BuildOptions {
   dasha?:   DashaInfo;   // current dasha period — activates dasha-based yoga status
@@ -31,16 +31,22 @@ export interface BuildOptions {
 //        ↓
 //   YogaAnalysis (assembled)
 //        ↓
-//   InferenceEngine           → InferenceConclusion[] (for domain engines)
+//   InferenceEngine           → InferenceConclusion[] (stamped with provenance + version)
+//        ↓
+//   HypothesisEngine          → Hypothesis[] (cross-domain abstract concepts)
+//        ↓
+//   InferenceGraphBuilder     → InferenceNode[] (bidirectional "Why?" graph)
 //        ↓
 //   AstrologyContext (complete)
 
 export class AstrologyContextBuilder {
-  private readonly intelligenceEngine = new PlanetIntelligenceEngine();
-  private readonly strengthEngine     = new PlanetStrengthEngine();
-  private readonly yogaEngine         = new YogaEngine();
-  private readonly activationEngine   = new ActivationEngine();
-  private readonly inferenceEngine    = new InferenceEngine();
+  private readonly intelligenceEngine  = new PlanetIntelligenceEngine();
+  private readonly strengthEngine      = new PlanetStrengthEngine();
+  private readonly yogaEngine          = new YogaEngine();
+  private readonly activationEngine    = new ActivationEngine();
+  private readonly inferenceEngine     = new InferenceEngine();
+  private readonly hypothesisEngine    = new HypothesisEngine();
+  private readonly inferenceGraphBuilder = new InferenceGraphBuilder();
 
   build(chartSuite: ChartSuite, options: BuildOptions = {}): AstrologyContext {
     const d1 = chartSuite.D1;
@@ -77,20 +83,34 @@ export class AstrologyContextBuilder {
       evidence: detection.evidence,
     };
 
-    // ── Build partial context (needed for InferenceEngine) ───────────────────
-    const partialCtx: AstrologyContext = {
+    // ── Build partial context (needed for subsequent engines) ─────────────────
+    const withYoga: Omit<AstrologyContext, "inferences" | "hypotheses" | "inferenceGraph"> = {
       chartSuite,
       planetRoles,
       planetStrengths,
       yogaAnalysis,
-      inferences: [],     // populated below
-      dasha:      options.dasha,
+      dasha: options.dasha,
     };
 
-    // ── Layer 5: Inference (pre-derived conclusions for domain engines) ───────
-    const inferences = this.inferenceEngine.derive(partialCtx);
+    // ── Layer 5: Inference (pre-derived conclusions, provenance-stamped) ──────
+    const inferences = this.inferenceEngine.derive({ ...withYoga, inferences: [], hypotheses: [], inferenceGraph: [] });
 
-    return { ...partialCtx, inferences };
+    const withInferences: AstrologyContext = {
+      ...withYoga,
+      inferences,
+      hypotheses:    [],
+      inferenceGraph: [],
+    };
+
+    // ── Layer 6: Hypothesis (abstract cross-domain concepts) ──────────────────
+    const hypotheses = this.hypothesisEngine.derive(withInferences);
+
+    const withHypotheses: AstrologyContext = { ...withInferences, hypotheses };
+
+    // ── Layer 7: Inference graph (bidirectional Why? traversal) ───────────────
+    const inferenceGraph = this.inferenceGraphBuilder.build(withHypotheses);
+
+    return { ...withHypotheses, inferenceGraph };
   }
 }
 

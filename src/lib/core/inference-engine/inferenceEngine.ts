@@ -1,7 +1,8 @@
-import { AstrologyContext, InferenceConclusion } from "../types";
+import { AstrologyContext, InferenceConclusion, DraftConclusion, ConfidenceProvenance } from "../types";
 import { SymbolRegistry } from "./symbolRegistry";
 import { InferenceRule, GENERAL_RULES } from "./rules/general";
 import { CAREER_RULES } from "./rules/career";
+import { CORE_RULESET } from "./ruleSetMeta";
 
 // All registered inference rules, ordered by priority.
 // Adding a new domain = add its rules file and include here.
@@ -10,6 +11,24 @@ const ALL_RULES: InferenceRule[] = [
   ...CAREER_RULES,
   // Phase 5+: WEALTH_RULES, MARRIAGE_RULES, HEALTH_RULES, EDUCATION_RULES
 ].sort((a, b) => a.priority - b.priority);
+
+// Default provenance breakdown from a draft conclusion's confidence + timing.
+function defaultProvenance(draft: DraftConclusion): ConfidenceProvenance {
+  if (draft.timing === "Current") {
+    return { natal: draft.confidence * 0.4, activation: draft.confidence * 0.5, strength: draft.confidence * 0.1 };
+  }
+  return { natal: draft.confidence * 0.6, activation: 0, strength: draft.confidence * 0.4 };
+}
+
+// stamp converts a DraftConclusion into a fully typed InferenceConclusion.
+function stamp(rule: InferenceRule, draft: DraftConclusion): InferenceConclusion {
+  return {
+    ...draft,
+    ruleId:         rule.id,
+    ruleSetVersion: CORE_RULESET.version,
+    provenance:     defaultProvenance(draft),
+  };
+}
 
 // The Inference Engine replaces per-domain astrological re-derivation.
 // Domain engines query this — they don't call chart/strength/yoga engines directly.
@@ -31,7 +50,7 @@ export class InferenceEngine {
     for (const rule of rules) {
       try {
         if (rule.test(ctx, sym)) {
-          conclusions.push(rule.conclude(ctx, sym));
+          conclusions.push(stamp(rule, rule.conclude(ctx, sym)));
         }
       } catch {
         // Rule evaluation failure must never crash the engine
@@ -49,7 +68,7 @@ export class InferenceEngine {
     for (const rule of ALL_RULES) {
       try {
         if (rule.test(ctx, sym)) {
-          const conclusion = rule.conclude(ctx, sym);
+          const conclusion = stamp(rule, rule.conclude(ctx, sym));
           const bucket = byDomain.get(conclusion.domain) ?? [];
           bucket.push(conclusion);
           byDomain.set(conclusion.domain, bucket);

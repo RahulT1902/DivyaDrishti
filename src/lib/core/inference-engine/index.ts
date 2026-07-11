@@ -1,5 +1,10 @@
 export { InferenceEngine } from "./inferenceEngine";
 export { SymbolRegistry } from "./symbolRegistry";
+export { HypothesisEngine } from "./hypothesisEngine";
+export { InferenceGraphBuilder } from "./inferenceGraph";
+export { CORE_RULESET } from "./ruleSetMeta";
 export type { InferenceRule } from "./rules/general";
+export type { HypothesisDefinition } from "./hypotheses/definitions";
 export { GENERAL_RULES } from "./rules/general";
 export { CAREER_RULES } from "./rules/career";
+export { HYPOTHESIS_DEFINITIONS } from "./hypotheses/definitions";

@@ -1,4 +1,4 @@
-import { AstrologyContext, InferenceConclusion } from "../../types";
+import { AstrologyContext, DraftConclusion } from "../../types";
 import { SymbolRegistry } from "../symbolRegistry";
 import { InferenceRule } from "./general";
 
@@ -18,7 +18,7 @@ export const CAREER_RULES: InferenceRule[] = [
       const status = sym.yogaActivationStatus("raj-yoga");
       return status === "Active" || status === "Peak";
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const promise = ctx.yogaAnalysis.birthPromises.find(p => p.id === "raj-yoga");
       const activation = ctx.yogaAnalysis.activations.find(a => a.yogaId === "raj-yoga");
       const score = activation?.activationScore ?? 0;
@@ -55,7 +55,7 @@ export const CAREER_RULES: InferenceRule[] = [
         : false;
       return s >= 65 && inKendraTrikona;
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const lord10 = ctx.chartSuite.D1.lords.find(l => l.house === 10)!;
       const strength = sym.strengthOf(lord10.lord);
       return {
@@ -86,7 +86,7 @@ export const CAREER_RULES: InferenceRule[] = [
       const status = sym.yogaActivationStatus("hamsa");
       return status !== "Dormant";
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const promise = ctx.yogaAnalysis.birthPromises.find(p => p.id === "hamsa");
       const score = promise?.birthStrength ?? 0;
       return {
@@ -114,7 +114,7 @@ export const CAREER_RULES: InferenceRule[] = [
     domain: "Career",
     priority: 13,
     test: (ctx, sym) => sym.yogaActivationStatus("ruchaka") !== "Dormant",
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const promise = ctx.yogaAnalysis.birthPromises.find(p => p.id === "ruchaka");
       const score = promise?.birthStrength ?? 0;
       return {
@@ -139,7 +139,7 @@ export const CAREER_RULES: InferenceRule[] = [
     domain: "Career",
     priority: 14,
     test: (ctx, sym) => sym.yogaActivationStatus("sasa") !== "Dormant",
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const promise = ctx.yogaAnalysis.birthPromises.find(p => p.id === "sasa");
       const score = promise?.birthStrength ?? 0;
       return {
@@ -164,7 +164,7 @@ export const CAREER_RULES: InferenceRule[] = [
     domain: "Career",
     priority: 20,
     test: (ctx, sym) => sym.strengthOfHouseLord(10) < 35,
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const lord10 = ctx.chartSuite.D1.lords.find(l => l.house === 10)!;
       const strength = sym.strengthOf(lord10.lord);
       return {
@@ -196,7 +196,7 @@ export const CAREER_RULES: InferenceRule[] = [
       const sunStrength  = sym.strengthOf("Sun");
       return !!sunPlacement && [1, 10].includes(sunPlacement.house) && sunStrength >= 60;
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const sunPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Sun")!;
       const strength     = sym.strengthOf("Sun");
       return {
@@ -229,7 +229,7 @@ export const CAREER_RULES: InferenceRule[] = [
       return status !== "Dormant" && !!neechaYoga &&
         neechaYoga.supportingPlanets.some(p => careerPlanets.includes(p));
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const promise = ctx.yogaAnalysis.birthPromises.find(p => p.id === "neecha-bhanga")!;
       const score   = promise.birthStrength;
       return {

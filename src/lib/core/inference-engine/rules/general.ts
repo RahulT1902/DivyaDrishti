@@ -1,4 +1,4 @@
-import { AstrologyContext, InferenceConclusion, PlanetName } from "../../types";
+import { AstrologyContext, DraftConclusion, PlanetName } from "../../types";
 import { SymbolRegistry } from "../symbolRegistry";
 
 export interface InferenceRule {
@@ -6,7 +6,8 @@ export interface InferenceRule {
   domain: string;    // "General" | "Career" | "Wealth" | "Marriage" | "Health"
   priority: number;  // lower = evaluated first
   test: (ctx: AstrologyContext, sym: SymbolRegistry) => boolean;
-  conclude: (ctx: AstrologyContext, sym: SymbolRegistry) => InferenceConclusion;
+  // Rules return DraftConclusion — InferenceEngine stamps provenance/ruleId/ruleSetVersion
+  conclude: (ctx: AstrologyContext, sym: SymbolRegistry) => DraftConclusion;
 }
 
 // General rules apply across all domains.
@@ -23,7 +24,7 @@ export const GENERAL_RULES: InferenceRule[] = [
       const yk = sym.yogakarakas();
       return yk.some(p => sym.strengthOf(p) >= 65);
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const yk = sym.yogakarakas().filter(p => sym.strengthOf(p) >= 65);
       const strength = Math.max(...yk.map(p => sym.strengthOf(p)));
       return {
@@ -55,7 +56,7 @@ export const GENERAL_RULES: InferenceRule[] = [
       );
       return active.length >= 2;
     },
-    conclude: (ctx): InferenceConclusion => {
+    conclude: (ctx): DraftConclusion => {
       const active = ctx.yogaAnalysis.activations.filter(
         a => a.status === "Active" || a.status === "Peak",
       );
@@ -94,7 +95,7 @@ export const GENERAL_RULES: InferenceRule[] = [
       const lagnaLord = sym.lordOf(1);
       return !!lagnaLord && sym.strengthOf(lagnaLord) >= 60;
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const lagnaLord = sym.lordOf(1)!;
       const strength  = sym.strengthOf(lagnaLord);
       return {
@@ -122,7 +123,7 @@ export const GENERAL_RULES: InferenceRule[] = [
       const lagnaLord = sym.lordOf(1);
       return !!lagnaLord && sym.strengthOf(lagnaLord) < 35;
     },
-    conclude: (ctx, sym): InferenceConclusion => {
+    conclude: (ctx, sym): DraftConclusion => {
       const lagnaLord = sym.lordOf(1)!;
       const strength  = sym.strengthOf(lagnaLord);
       return {
@@ -147,7 +148,7 @@ export const GENERAL_RULES: InferenceRule[] = [
     domain: "General",
     priority: 5,
     test: (ctx) => ctx.yogaAnalysis.overallBirthStrength >= 70,
-    conclude: (ctx): InferenceConclusion => {
+    conclude: (ctx): DraftConclusion => {
       const s = ctx.yogaAnalysis.overallBirthStrength;
       return {
         id: "gen-high-yoga-strength",
