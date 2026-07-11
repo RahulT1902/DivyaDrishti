@@ -94,15 +94,119 @@ export interface PlanetStrength {
   evidence: AstrologicalEvidence[];
 }
 
-// ── Placeholder types — populated by Step 4 (YogaEngine) ────────────────────
+// ── Yoga Engine types ────────────────────────────────────────────────────────
 
+export type YogaStatus   = "Dormant" | "Emerging" | "Active" | "Peak";
+export type YogaCategory = "Raj" | "Dhana" | "PanchaMahapurusha" | "Chandra" | "Vipareeta" | "Spiritual" | "Misc";
+export type HouseGroup   = "Kendra" | "Trikona" | "Dusthana" | "Upachaya" | "Maraka";
+
+// ── Declarative Rule DSL — each node is a composable boolean condition ───────
+
+export type RuleNode =
+  | { type: "PlanetInSign";            planet: PlanetName; sign: Sign }
+  | { type: "PlanetInHouse";           planet: PlanetName; house: number }
+  | { type: "PlanetInGroup";           planet: PlanetName; group: HouseGroup }
+  | { type: "PlanetStrength";          planet: PlanetName; op: ">" | ">=" | "<" | "<="; value: number }
+  | { type: "PlanetFunctionalNature";  planet: PlanetName; nature: FunctionalNature }
+  | { type: "PlanetIsYogakaraka";      planet: PlanetName }
+  | { type: "PlanetsConjunct";         planet1: PlanetName; planet2: PlanetName }
+  | { type: "PlanetAspectsHouse";      planet: PlanetName; house: number }
+  | { type: "PlanetAspectsPlanet";     from: PlanetName;   to: PlanetName }
+  | { type: "LordOfHouseInHouse";      lordOf: number;     inHouse: number }
+  | { type: "LordOfHouseInGroup";      lordOf: number;     group: HouseGroup }
+  | { type: "HouseLordsConjunct";      house1: number;     house2: number }
+  | { type: "HouseLordAspectsHouseLord"; fromHouse: number; toHouse: number }
+  | { type: "PlanetIsExalted";         planet: PlanetName }
+  | { type: "PlanetIsDebilitated";     planet: PlanetName }
+  | { type: "PlanetInOwnSign";         planet: PlanetName }
+  | { type: "PlanetIsRetrograde";      planet: PlanetName }
+  | { type: "PlanetIsCombust";         planet: PlanetName }
+  | { type: "PlanetIsVargottama";      planet: PlanetName }
+  | { type: "PlanetInKendraFromPlanet"; planet: PlanetName; reference: PlanetName }
+  | { type: "HouseHasMinPlanets";      house: number; minCount: number }
+  | { type: "AND";  rules: RuleNode[] }
+  | { type: "OR";   rules: RuleNode[] }
+  | { type: "NOT";  rule: RuleNode };
+
+// Shared result type for DSL evaluation and custom yoga functions
+export interface ConditionResult {
+  matches: boolean;
+  supportingPlanets: PlanetName[];
+  descriptions: string[];
+}
+
+// Input to every rule evaluation
+export interface EvaluationContext {
+  chart: DivisionalChart;
+  roles: PlanetRole[];
+  strengths: PlanetStrength[];
+}
+
+// Modifier: adjusts a detected yoga's strength up or down
+export interface YogaModifier {
+  condition: RuleNode;
+  strengthDelta: number;   // positive = strengthen, negative = weaken
+  description: string;
+}
+
+// Declarative yoga definition — the engine evaluates these, not hardcoded if-chains
+export interface YogaDefinition {
+  id: string;
+  name: string;
+  sanskritName?: string;
+  category: YogaCategory;
+  domains: string[];
+  severity: number;        // 0–100 — impact weight used by domain engines
+  priority: number;        // evaluation order (lower = checked first)
+  conditions: RuleNode;    // DSL-evaluated detection rule
+  // Optional override: evaluated instead of `conditions` when set (for complex combinatorial yogas)
+  evaluateFn?: (ctx: EvaluationContext) => ConditionResult;
+  // Optional override: computes yoga strength from detected planets (default: average of planet strengths)
+  strengthFormula?: (ctx: EvaluationContext, supportingPlanets: PlanetName[]) => number;
+  modifiers: YogaModifier[];
+  description: string;
+  classicalReference?: string;
+}
+
+// Yoga checked but conditions not met — captured for "near miss" reporting
+export interface YogaCandidate {
+  yogaId: string;
+  yogaName: string;
+  failedConditions: string[];
+  nearMiss: boolean;       // true when only one sub-condition failed
+}
+
+// Two yogas that conflict (e.g., Gajakesari + combust Jupiter)
+export interface YogaConflict {
+  yoga1Id: string;
+  yoga2Id: string;
+  description: string;
+  netStrengthDelta: number;
+}
+
+// Full result for a detected yoga
 export interface YogaResult {
   id: string;
   name: string;
-  isActive: boolean;
-  strength: number;          // 0–100
+  sanskritName?: string;
+  category: YogaCategory;
+  status: YogaStatus;
+  strength: number;           // 0–100
+  severity: number;           // from definition — impact weight
+  supportingPlanets: PlanetName[];
   affectedDomains: string[];
+  evidence: AstrologicalEvidence[];
   description: string;
+}
+
+// Full output from the Yoga Engine
+export interface YogaAnalysis {
+  detected: YogaResult[];
+  missed: YogaCandidate[];
+  dominantYogas: YogaResult[];      // top yogas by strength × severity
+  conflictingYogas: YogaConflict[];
+  overallYogaStrength: number;      // 0–100 weighted composite
+  evidence: AstrologicalEvidence[];
 }
 
 // ── Shared evidence model — every engine emits this format ──────────────────
@@ -184,7 +288,7 @@ export interface AstrologyContext {
   chartSuite:      ChartSuite;
   planetRoles:     PlanetRole[];
   planetStrengths: PlanetStrength[];
-  yogas:           YogaResult[];     // populated by YogaEngine (Step 4)
+  yogaAnalysis:    YogaAnalysis;     // populated by YogaEngine (Step 4)
   dasha?:          unknown;          // typed when DashaEngine integrates
   transit?:        unknown;          // typed when TransitEngine integrates
 }
