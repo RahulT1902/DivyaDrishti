@@ -200,19 +200,52 @@ export interface YogaBirthPromise {
   description: string;
 }
 
+// ── Dasha activation weights — the 5-component model ─────────────────────────
+// These govern how activation score is computed from available data.
+// Weights sum to 1.0.  When a component has no data, its weight is
+// redistributed proportionally across available components.
+
+export interface DashaWeights {
+  natalPromise:   number;  // 0.40 default — yoga birth strength
+  mahadasha:      number;  // 0.30 default — mahadasha lord activation
+  antardasha:     number;  // 0.15 default — antardasha lord activation
+  transit:        number;  // 0.10 default — current transit support
+  planetStrength: number;  // 0.05 default — supporting planet strength
+}
+
+export const DEFAULT_DASHA_WEIGHTS: DashaWeights = {
+  natalPromise:   0.40,
+  mahadasha:      0.30,
+  antardasha:     0.15,
+  transit:        0.10,
+  planetStrength: 0.05,
+};
+
+// ── 5-component provenance for a yoga activation score ────────────────────────
+
+export interface DashaProvenance {
+  natalPromise:   number;  // 0–100, raw contribution from birth strength
+  mahadasha:      number;  // 0–100, raw contribution from maha lord timing
+  antardasha:     number;  // 0–100, raw contribution from antar lord timing
+  transit:        number;  // 0–100, raw contribution from transit (stub)
+  planetStrength: number;  // 0–100, raw contribution from supporting planet strength
+  appliedWeights: DashaWeights;  // which weights were actually used (after redistribution)
+}
+
 // ── Mutable activation state (whether/when the promise manifests) ─────────────
-// Recomputed whenever timing data changes.  Currently strength-based only;
-// dashaContribution and transitContribution become non-zero in Phase 5.
+// Recomputed whenever timing data changes.
+// dashaProvenance exposes the 5-component breakdown for transparency and tuning.
 
 export interface YogaActivation {
   yogaId: string;
-  status: YogaStatus;          // Dormant | Emerging | Active | Peak
-  activationScore: number;     // 0–100 composite
-  strengthContribution: number; // from natal birth strength
-  dashaContribution: number;   // from active dasha (stub: 0 until DashaEngine)
-  transitContribution: number; // from current transit (stub: 0 until TransitEngine)
+  status: YogaStatus;           // Dormant | Emerging | Active | Peak
+  activationScore: number;      // 0–100 composite
+  strengthContribution: number; // kept for backward compatibility
+  dashaContribution: number;    // mahadasha + antardasha combined contribution
+  transitContribution: number;  // transit contribution (stub: 0 until TransitEngine)
   isDashaActive: boolean;
   isTransitActive: boolean;
+  dashaProvenance: DashaProvenance;   // explicit 5-component breakdown
   evidence: AstrologicalEvidence[];
 }
 
@@ -275,9 +308,38 @@ export interface ConfidenceProvenance {
 // ── Inference Engine types ────────────────────────────────────────────────────
 // Domain engines query these conclusions rather than re-implementing astrological logic.
 
-// Rule authors return DraftConclusion — InferenceEngine stamps the three
-// bookkeeping fields (provenance, ruleId, ruleSetVersion) before storing.
-export type DraftConclusion = Omit<InferenceConclusion, "provenance" | "ruleId" | "ruleSetVersion">;
+// ── Uncertainty profile — what data gaps reduce reliability ────────────────────
+// Exposed alongside confidence so the LLM narrator can be transparent about
+// what the engine knows, suspects, and is uncertain about.
+
+export interface UncertaintyProfile {
+  missingData:         string[];   // data that would improve this assessment
+  weakEvidence:        string[];   // where evidence is thin or inconclusive
+  conflictingEvidence: string[];   // chart factors that contradict each other
+  overallUncertainty:  "Low" | "Medium" | "High";
+}
+
+// ── Prediction Horizon — how long a conclusion is expected to remain valid ─────
+
+export type PredictionScope =
+  | "Immediate"     // 1–3 months — transit/sub-period driven
+  | "CurrentDasha"  // current maha/antardasha period
+  | "MediumTerm"    // 6–18 months
+  | "LongTerm"      // 2–7 years
+  | "Natal";        // lifelong tendency from birth chart
+
+export interface PredictionHorizon {
+  scope:       PredictionScope;
+  label:       string;            // "1–3 months" | "Current Dasha Period" | "Natal Promise" etc.
+  description: string;            // one sentence on what drives this horizon
+}
+
+// ── Inference Engine types ────────────────────────────────────────────────────
+// Domain engines query these conclusions rather than re-implementing astrological logic.
+
+// Rule authors return DraftConclusion — InferenceEngine stamps the four
+// bookkeeping fields (provenance, ruleId, ruleSetVersion, horizon) before storing.
+export type DraftConclusion = Omit<InferenceConclusion, "provenance" | "ruleId" | "ruleSetVersion" | "horizon">;
 
 export interface InferenceConclusion {
   id: string;
@@ -294,6 +356,8 @@ export interface InferenceConclusion {
   provenance: ConfidenceProvenance;         // breakdown of confidence sources
   ruleId: string;                           // which rule produced this
   ruleSetVersion: string;                   // which engine version (for regression tracking)
+  horizon: PredictionHorizon;              // how long this conclusion is expected to hold
+  uncertainty?: UncertaintyProfile;        // only set when the rule detects explicit uncertainty
 }
 
 // ── Hypothesis Layer — abstract concepts between inference and domains ────────

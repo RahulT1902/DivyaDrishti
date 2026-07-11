@@ -1,5 +1,5 @@
-import { AstrologyContext } from "../../core/types";
-import { DomainEngine, DomainSignalEngine, RecommendationEngine, PromptContext } from "../../core/domain";
+import { AstrologyContext, UncertaintyProfile, PredictionHorizon } from "../../core/types";
+import { DomainEngine, DomainSignalEngine, RecommendationEngine, PromptContext, DomainSignal } from "../../core/domain";
 import { DecisionGraphBuilder } from "../../core/decision-graph";
 import { CORE_RULESET } from "../../core/inference-engine";
 import { CAREER_KNOWLEDGE_PACK } from "./knowledgePack";
@@ -46,6 +46,12 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
 
     const risks = decisionGraph.blockingFactors.map(f => f.label);
 
+    // ── Step 5: Uncertainty profile ───────────────────────────────────────
+    const uncertainty = computeUncertainty(ctx, signals);
+
+    // ── Step 6: Prediction horizon ────────────────────────────────────────
+    const horizon = computeHorizon(decisionGraph.confidence, ctx);
+
     return {
       domain:                    "Career",
       currentState:              decisionGraph.currentState,
@@ -62,6 +68,8 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
       risks,
       recommendations,
       decisionGraph,
+      uncertainty,
+      horizon,
       ruleSetVersion:            CORE_RULESET.version,
     };
   }
@@ -99,11 +107,19 @@ RULES:
 6. Keep your response under 300 words.
 7. End with one concrete sentence the person can act on today.`;
 
+    const uncertaintyLines = [
+      ...(assessment.uncertainty.missingData.map(m => `  Missing: ${m}`)),
+      ...(assessment.uncertainty.weakEvidence.map(w => `  Weak: ${w}`)),
+      ...(assessment.uncertainty.conflictingEvidence.map(c => `  Conflict: ${c}`)),
+    ].join("\n") || "  (none)";
+
     const userMessage =
 `CAREER ASSESSMENT — Engine v${assessment.ruleSetVersion}
 
 OVERALL STATE: ${assessment.currentState}
 CONFIDENCE: ${assessment.confidence}/100
+HORIZON: ${assessment.horizon.label} — ${assessment.horizon.description}
+UNCERTAINTY: ${assessment.uncertainty.overallUncertainty}
 
 DOMAIN SIGNALS
 ${topSignals}
@@ -120,6 +136,9 @@ ${assessment.bestTiming.description}
 RECOMMENDED ACTIONS
 ${recsList}
 
+DATA QUALITY NOTES
+${uncertaintyLines}
+
 ---
 ${userQuery ?? "Provide a comprehensive career assessment based on the above."}`;
 
@@ -129,4 +148,94 @@ ${userQuery ?? "Provide a comprehensive career assessment based on the above."}`
       userMessage,
     };
   }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function computeUncertainty(ctx: AstrologyContext, signals: DomainSignal[]): UncertaintyProfile {
+  const missing: string[]     = [];
+  const weak: string[]        = [];
+  const conflicting: string[] = [];
+
+  // Missing data
+  if (!ctx.dasha) {
+    missing.push("Dasha periods not provided — maha/antardasha contribution is 0");
+  }
+  if (!ctx.transit) {
+    missing.push("Current transit positions not provided — transit component is 0");
+  }
+  const d10StrengthsMissing = (ctx.chartSuite.D10?.strengths?.length ?? 0) === 0;
+  if (d10StrengthsMissing) {
+    missing.push("D10 (Dashamsa) Shadbala not computed — D10 signals use D1 strength proxy");
+  }
+  const hasKalaBala = ctx.planetStrengths.some(
+    s => Object.keys(s.components ?? {}).some(k => k.toLowerCase().includes("kala")),
+  );
+  if (!hasKalaBala) {
+    missing.push("Kala Bala (temporal strength) not computed — planet strength scores are partial");
+  }
+
+  // Weak evidence
+  const careerInferences = ctx.inferences.filter(i => i.domain === "Career");
+  if (careerInferences.length < 3) {
+    weak.push(`Only ${careerInferences.length} career inference rule(s) fired — limited signal diversity`);
+  }
+  const lowConfidenceSignals = signals.filter(s => s.confidence < 55);
+  if (lowConfidenceSignals.length > 2) {
+    weak.push(`Low evidence confidence on: ${lowConfidenceSignals.map(s => s.label).join(", ")}`);
+  }
+
+  // Conflicting evidence
+  const leadership  = signals.find(s => s.id === "leadership")?.score    ?? 50;
+  const stability   = signals.find(s => s.id === "job-stability")?.score  ?? 50;
+  const promotion   = signals.find(s => s.id === "promotion-potential")?.score ?? 50;
+
+  if (leadership >= 72 && stability < 38) {
+    conflicting.push(
+      "High leadership potential + low job stability: strong career drive, but structured employment may not be the right vehicle — entrepreneurship or consulting warranted",
+    );
+  }
+  if (promotion >= 70 && leadership < 40) {
+    conflicting.push(
+      "High promotion potential + low leadership: advancement through specialist depth rather than managerial authority",
+    );
+  }
+
+  // Check D10 10th afflicted rule contradicting positive signals
+  const d10Afflicted = ctx.inferences.some(
+    i => i.id === "career-d10-10th-afflicted" && i.direction === "Negative",
+  );
+  const hasStrongCareerYoga = ctx.inferences.some(
+    i => i.domain === "Career" && i.direction === "Positive" && i.confidence >= 70,
+  );
+  if (d10Afflicted && hasStrongCareerYoga) {
+    conflicting.push(
+      "Strong career yoga (D1) vs. afflicted D10 10th house — natal promise is strong but professional environment may present structural friction",
+    );
+  }
+
+  const overallUncertainty: "Low" | "Medium" | "High" =
+    conflicting.length > 0 || missing.length >= 3 ? "High" :
+    missing.length >= 1 || weak.length > 0 ? "Medium" : "Low";
+
+  return { missingData: missing, weakEvidence: weak, conflictingEvidence: conflicting, overallUncertainty };
+}
+
+function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHorizon {
+  // If dasha is available, the assessment is anchored to current dasha cycle
+  if (ctx.dasha) {
+    const dashaEnd = ctx.dasha.periodEnd;
+    return {
+      scope:       "CurrentDasha",
+      label:       "Current Dasha Period",
+      description: `Assessment is anchored to the current dasha cycle (ending ${dashaEnd}). Re-evaluate when dasha changes.`,
+    };
+  }
+
+  // Without dasha, the assessment reflects natal patterns — long-term but less timing-specific
+  return {
+    scope:       "LongTerm",
+    label:       "Long-Term Natal Tendency",
+    description: "Assessment reflects natal chart patterns — valid as a long-term tendency. Provide dasha periods for timing-specific guidance.",
+  };
 }

@@ -20,21 +20,28 @@ export const CAREER_KNOWLEDGE_PACK: DomainKnowledgePack = {
   domain: "Career",
 
   signals: [
+    // D1 signals enriched with D10 reason codes — D1 and D10 are equal citizens
     {
       id:               "leadership",
       label:            "Leadership",
       description:      "Capacity to lead, inspire, and manage others",
       hypothesisIds:    ["leadership-potential"],
-      reasonCodes:      ["CAREER_AUTHORITY", "CAREER_RECOGNITION", "YOGAKARAKA_STRONG", "MANAGEMENT_APTITUDE"],
-      hypothesisWeight: 0.70,
-      inferenceWeight:  0.30,
+      reasonCodes:      [
+        "CAREER_AUTHORITY", "CAREER_RECOGNITION", "YOGAKARAKA_STRONG", "MANAGEMENT_APTITUDE",
+        "D10_LAGNA_LORD_STRONG", "D10_SUN_PROMINENT",  // D10 signals
+      ],
+      hypothesisWeight: 0.65,
+      inferenceWeight:  0.35,
     },
     {
       id:               "authority",
       label:            "Authority",
       description:      "Formal power, government roles, institutional status",
       hypothesisIds:    ["leadership-potential", "discipline-perseverance"],
-      reasonCodes:      ["CAREER_AUTHORITY", "CAREER_GOVERNMENT", "10TH_LORD_STRONG"],
+      reasonCodes:      [
+        "CAREER_AUTHORITY", "CAREER_GOVERNMENT", "10TH_LORD_STRONG",
+        "D10_10TH_LORD_STRONG", "D10_LAGNA_LORD_STRONG", "D10_SATURN_CAREER",  // D10 signals
+      ],
       hypothesisWeight: 0.60,
       inferenceWeight:  0.40,
     },
@@ -43,7 +50,10 @@ export const CAREER_KNOWLEDGE_PACK: DomainKnowledgePack = {
       label:            "Recognition",
       description:      "Public acknowledgment, awards, professional reputation",
       hypothesisIds:    ["leadership-potential", "communication-excellence"],
-      reasonCodes:      ["CAREER_RECOGNITION", "CAREER_SUCCESS", "OVERALL_POSITIVE"],
+      reasonCodes:      [
+        "CAREER_RECOGNITION", "CAREER_SUCCESS", "OVERALL_POSITIVE",
+        "D10_SUN_PROMINENT", "D10_10TH_LORD_STRONG",  // D10 signals
+      ],
       hypothesisWeight: 0.65,
       inferenceWeight:  0.35,
     },
@@ -52,7 +62,10 @@ export const CAREER_KNOWLEDGE_PACK: DomainKnowledgePack = {
       label:            "Entrepreneurship",
       description:      "Capacity to start and run independent ventures",
       hypothesisIds:    ["leadership-potential", "physical-vitality", "adversity-resilience"],
-      reasonCodes:      ["CAREER_MARTIAL", "CAREER_LEADERSHIP", "CAREER_AUTHORITY"],
+      reasonCodes:      [
+        "CAREER_MARTIAL", "CAREER_LEADERSHIP", "CAREER_AUTHORITY",
+        "D10_LAGNA_LORD_STRONG",  // D10 signal — strong professional identity
+      ],
       hypothesisWeight: 0.60,
       inferenceWeight:  0.40,
     },
@@ -61,7 +74,10 @@ export const CAREER_KNOWLEDGE_PACK: DomainKnowledgePack = {
       label:            "Job Stability",
       description:      "Consistency in employment and satisfaction in structured service roles",
       hypothesisIds:    ["discipline-perseverance", "adversity-resilience"],
-      reasonCodes:      ["CAREER_DISCIPLINE", "CAREER_GOVERNMENT"],
+      reasonCodes:      [
+        "CAREER_DISCIPLINE", "CAREER_GOVERNMENT",
+        "D10_SATURN_CAREER",  // D10 signal — structured, enduring career
+      ],
       hypothesisWeight: 0.65,
       inferenceWeight:  0.35,
     },
@@ -70,9 +86,12 @@ export const CAREER_KNOWLEDGE_PACK: DomainKnowledgePack = {
       label:            "Promotion Potential",
       description:      "Likelihood of advancement within an existing career path",
       hypothesisIds:    ["leadership-potential", "discipline-perseverance"],
-      reasonCodes:      ["10TH_LORD_STRONG", "CAREER_SUCCESS", "CAREER_AUTHORITY"],
-      hypothesisWeight: 0.60,
-      inferenceWeight:  0.40,
+      reasonCodes:      [
+        "10TH_LORD_STRONG", "CAREER_SUCCESS", "CAREER_AUTHORITY",
+        "D10_10TH_LORD_STRONG", "PROFESSIONAL_STATUS",  // D10 signal + status code
+      ],
+      hypothesisWeight: 0.55,
+      inferenceWeight:  0.45,
     },
     {
       id:               "professional-growth",

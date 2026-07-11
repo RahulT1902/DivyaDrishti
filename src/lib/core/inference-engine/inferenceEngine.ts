@@ -1,4 +1,7 @@
-import { AstrologyContext, InferenceConclusion, DraftConclusion, ConfidenceProvenance } from "../types";
+import {
+  AstrologyContext, InferenceConclusion, DraftConclusion,
+  ConfidenceProvenance, PredictionHorizon,
+} from "../types";
 import { SymbolRegistry } from "./symbolRegistry";
 import { InferenceRule, GENERAL_RULES } from "./rules/general";
 import { CAREER_RULES } from "./rules/career";
@@ -27,7 +30,25 @@ function stamp(rule: InferenceRule, draft: DraftConclusion): InferenceConclusion
     ruleId:         rule.id,
     ruleSetVersion: CORE_RULESET.version,
     provenance:     defaultProvenance(draft),
+    horizon:        computeHorizon(draft),
   };
+}
+
+function computeHorizon(draft: DraftConclusion): PredictionHorizon {
+  switch (draft.timing) {
+    case "Natal":
+      return {
+        scope:       "Natal",
+        label:       "Natal Promise",
+        description: "This is a lifelong tendency rooted in the birth chart — independent of timing.",
+      };
+    case "Current":
+      return {
+        scope:       "CurrentDasha",
+        label:       "Current Dasha Period",
+        description: "This pattern is active during the current dasha cycle; re-evaluate when dasha changes.",
+      };
+  }
 }
 
 // The Inference Engine replaces per-domain astrological re-derivation.

@@ -1,4 +1,4 @@
-import { DecisionFactor, TimingWindow, DecisionGraph } from "../../core/types";
+import { DecisionFactor, TimingWindow, DecisionGraph, UncertaintyProfile, PredictionHorizon } from "../../core/types";
 import { DomainSignal, Recommendation } from "../../core/domain";
 
 // CareerAssessment is the structured output of the Career Domain Engine.
@@ -44,6 +44,15 @@ export interface CareerAssessment {
 
   // ── Full decision graph (for LLM context) ─────────────────────────────────
   decisionGraph: DecisionGraph;
+
+  // ── Uncertainty ───────────────────────────────────────────────────────────
+  // What data gaps, weak evidence, or conflicts reduce reliability.
+  // Transparent to the LLM narrator so it can qualify its language appropriately.
+  uncertainty: UncertaintyProfile;
+
+  // ── Prediction horizon ────────────────────────────────────────────────────
+  // How long this assessment is expected to remain valid.
+  horizon: PredictionHorizon;
 
   // ── Traceability ──────────────────────────────────────────────────────────
   ruleSetVersion: string;

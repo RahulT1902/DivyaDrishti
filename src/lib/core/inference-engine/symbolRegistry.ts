@@ -110,6 +110,58 @@ export class SymbolRegistry {
     return this.ctx.yogaAnalysis.birthPromises.find(y => y.id === yogaId)?.birthStrength ?? 0;
   }
 
+  // ── D10 (Dashamsa) — Career divisional chart queries ─────────────────────
+  // D10 is the primary varga for career, profession, and status.
+  // D10 must be treated as an equal citizen alongside D1 in career assessment.
+  //
+  // When D10.strengths is empty (not yet computed), methods fall back to
+  // D1 strength as a graceful approximation — callers should check
+  // hasD10Strengths() and flag it as missing data in UncertaintyProfile.
+
+  hasD10(): boolean {
+    return !!this.ctx.chartSuite.D10;
+  }
+
+  hasD10Strengths(): boolean {
+    return (this.ctx.chartSuite.D10?.strengths?.length ?? 0) > 0;
+  }
+
+  // House a planet occupies in D10 (1–12)
+  d10PlanetHouse(planet: PlanetName): number | undefined {
+    return this.ctx.chartSuite.D10?.planets.find(p => p.planet === planet)?.house;
+  }
+
+  // Lord of a D10 house
+  d10LordOf(house: number): PlanetName | undefined {
+    return this.ctx.chartSuite.D10?.lords.find(l => l.house === house)?.lord;
+  }
+
+  // Placement house of a D10 lord (where is the lord placed in D10?)
+  d10LordPlacedInHouse(house: number): number | undefined {
+    return this.ctx.chartSuite.D10?.lords.find(l => l.house === house)?.lordPlacedInHouse;
+  }
+
+  // Strength of a planet in D10.  Falls back to D1 strength if D10 strengths not computed.
+  d10StrengthOf(planet: PlanetName): number {
+    const d10Strength = this.ctx.chartSuite.D10?.strengths.find(s => s.planet === planet)?.overallStrength;
+    if (d10Strength !== undefined) return d10Strength;
+    // Graceful fallback: D1 strength (with 10% reduction to signal lower certainty)
+    return Math.round(this.strengthOf(planet) * 0.90);
+  }
+
+  // Is the planet in a Kendra (1/4/7/10) or Trikona (1/5/9) in D10?
+  d10PlanetInKendraTrikona(planet: PlanetName): boolean {
+    const house = this.d10PlanetHouse(planet);
+    return house !== undefined && [1, 4, 5, 7, 9, 10].includes(house);
+  }
+
+  // Strength of the D10 house lord (composite: D10 if available, D1 fallback)
+  d10StrengthOfHouseLord(house: number): number {
+    const lord = this.d10LordOf(house);
+    if (!lord) return 50;
+    return this.d10StrengthOf(lord);
+  }
+
   // ── Internal helpers ──────────────────────────────────────────────────────
 
   private byNature(...natures: FunctionalNature[]): PlanetName[] {
