@@ -99,6 +99,60 @@ export interface YogaResult {
   description: string;
 }
 
+// ── Shared evidence model — every engine emits this format ──────────────────
+
+export interface AstrologicalEvidence {
+  id: string;
+  category:
+    | "FunctionalNature" | "NaturalNature" | "Ownership"
+    | "Placement" | "Yoga" | "Transit" | "Dasha" | "Strength";
+  description: string;
+  strength: number;        // 0–100, how strong this evidence is
+  weight: number;          // importance multiplier for confidence scoring
+  sourceChart: ChartType;
+  planet?: PlanetName;
+  house?: number;
+  sign?: Sign;
+}
+
+// ── Planet Intelligence output ───────────────────────────────────────────────
+
+export type NaturalNature = "GreatBenefic" | "Benefic" | "Neutral" | "MildMalefic" | "Malefic" | "Shadow";
+export type FunctionalNature = "Yogakaraka" | "FunctionalBenefic" | "Neutral" | "FunctionalMalefic" | "Maraka" | "Badhaka" | "Mixed";
+
+export interface PlanetRole {
+  planet: PlanetName;
+  naturalNature: NaturalNature;
+  functionalNature: FunctionalNature;
+  ownsHouses: number[];
+  ownsSigns: Sign[];
+  isYogakaraka: boolean;
+  isMaraka: boolean;
+  isBadhaka: boolean;
+  isKendradhipati: boolean;
+  isTrikonadhipati: boolean;
+  isDusthanadhipati: boolean;
+  isFunctionalBenefic: boolean;
+  isFunctionalMalefic: boolean;
+  priorityScore: number;     // 0–100 composite importance
+  reasoning: AstrologicalEvidence[];
+}
+
+// ── Universal engine contract ────────────────────────────────────────────────
+
+export interface AstrologyEngine<I, O> {
+  evaluate(input: I): O;
+}
+
+// ── Chart metadata ───────────────────────────────────────────────────────────
+
+export interface ChartMetadata {
+  varga: number;             // divisional number (1 for D1, 10 for D10, etc.)
+  purpose: string;           // human-readable domain focus
+  accuracyWeight: number;    // 0–1, relative weight in multi-chart confidence scoring
+  source: "Computed";        // future: "Corrected" | "UserOverride"
+}
+
 // ── The universal chart object ───────────────────────────────────────────────
 
 export interface DivisionalChart {
@@ -115,6 +169,7 @@ export interface DivisionalChart {
   conjunctions: Conjunction[];
   yogas: YogaResult[];         // populated by YogaEngine (Step 4)
   strengths: PlanetStrength[]; // populated by StrengthEngine (Step 3)
+  metadata: ChartMetadata;
 }
 
 // ── Chart suite — all divisional charts for one birth ───────────────────────
