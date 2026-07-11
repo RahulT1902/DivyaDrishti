@@ -70,22 +70,28 @@ export interface Conjunction {
   house: number;
 }
 
-// ── Placeholder types — populated by Step 3 (StrengthEngine) ────────────────
+// ── Planet Strength — canonical strength model ───────────────────────────────
+
+export interface PlanetStrengthComponents {
+  sthanaBala:     number;   // 0–100  dignity (exalted/own/friend/enemy/debilitated)
+  digBala:        number;   // 0–100  directional strength
+  naisargikaBala: number;   // 0–100  natural/inherent strength
+  combustion:     number;   // 0–100  100=healthy, 0=fully combust
+  retrograde:     number;   // 0–100  70=retrograde bonus, 50=direct
+  vargottama:     number;   // 0–100  85=vargottama, 50=normal
+  // Phase 3B stubs — plug in when computed, weights auto-adjust
+  kalaBala:       number;   // 0–100  temporal strength (stub → 50)
+  cheshtaBala:    number;   // 0–100  motional strength (stub → 50)
+  drikBala:       number;   // 0–100  aspectual strength (stub → 50)
+  avastha:        number;   // 0–100  planetary state (stub → 50)
+}
 
 export interface PlanetStrength {
   planet: PlanetName;
-  finalStrength: number;   // 0–100 composite
-  components: {
-    digBala: number;
-    sthanaBala: number;
-    cheshtaBala: number;
-    naisargikaBala: number;
-    drikBala: number;
-    kalaBala: number;
-    retrogradeBonus: number;
-    combustPenalty: number;
-    vargottamaBonus: number;
-  };
+  overallStrength: number;  // 0–100 weighted composite of all components
+  confidence: number;       // 0–100 how complete the model is (grows as stubs fill in)
+  components: PlanetStrengthComponents;
+  evidence: AstrologicalEvidence[];
 }
 
 // ── Placeholder types — populated by Step 4 (YogaEngine) ────────────────────
@@ -170,6 +176,17 @@ export interface DivisionalChart {
   yogas: YogaResult[];         // populated by YogaEngine (Step 4)
   strengths: PlanetStrength[]; // populated by StrengthEngine (Step 3)
   metadata: ChartMetadata;
+}
+
+// ── AstrologyContext — single enriched object that flows through all engines ─
+
+export interface AstrologyContext {
+  chartSuite:      ChartSuite;
+  planetRoles:     PlanetRole[];
+  planetStrengths: PlanetStrength[];
+  yogas:           YogaResult[];     // populated by YogaEngine (Step 4)
+  dasha?:          unknown;          // typed when DashaEngine integrates
+  transit?:        unknown;          // typed when TransitEngine integrates
 }
 
 // ── Chart suite — all divisional charts for one birth ───────────────────────
