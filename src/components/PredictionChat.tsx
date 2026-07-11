@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, ArrowLeft, Sparkles } from "lucide-react";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface Message {
   id: string;
@@ -97,11 +98,9 @@ export default function PredictionChat({
     setLoading(true);
 
     try {
-      const res = await fetch("/api/predictions/chat", {
+      const res = await authFetch("/api/predictions/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "",
           message: input,
           timeframe,
           domain,
