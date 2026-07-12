@@ -75,8 +75,12 @@ export async function POST(req: NextRequest) {
     }
     targetDomain = targetDomain || "general";
 
-    // Detect temporal shift — "tomorrow" changes which transit positions we fetch
-    const isTomorrow = /\btomorrow\b/i.test(question);
+    // Detect temporal shift — "tomorrow" changes which transit positions we fetch.
+    // Also inherit from the most recent assistant message so follow-up questions
+    // (e.g. clicking "Explore This") stay on the same temporal horizon.
+    const lastAssistantMsg = history.filter(m => m.role === "assistant").slice(-1)[0]?.content ?? "";
+    const isTomorrow = /\btomorrow\b/i.test(question) ||
+      (!(/\btoday\b/i.test(question)) && /Tomorrow's (Health|guidance|Career|Financial|Relationship)/i.test(lastAssistantMsg));
     const transitDate = isTomorrow ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined;
     const temporalLabel = isTomorrow ? "Tomorrow" : "Today";
 
