@@ -1,6 +1,7 @@
 import {
   AstrologyContext,
-  InferenceNode, AstrologicalEvidence,
+  InferenceConclusion, InferenceNode, AstrologicalEvidence,
+  ExplainabilityCoverage,
 } from "../types";
 
 // InferenceGraphBuilder constructs a bidirectional inference graph.
@@ -189,7 +190,7 @@ export class InferenceGraphBuilder {
   }
 
   // Returns the "Why?" chain for a given node id — walks up the parent links
-  // to produce an ordered list from root fact to the requested node.
+  // to produce an ordered list from root Fact to the requested node.
   explainNode(nodes: InferenceNode[], nodeId: string): InferenceNode[] {
     const nodeMap = new Map(nodes.map(n => [n.id, n]));
     const result: InferenceNode[] = [];
@@ -207,4 +208,62 @@ export class InferenceGraphBuilder {
     walk(nodeId);
     return result;
   }
+}
+
+// ── Explainability Coverage ───────────────────────────────────────────────────
+// Computes what fraction of inference conclusions are traceable through the
+// complete Fact → Inference → Hypothesis → Decision chain.
+//
+// Called after the graph is fully built (Layer 7) — results are stamped on
+// AstrologyContext alongside KnowledgeCompletenessScore.
+
+export function computeExplainabilityCoverage(
+  inferences: InferenceConclusion[],
+  nodes:       InferenceNode[],
+): ExplainabilityCoverage {
+  if (inferences.length === 0) {
+    return { total: 0, fullyExplainable: 0, partiallyExplainable: 0, opaque: 0, coverageScore: 0 };
+  }
+
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  let fullyExplainable     = 0;
+  let partiallyExplainable = 0;
+  let opaque               = 0;
+
+  for (const conclusion of inferences) {
+    const inferenceNode = nodeMap.get(`inference:${conclusion.id}`);
+
+    if (!inferenceNode) {
+      opaque++;
+      continue;
+    }
+
+    // Does it have a Fact parent?
+    const hasFactParent = inferenceNode.parents.some(
+      pid => nodeMap.get(pid)?.type === "Fact",
+    );
+
+    // Does it have a Hypothesis child?
+    const hypothesisChildIds = inferenceNode.children.filter(
+      cid => nodeMap.get(cid)?.type === "Hypothesis",
+    );
+    const hasHypothesisChild = hypothesisChildIds.length > 0;
+
+    // Does at least one of those Hypothesis children have a Decision child?
+    const hasDecisionGrandchild = hypothesisChildIds.some(hid =>
+      nodeMap.get(hid)?.children.some(cid => nodeMap.get(cid)?.type === "Decision"),
+    );
+
+    if (hasFactParent && hasHypothesisChild && hasDecisionGrandchild) {
+      fullyExplainable++;
+    } else {
+      partiallyExplainable++;
+    }
+  }
+
+  const total         = inferences.length;
+  const coverageScore = Math.round((fullyExplainable / total) * 100);
+
+  return { total, fullyExplainable, partiallyExplainable, opaque, coverageScore };
 }

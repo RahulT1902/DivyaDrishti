@@ -1,0 +1,45 @@
+{
+  "id": "health-chart001-transit-tomorrow",
+  "description": "Temporal test — same Leo lagna chart, Moon transiting house 6 (Capricorn) tomorrow. Moon in 6th = digestive sensitivity rule should fire. Transit activation should be below neutral.",
+  "ascendantSign": 5,
+  "planets": {
+    "Sun":     { "sign": 5,  "house": 1,  "degreeInSign": 15 },
+    "Moon":    { "sign": 2,  "house": 10, "degreeInSign": 20 },
+    "Mars":    { "sign": 10, "house": 6,  "degreeInSign": 12 },
+    "Mercury": { "sign": 6,  "house": 2,  "degreeInSign": 8  },
+    "Jupiter": { "sign": 5,  "house": 1,  "degreeInSign": 18 },
+    "Venus":   { "sign": 7,  "house": 3,  "degreeInSign": 22 },
+    "Saturn":  { "sign": 11, "house": 7,  "degreeInSign": 25 },
+    "Rahu":    { "sign": 3,  "house": 11, "degreeInSign": 10 },
+    "Ketu":    { "sign": 9,  "house": 5,  "degreeInSign": 10 }
+  },
+  "transitEvidence": [
+    {
+      "ruleId":      "transit-moon-6th-health",
+      "domain":      "Health",
+      "label":       "Moon in 6th: Digestive sensitivity",
+      "description": "Transiting Moon in the 6th house (roga bhava) activates disease indicators. Digestive discomfort, minor infections, or fatigue are elevated risks.",
+      "planet":      "Moon",
+      "natalHouse":  6,
+      "scoreDelta":  -12,
+      "direction":   "Challenging",
+      "duration": {
+        "planet":   "Moon",
+        "typical":  "~2.5 days per sign",
+        "category": "Momentary"
+      },
+      "evidence": [
+        {
+          "id":          "transit-moon-6th-health-ev",
+          "category":    "Transit",
+          "description": "Moon in 6th: Digestive sensitivity",
+          "strength":    30,
+          "weight":      1.0,
+          "sourceChart": "D1",
+          "planet":      "Moon",
+          "house":       6
+        }
+      ]
+    }
+  ]
+}

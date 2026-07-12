@@ -1,0 +1,16 @@
+{
+  "id": "marriage-chart001",
+  "description": "Strong marriage — Aries asc, Venus (7th lord) exalted in Pisces, Moon in 7th, Jupiter in lagna aspecting 7th",
+  "ascendantSign": 1,
+  "planets": {
+    "Sun":     { "sign": 4,  "house": 4,  "degreeInSign": 15 },
+    "Moon":    { "sign": 7,  "house": 7,  "degreeInSign": 20 },
+    "Mars":    { "sign": 8,  "house": 8,  "degreeInSign": 12 },
+    "Mercury": { "sign": 3,  "house": 3,  "degreeInSign": 8  },
+    "Jupiter": { "sign": 1,  "house": 1,  "degreeInSign": 18 },
+    "Venus":   { "sign": 12, "house": 12, "degreeInSign": 22 },
+    "Saturn":  { "sign": 10, "house": 10, "degreeInSign": 25 },
+    "Rahu":    { "sign": 11, "house": 11, "degreeInSign": 10 },
+    "Ketu":    { "sign": 5,  "house": 5,  "degreeInSign": 10 }
+  }
+}

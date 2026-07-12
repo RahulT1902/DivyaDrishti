@@ -70,6 +70,8 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
       decisionGraph,
       uncertainty,
       horizon,
+      completeness:              ctx.completeness,
+      explainability:            ctx.explainability,
       ruleSetVersion:            CORE_RULESET.version,
     };
   }
@@ -113,6 +115,10 @@ RULES:
       ...(assessment.uncertainty.conflictingEvidence.map(c => `  Conflict: ${c}`)),
     ].join("\n") || "  (none)";
 
+    const completenessLines = assessment.completeness.components
+      .map(c => `  ${c.status === "Full" ? "✓" : c.status === "Partial" ? "~" : "✗"} ${c.name} (${Math.round(c.weight * 100)}%)${c.note ? ` — ${c.note}` : ""}`)
+      .join("\n");
+
     const userMessage =
 `CAREER ASSESSMENT — Engine v${assessment.ruleSetVersion}
 
@@ -138,6 +144,14 @@ ${recsList}
 
 DATA QUALITY NOTES
 ${uncertaintyLines}
+
+KNOWLEDGE COMPLETENESS: ${assessment.completeness.overall}/100
+${completenessLines}
+${assessment.completeness.missingComponents.length > 0
+  ? `  → ${assessment.completeness.missingComponents.length} reasoning module(s) not yet applied. Scores are reliable within the applied model; see missing components above.`
+  : "  → All available reasoning modules applied."}
+
+EXPLAINABILITY: ${assessment.explainability.coverageScore}/100  (${assessment.explainability.fullyExplainable}/${assessment.explainability.total} fully traceable, ${assessment.explainability.partiallyExplainable} partial, ${assessment.explainability.opaque} opaque)
 
 ---
 ${userQuery ?? "Provide a comprehensive career assessment based on the above."}`;

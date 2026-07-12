@@ -1,0 +1,8 @@
+{
+  "description": "Moon in natal 1st house — transit-moon-1st-health must fire; transit activation score must be above neutral (50)",
+  "requiredTransitRules": ["transit-moon-1st-health"],
+  "minActivationScore": 60,
+  "maxActivationScore": 85,
+  "expectedRuleCount": { "min": 10, "max": 40 },
+  "maxOpaqueInferences": 0
+}

@@ -1,0 +1,15 @@
+{
+  "description": "10th lord Mars (exalted, kendra) and exalted Sun in 10th must fire; weak-career rule must not",
+  "requiredInferences": [
+    "career-10th-lord-strong",
+    "career-sun-10th-authority"
+  ],
+  "forbiddenInferences": [
+    "career-10th-lord-weak"
+  ],
+  "domains": {
+    "Career": { "minConfidence": 60 }
+  },
+  "expectedRuleCount": { "min": 18, "max": 35 },
+  "maxOpaqueInferences": 0
+}

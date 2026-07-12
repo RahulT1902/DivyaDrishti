@@ -5,6 +5,10 @@ import {
 import { SymbolRegistry } from "./symbolRegistry";
 import { InferenceRule, GENERAL_RULES } from "./rules/general";
 import { CAREER_RULES } from "./rules/career";
+import { WEALTH_RULES } from "./rules/wealth";
+import { MARRIAGE_RULES } from "./rules/marriage";
+import { HEALTH_RULES } from "./rules/health";
+import { ASHTAKAVARGA_RULES } from "./rules/ashtakavarga";
 import { CORE_RULESET } from "./ruleSetMeta";
 
 // All registered inference rules, ordered by priority.
@@ -12,7 +16,11 @@ import { CORE_RULESET } from "./ruleSetMeta";
 const ALL_RULES: InferenceRule[] = [
   ...GENERAL_RULES,
   ...CAREER_RULES,
-  // Phase 5+: WEALTH_RULES, MARRIAGE_RULES, HEALTH_RULES, EDUCATION_RULES
+  ...WEALTH_RULES,
+  ...MARRIAGE_RULES,
+  ...HEALTH_RULES,
+  ...ASHTAKAVARGA_RULES,
+  // Phase 6+: EDUCATION_RULES, SPIRITUALITY_RULES
 ].sort((a, b) => a.priority - b.priority);
 
 // Default provenance breakdown from a draft conclusion's confidence + timing.

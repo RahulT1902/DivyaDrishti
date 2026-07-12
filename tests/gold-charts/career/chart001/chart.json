@@ -1,0 +1,16 @@
+{
+  "id": "career-chart001",
+  "description": "Classic career success — Cancer asc, exalted 10th lord Mars in 7th (kendra), exalted Sun in 10th",
+  "ascendantSign": 4,
+  "planets": {
+    "Sun":     { "sign": 1,  "house": 10, "degreeInSign": 15 },
+    "Moon":    { "sign": 8,  "house": 5,  "degreeInSign": 20 },
+    "Mars":    { "sign": 10, "house": 7,  "degreeInSign": 12 },
+    "Mercury": { "sign": 6,  "house": 3,  "degreeInSign": 8  },
+    "Jupiter": { "sign": 4,  "house": 1,  "degreeInSign": 18 },
+    "Venus":   { "sign": 7,  "house": 4,  "degreeInSign": 22 },
+    "Saturn":  { "sign": 11, "house": 8,  "degreeInSign": 5  },
+    "Rahu":    { "sign": 3,  "house": 12, "degreeInSign": 10 },
+    "Ketu":    { "sign": 9,  "house": 6,  "degreeInSign": 10 }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "description": "Debilitated combust 10th lord must trigger weak-career rule; strong-career and sun-authority must not",
+  "requiredInferences": [
+    "career-10th-lord-weak"
+  ],
+  "forbiddenInferences": [
+    "career-10th-lord-strong",
+    "career-sun-10th-authority"
+  ],
+  "expectedRuleCount": { "min": 6, "max": 20 },
+  "maxOpaqueInferences": 0
+}

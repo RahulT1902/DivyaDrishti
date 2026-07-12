@@ -1,0 +1,16 @@
+{
+  "description": "Sun in own sign as lagna lord and Jupiter in lagna must produce strong-constitution rules",
+  "requiredInferences": [
+    "health-lagna-lord-strong",
+    "health-sun-strong",
+    "health-benefic-lagna"
+  ],
+  "forbiddenInferences": [
+    "health-lagna-lord-weak"
+  ],
+  "domains": {
+    "Health": { "minConfidence": 55 }
+  },
+  "expectedRuleCount": { "min": 16, "max": 33 },
+  "maxOpaqueInferences": 0
+}

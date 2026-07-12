@@ -143,7 +143,11 @@ function getMirror(intent: Intent, insight: DeepInsight, timeframe: string, sign
     relationship: `You may notice dynamics feeling more demanding${timeMarker}, requiring steady patience.`,
     health: `You may feel an internal mismatch between your ambition and your body's need for rest${timeMarker}.`,
     general: `You may be experiencing slower results${timeMarker} despite consistent effort.`,
-    mind: `You may feel a sense of mental restriction${timeMarker} or a need for deeper internal clarity.`
+    mind: `You may feel a sense of mental restriction${timeMarker} or a need for deeper internal clarity.`,
+    spirituality: `You may feel that external circumstances are pulling you away from your inner practice${timeMarker}.`,
+    family: `You may notice family dynamics requiring more of your attention and patience${timeMarker}.`,
+    education: `You may feel the gap between effort invested and results received${timeMarker} more acutely right now.`,
+    business: `You may feel momentum is building more slowly than expected${timeMarker}, but the foundation is being laid.`,
   };
   return mirrors[intent.domain] || mirrors.general;
 }

@@ -1,16 +1,26 @@
 import {
   AstrologyContext, ChartSuite, PlanetRole, PlanetStrength,
   YogaAnalysis, YogaActivation, DashaInfo,
+  KnowledgeCompletenessScore, ExplainabilityCoverage,
 } from "../types";
+import { TransitEvidence, TemporalHorizon } from "../transit-engine/types";
+import { computeTemporalStability } from "../transit-engine/evaluateRules";
 import { PlanetIntelligenceEngine } from "../planet-intelligence";
 import { PlanetStrengthEngine } from "../strength-engine";
 import { YogaEngine } from "../yoga-engine";
 import { ActivationEngine } from "../activation-engine";
-import { InferenceEngine, HypothesisEngine, InferenceGraphBuilder } from "../inference-engine";
+import {
+  InferenceEngine, HypothesisEngine,
+  InferenceGraphBuilder, computeExplainabilityCoverage,
+} from "../inference-engine";
+import { KnowledgeCompletenessEngine } from "../knowledge-completeness";
 
 export interface BuildOptions {
-  dasha?:   DashaInfo;   // current dasha period — activates dasha-based yoga status
-  transit?: unknown;     // current transit positions — Phase 5
+  dasha?:   DashaInfo;
+  transit?: TransitEvidence[];
+  // Temporal horizon — controls how fast vs slow planet transits are weighted.
+  // Defaults to "daily" when omitted.
+  horizon?: TemporalHorizon;
 }
 
 // AstrologyContextBuilder is the single orchestration layer.
@@ -35,7 +45,10 @@ export interface BuildOptions {
 //        ↓
 //   HypothesisEngine          → Hypothesis[] (cross-domain abstract concepts)
 //        ↓
-//   InferenceGraphBuilder     → InferenceNode[] (bidirectional "Why?" graph)
+//   InferenceGraphBuilder          → InferenceNode[] (bidirectional "Why?" graph)
+//        ↓
+//   KnowledgeCompletenessEngine    → KnowledgeCompletenessScore (how much of the model was applied)
+//   computeExplainabilityCoverage  → ExplainabilityCoverage (what fraction is fully graph-traceable)
 //        ↓
 //   AstrologyContext (complete)
 
@@ -62,10 +75,12 @@ export class AstrologyContextBuilder {
 
     // ── Layer 4: Activation (timing-aware, mutable) ──────────────────────────
     const activations: YogaActivation[] = this.activationEngine.evaluate({
-      birthPromises:   detection.birthPromises,
+      birthPromises:    detection.birthPromises,
       planetRoles,
       planetStrengths,
-      dasha:           options.dasha,
+      dasha:            options.dasha,
+      transit:          options.transit,
+      transitHorizon:   options.horizon,
     });
 
     const yogaAnalysis: YogaAnalysis = {
@@ -84,22 +99,37 @@ export class AstrologyContextBuilder {
     };
 
     // ── Build partial context (needed for subsequent engines) ─────────────────
-    const withYoga: Omit<AstrologyContext, "inferences" | "hypotheses" | "inferenceGraph"> = {
+    // temporalStability is computed here, alongside the transit data, so all
+    // downstream consumers (HealthEngine, narrator prompt) can read it directly.
+    const temporalStability = options.transit?.length
+      ? computeTemporalStability(options.transit)
+      : undefined;
+
+    const withYoga: Omit<AstrologyContext, "inferences" | "hypotheses" | "inferenceGraph" | "completeness" | "explainability"> = {
       chartSuite,
       planetRoles,
       planetStrengths,
       yogaAnalysis,
-      dasha: options.dasha,
+      dasha:             options.dasha,
+      transit:           options.transit,
+      temporalStability,
     };
 
     // ── Layer 5: Inference (pre-derived conclusions, provenance-stamped) ──────
-    const inferences = this.inferenceEngine.derive({ ...withYoga, inferences: [], hypotheses: [], inferenceGraph: [] });
+    const inferences = this.inferenceEngine.derive({
+      ...withYoga,
+      inferences: [], hypotheses: [], inferenceGraph: [],
+      completeness:   STUB_COMPLETENESS,
+      explainability: STUB_EXPLAINABILITY,
+    });
 
     const withInferences: AstrologyContext = {
       ...withYoga,
       inferences,
-      hypotheses:    [],
+      hypotheses:     [],
       inferenceGraph: [],
+      completeness:   STUB_COMPLETENESS,
+      explainability: STUB_EXPLAINABILITY,
     };
 
     // ── Layer 6: Hypothesis (abstract cross-domain concepts) ──────────────────
@@ -110,11 +140,41 @@ export class AstrologyContextBuilder {
     // ── Layer 7: Inference graph (bidirectional Why? traversal) ───────────────
     const inferenceGraph = this.inferenceGraphBuilder.build(withHypotheses);
 
-    return { ...withHypotheses, inferenceGraph };
+    // ── Layer 8: Meta-quality metrics (computed last — need full context) ─────
+    // completeness: how much of the reasoning model was applied (uses dasha/transit presence)
+    // explainability: what fraction of conclusions trace through Fact→…→Decision
+    const withGraph: Omit<AstrologyContext, "completeness" | "explainability"> = {
+      ...withHypotheses,
+      inferenceGraph,
+    };
+    const completeness   = KnowledgeCompletenessEngine.compute(withGraph);
+    const explainability = computeExplainabilityCoverage(inferences, inferenceGraph);
+
+    return { ...withGraph, completeness, explainability };
   }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Stubs for meta-quality metrics in intermediate pipeline steps (Layers 5–7).
+// Replaced with real values at Layer 8 once the full context is assembled.
+// Never exposed to external consumers.
+
+const STUB_COMPLETENESS: KnowledgeCompletenessScore = {
+  overall:           0,
+  components:        [],
+  missingComponents: [],
+  partialComponents: [],
+  implementedWeight: 0,
+};
+
+const STUB_EXPLAINABILITY: ExplainabilityCoverage = {
+  total:                0,
+  fullyExplainable:     0,
+  partiallyExplainable: 0,
+  opaque:               0,
+  coverageScore:        0,
+};
 
 function computeActivationScore(activations: YogaActivation[]): number {
   if (activations.length === 0) return 0;

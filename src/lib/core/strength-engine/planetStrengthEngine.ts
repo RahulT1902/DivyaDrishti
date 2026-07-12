@@ -5,13 +5,15 @@ import { computeSthanaBala } from "./sthanaBala";
 import { computeDigBala } from "./digBala";
 import { computeNaisargikaBala } from "./naisargikaBala";
 import { computeCombustion, computeRetrograde, computeVargottama } from "./modifiers";
+import { computeAvastha } from "./avastha";
+import { computeCheshtaBala } from "./cheshtaBala";
+import { computeDrikBala } from "./drikBala";
+import { computeKalaBala } from "./kalaBala";
 import { STRENGTH_WEIGHTS, MODEL_CONFIDENCE } from "./strengthWeights";
 
 const ALL_PLANETS: PlanetName[] = [
   "Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu",
 ];
-
-const STUB_SCORE = 50; // neutral placeholder for unimplemented components
 
 export class PlanetStrengthEngine implements AstrologyEngine<DivisionalChart, PlanetStrength[]> {
   evaluate(d1Chart: DivisionalChart): PlanetStrength[] {
@@ -34,6 +36,10 @@ export class PlanetStrengthEngine implements AstrologyEngine<DivisionalChart, Pl
     const combustion   = computeCombustion(planet, placement.isCombust);
     const retrograde   = computeRetrograde(planet, placement.isRetrograde);
     const vargottama   = computeVargottama(planet, placement.isVargottama);
+    const avastha      = computeAvastha(planet, placement.degreeInSign ?? 15);
+    const cheshta      = computeCheshtaBala(planet, placement.isRetrograde, placement.isCombust);
+    const drik         = computeDrikBala(planet, d1Chart);
+    const kala         = computeKalaBala(planet, d1Chart);
 
     const components: PlanetStrengthComponents = {
       sthanaBala:     sthana.score,
@@ -42,11 +48,10 @@ export class PlanetStrengthEngine implements AstrologyEngine<DivisionalChart, Pl
       combustion:     combustion.score,
       retrograde:     retrograde.score,
       vargottama:     vargottama.score,
-      // Stubs — return neutral until implemented in Phase 3B
-      kalaBala:       STUB_SCORE,
-      cheshtaBala:    STUB_SCORE,
-      drikBala:       STUB_SCORE,
-      avastha:        STUB_SCORE,
+      kalaBala:       kala.score,
+      cheshtaBala:    cheshta.score,
+      drikBala:       drik.score,
+      avastha:        avastha.score,
     };
 
     // ── Weighted overall strength ───────────────────────────────────────────
@@ -76,6 +81,10 @@ export class PlanetStrengthEngine implements AstrologyEngine<DivisionalChart, Pl
       combustion.evidence,
       retrograde.evidence,
       vargottama.evidence,
+      avastha.evidence,
+      cheshta.evidence,
+      drik.evidence,
+      kala.evidence,
     ];
 
     return {
@@ -89,15 +98,15 @@ export class PlanetStrengthEngine implements AstrologyEngine<DivisionalChart, Pl
 }
 
 function neutralStrength(planet: PlanetName): PlanetStrength {
-  const stub = STUB_SCORE;
+  const neutral = 50;
   return {
     planet,
-    overallStrength: stub,
+    overallStrength: neutral,
     confidence:      MODEL_CONFIDENCE,
     components: {
-      sthanaBala: stub, digBala: stub, naisargikaBala: stub,
-      combustion: stub, retrograde: stub, vargottama: stub,
-      kalaBala: stub, cheshtaBala: stub, drikBala: stub, avastha: stub,
+      sthanaBala: neutral, digBala: neutral, naisargikaBala: neutral,
+      combustion: neutral, retrograde: neutral, vargottama: neutral,
+      kalaBala: neutral, cheshtaBala: neutral, drikBala: neutral, avastha: neutral,
     },
     evidence: [],
   };

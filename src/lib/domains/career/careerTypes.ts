@@ -1,4 +1,4 @@
-import { DecisionFactor, TimingWindow, DecisionGraph, UncertaintyProfile, PredictionHorizon } from "../../core/types";
+import { DecisionFactor, TimingWindow, DecisionGraph, UncertaintyProfile, PredictionHorizon, KnowledgeCompletenessScore, ExplainabilityCoverage } from "../../core/types";
 import { DomainSignal, Recommendation } from "../../core/domain";
 
 // CareerAssessment is the structured output of the Career Domain Engine.
@@ -53,6 +53,18 @@ export interface CareerAssessment {
   // ── Prediction horizon ────────────────────────────────────────────────────
   // How long this assessment is expected to remain valid.
   horizon: PredictionHorizon;
+
+  // ── Knowledge completeness ────────────────────────────────────────────────
+  // How much of the intended reasoning model was applied to produce this assessment.
+  // Distinct from confidence: completeness measures reasoning breadth; confidence
+  // measures belief strength within whatever reasoning was applied.
+  completeness: KnowledgeCompletenessScore;
+
+  // ── Explainability coverage ───────────────────────────────────────────────
+  // What fraction of inference conclusions can be traced through the full
+  // Fact → Inference → Hypothesis → Decision chain. A transparency metric —
+  // opaque conclusions cannot be interrogated by "Why?" traversal.
+  explainability: ExplainabilityCoverage;
 
   // ── Traceability ──────────────────────────────────────────────────────────
   ruleSetVersion: string;

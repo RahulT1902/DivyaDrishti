@@ -1,7 +1,7 @@
 export { InferenceEngine } from "./inferenceEngine";
 export { SymbolRegistry } from "./symbolRegistry";
 export { HypothesisEngine } from "./hypothesisEngine";
-export { InferenceGraphBuilder } from "./inferenceGraph";
+export { InferenceGraphBuilder, computeExplainabilityCoverage } from "./inferenceGraph";
 export { CORE_RULESET } from "./ruleSetMeta";
 export type { InferenceRule } from "./rules/general";
 export type { HypothesisDefinition } from "./hypotheses/definitions";

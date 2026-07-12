@@ -4,13 +4,16 @@ import {
   DashaProvenance, DashaWeights, DEFAULT_DASHA_WEIGHTS,
   AstrologicalEvidence, AstrologyEngine,
 } from "../types";
+import { TransitEvidence, TemporalHorizon } from "../transit-engine/types";
+import { normalizeTransitEvidence } from "../transit-engine/evaluateRules";
 
 export interface ActivationInput {
   birthPromises:   YogaBirthPromise[];
   planetRoles:     PlanetRole[];
   planetStrengths: PlanetStrength[];
-  dasha?:          DashaInfo;    // Mahadasha + Antardasha timing
-  transit?:        unknown;      // TransitEngine Phase 7
+  dasha?:          DashaInfo;
+  transit?:        TransitEvidence[];
+  transitHorizon?: TemporalHorizon;
   weights?:        DashaWeights; // override defaults for A/B tuning
 }
 
@@ -50,12 +53,12 @@ export class ActivationEngine implements AstrologyEngine<ActivationInput, YogaAc
     const natalRaw   = promise.birthStrength;
     const mahaRaw    = computeMahaContribution(promise, input.dasha);
     const antarRaw   = computeAntarContribution(promise, input.dasha);
-    const transitRaw = 0;   // stub — TransitEngine Phase 7
+    const transitRaw  = normalizeTransitEvidence(input.transit ?? [], input.transitHorizon ?? "daily");
     const strengthRaw = computeAvgStrength(promise.supportingPlanets, input.planetStrengths);
 
     // ── Effective weights (redistribute unavailable) ───────────────────────
     const hasDasha   = !!input.dasha;
-    const hasTransit = false;  // TransitEngine Phase 7
+    const hasTransit = !!(input.transit?.length);
 
     const applied = redistributeWeights(weights, hasDasha, hasTransit);
 
@@ -70,7 +73,7 @@ export class ActivationEngine implements AstrologyEngine<ActivationInput, YogaAc
 
     // ── Status ────────────────────────────────────────────────────────────
     const isDashaActive   = hasDasha && (mahaRaw > 0 || antarRaw > 0);
-    const isTransitActive = false;
+    const isTransitActive = hasTransit;
     const status          = deriveStatus(activationScore, isDashaActive);
 
     // ── Dasha provenance ──────────────────────────────────────────────────

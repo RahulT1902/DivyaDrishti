@@ -1,0 +1,8 @@
+{
+  "description": "Moon in natal 6th house — transit-moon-6th-health must fire; transit activation score must be below neutral (50), proving today ≠ tomorrow",
+  "requiredTransitRules": ["transit-moon-6th-health"],
+  "minActivationScore": 30,
+  "maxActivationScore": 49,
+  "expectedRuleCount": { "min": 10, "max": 40 },
+  "maxOpaqueInferences": 0
+}

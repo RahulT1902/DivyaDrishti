@@ -1,0 +1,18 @@
+{
+  "description": "Exalted 7th lord Venus and Moon in 7th must fire; Saturn not in 7th so saturn-7th must not fire",
+  "requiredInferences": [
+    "marriage-7th-lord-strong",
+    "marriage-venus-strong",
+    "marriage-benefics-7th",
+    "marriage-jupiter-7th-aspect"
+  ],
+  "forbiddenInferences": [
+    "marriage-7th-lord-weak",
+    "marriage-saturn-7th"
+  ],
+  "domains": {
+    "Marriage": { "minConfidence": 55 }
+  },
+  "expectedRuleCount": { "min": 10, "max": 26 },
+  "maxOpaqueInferences": 0
+}

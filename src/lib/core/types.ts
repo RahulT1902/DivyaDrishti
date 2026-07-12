@@ -480,7 +480,7 @@ export interface ChartMetadata {
   varga: number;             // divisional number (1 for D1, 10 for D10, etc.)
   purpose: string;           // human-readable domain focus
   accuracyWeight: number;    // 0–1, relative weight in multi-chart confidence scoring
-  source: "Computed";        // future: "Corrected" | "UserOverride"
+  source: "Computed" | "Placeholder";   // Placeholder = empty shell; rules must skip
 }
 
 // ── The universal chart object ───────────────────────────────────────────────
@@ -502,6 +502,57 @@ export interface DivisionalChart {
   metadata: ChartMetadata;
 }
 
+// ── Knowledge Completeness Score ──────────────────────────────────────────────
+// Answers: "How much of the intended reasoning model has been applied?"
+//
+// Separate from confidence (which answers "How strongly do we believe this?").
+// A conclusion can be high-confidence AND low-completeness (e.g., strong natal
+// yoga detected, but Ashtakavarga, transit, and Kala Bala are all missing —
+// the conclusion is reliable as far as it goes, but limited in scope).
+//
+// Components use three statuses, each contributing a fraction of their weight:
+//   Full    → 1.0 × weight
+//   Partial → 0.5 × weight
+//   Missing → 0.0 × weight
+
+export type CompletenessStatus = "Full" | "Partial" | "Missing";
+
+export interface CompletenessComponent {
+  name:    string;
+  status:  CompletenessStatus;
+  weight:  number;     // target contribution to overall score (0–1, all sum to 1)
+  note?:   string;     // what's missing, partial, or implemented
+}
+
+export interface KnowledgeCompletenessScore {
+  overall:            number;                   // 0–100 weighted completeness
+  components:         CompletenessComponent[];  // full per-capability breakdown
+  missingComponents:  string[];                 // names of Missing components
+  partialComponents:  string[];                 // names of Partial components
+  implementedWeight:  number;                   // sum of Full component weights (0–1)
+}
+
+// ── Explainability Coverage ───────────────────────────────────────────────────
+// Measures what fraction of inference conclusions can be fully traced through
+// the Fact → Inference → Hypothesis → Decision chain in the inference graph.
+//
+// A prediction is "fully explainable" only when all four chain links exist:
+//   Fact (observed planetary position/yoga) →
+//   Inference (rule conclusion) →
+//   Hypothesis (abstract concept: leadership, discipline, etc.) →
+//   Decision (domain-level assessment)
+//
+// "Partially explainable" = exists in graph but chain is incomplete.
+// "Opaque" = inference conclusion has no matching node in the graph.
+
+export interface ExplainabilityCoverage {
+  total:                number;  // total InferenceConclusion[] in this context
+  fullyExplainable:     number;  // complete Fact→Inference→Hypothesis→Decision chain
+  partiallyExplainable: number;  // some chain present but incomplete
+  opaque:               number;  // not in inference graph at all
+  coverageScore:        number;  // 0–100  (fullyExplainable / total × 100)
+}
+
 // ── AstrologyContext — single enriched object that flows through all engines ─
 
 export interface AstrologyContext {
@@ -512,8 +563,13 @@ export interface AstrologyContext {
   inferences:      InferenceConclusion[];   // fine-grained rule conclusions
   hypotheses:      Hypothesis[];            // abstract concepts (leadership, discipline, etc.)
   inferenceGraph:  InferenceNode[];         // bidirectional graph — enables "Why?" traversal
-  dasha?:          DashaInfo;               // typed — populated when DashaEngine integrates
-  transit?:        unknown;                 // typed when TransitEngine integrates
+  completeness:    KnowledgeCompletenessScore;   // how much of the model has been applied
+  explainability:  ExplainabilityCoverage;       // what fraction of conclusions are graph-traceable
+  dasha?:              DashaInfo;
+  transit?:            import("./transit-engine/types").TransitEvidence[];
+  // How consistent is the transit picture across daily/weekly/monthly/yearly horizons?
+  // Present only when transit evidence is available; absent = can't measure stability.
+  temporalStability?:  import("./transit-engine/types").TemporalStabilityScore;
 }
 
 // ── Chart suite — all divisional charts for one birth ───────────────────────

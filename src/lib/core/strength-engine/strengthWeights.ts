@@ -21,10 +21,10 @@ export const STRENGTH_WEIGHTS: StrengthWeightMap = {
   combustion:     { weight: 0.15, implemented: true  },
   retrograde:     { weight: 0.10, implemented: true  },
   vargottama:     { weight: 0.10, implemented: true  },
-  kalaBala:       { weight: 0.04, implemented: false }, // Phase 3B
-  cheshtaBala:    { weight: 0.02, implemented: false }, // Phase 3B
-  drikBala:       { weight: 0.01, implemented: false }, // Phase 3B
-  avastha:        { weight: 0.01, implemented: false }, // Phase 3B
+  kalaBala:       { weight: 0.04, implemented: true  }, // Phase 3B — Paksha approximation
+  cheshtaBala:    { weight: 0.02, implemented: true  }, // Phase 3B — retrograde/combust flags
+  drikBala:       { weight: 0.01, implemented: true  }, // Phase 3B — aspect list scan
+  avastha:        { weight: 0.01, implemented: true  }, // Phase 3B — degree-based state
 };
 
 // Sum of all target weights — used to compute confidence %

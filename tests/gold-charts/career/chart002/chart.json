@@ -1,0 +1,16 @@
+{
+  "id": "career-chart002",
+  "description": "Weak career — Cancer asc, 10th lord Mars debilitated in 1st and combust; Sun not in 10th",
+  "ascendantSign": 4,
+  "planets": {
+    "Sun":     { "sign": 6,  "house": 3,  "degreeInSign": 12 },
+    "Moon":    { "sign": 2,  "house": 11, "degreeInSign": 15 },
+    "Mars":    { "sign": 4,  "house": 1,  "degreeInSign": 3,  "isCombust": true },
+    "Mercury": { "sign": 3,  "house": 12, "degreeInSign": 20 },
+    "Jupiter": { "sign": 8,  "house": 5,  "degreeInSign": 10 },
+    "Venus":   { "sign": 5,  "house": 2,  "degreeInSign": 18 },
+    "Saturn":  { "sign": 11, "house": 8,  "degreeInSign": 25 },
+    "Rahu":    { "sign": 3,  "house": 12, "degreeInSign": 15 },
+    "Ketu":    { "sign": 9,  "house": 6,  "degreeInSign": 15 }
+  }
+}

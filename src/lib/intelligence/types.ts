@@ -1,6 +1,7 @@
 export type DecisionSignal = "ACT" | "WAIT" | "AVOID" | "OBSERVE";
 
-export type IntentDomain = "career" | "finance" | "relationship" | "health" | "general" | "mind";
+export type IntentDomain = "career" | "finance" | "relationship" | "health" | "general" | "mind" | "spirituality" | "family" | "education" | "business";
+export type NarrativeStyle = "A" | "B" | "C" | "D" | "E";
 export type IntentType = "decision" | "problem" | "timing" | "general";
 
 export interface Intent {
@@ -8,6 +9,7 @@ export interface Intent {
   type: IntentType;
   confidence: number;
   timeframe?: string;
+  narrativeStyle?: NarrativeStyle;
 }
 
 export interface ChatResponse {

@@ -1,4 +1,4 @@
-import { AstrologyContext, DraftConclusion } from "../../types";
+import { AstrologyContext, DraftConclusion, PlanetName } from "../../types";
 import { SymbolRegistry } from "../symbolRegistry";
 import { InferenceRule } from "./general";
 
@@ -417,6 +417,286 @@ export const CAREER_RULES: InferenceRule[] = [
         conflictingEvidence: [],
         reasonCodes: ["D10_10TH_AFFLICTED", "CAREER_CHALLENGES"],
         planets: afflicting as import("../../types").PlanetName[],
+      };
+    },
+  },
+
+  // ── Sun strong in 10th house → solar authority / government / recognition ──
+  {
+    id: "career-sun-10th-authority",
+    domain: "Career",
+    priority: 23,
+    test: (ctx, sym) => {
+      const sunPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Sun");
+      return !!sunPlacement && sunPlacement.house === 10 && sym.strengthOf("Sun") >= 65;
+    },
+    conclude: (ctx, sym): DraftConclusion => {
+      const strength = sym.strengthOf("Sun");
+      return {
+        id: "career-sun-10th-authority",
+        domain: "Career",
+        statement: `Sun in 10th house with strength ${strength}/100 — solar authority in career: recognition, leadership, and government roles`,
+        confidence: strength,
+        probability: Math.round(strength * 0.82),
+        direction: "Positive",
+        timing: "Natal",
+        supportingEvidence: [
+          `Sun in 10th house (karma bhava), strength ${strength}/100`,
+          "Sun in 10th bestows public recognition, administrative authority, and career prominence",
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_AUTHORITY", "SUN_10TH"],
+        planets: ["Sun"],
+      };
+    },
+  },
+
+  // ── Mercury strong in kendra → communication / intellectual career ─────────
+  {
+    id: "career-mercury-intellectual",
+    domain: "Career",
+    priority: 24,
+    test: (ctx, sym) => {
+      const mercuryPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Mercury");
+      return (
+        !!mercuryPlacement &&
+        [1, 4, 7, 10].includes(mercuryPlacement.house) &&
+        sym.strengthOf("Mercury") >= 60
+      );
+    },
+    conclude: (ctx, sym): DraftConclusion => {
+      const mercuryPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Mercury")!;
+      const strength = sym.strengthOf("Mercury");
+      return {
+        id: "career-mercury-intellectual",
+        domain: "Career",
+        statement: `Mercury in kendra (house ${mercuryPlacement.house}) with strength ${strength}/100 — communication and intellectual career favored`,
+        confidence: strength,
+        probability: Math.round(strength * 0.80),
+        direction: "Positive",
+        timing: "Natal",
+        supportingEvidence: [
+          `Mercury in kendra house ${mercuryPlacement.house}, strength ${strength}/100`,
+          "Mercury in angular house amplifies analytical, writing, teaching, and communication career paths",
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_COMMUNICATION", "INTELLECTUAL_APTITUDE"],
+        planets: ["Mercury"],
+      };
+    },
+  },
+
+  // ── Jupiter in 9th or 11th, strong → advisory / teaching / wisdom career ───
+  {
+    id: "career-jupiter-advisory",
+    domain: "Career",
+    priority: 25,
+    test: (ctx, sym) => {
+      const jupiterPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Jupiter");
+      return (
+        !!jupiterPlacement &&
+        [9, 11].includes(jupiterPlacement.house) &&
+        sym.strengthOf("Jupiter") >= 60
+      );
+    },
+    conclude: (ctx, sym): DraftConclusion => {
+      const jupiterPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Jupiter")!;
+      const strength = sym.strengthOf("Jupiter");
+      const houseLabel = jupiterPlacement.house === 9 ? "dharma (9th)" : "gains (11th)";
+      return {
+        id: "career-jupiter-advisory",
+        domain: "Career",
+        statement: `Jupiter in ${houseLabel} house with strength ${strength}/100 — advisory, teaching, or wisdom-based career`,
+        confidence: strength,
+        probability: Math.round(strength * 0.80),
+        direction: "Positive",
+        timing: "Natal",
+        supportingEvidence: [
+          `Jupiter in house ${jupiterPlacement.house} (${houseLabel}), strength ${strength}/100`,
+          "Jupiter's higher wisdom expressed through 9th/11th: counseling, teaching, and advisory roles",
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_ADVISORY", "CAREER_TEACHING", "WISDOM_CAREER"],
+        planets: ["Jupiter"],
+      };
+    },
+  },
+
+  // ── Venus in 10th or 7th, strong → creative / luxury / relationship career ─
+  {
+    id: "career-venus-creative",
+    domain: "Career",
+    priority: 26,
+    test: (ctx, sym) => {
+      const venusPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Venus");
+      return (
+        !!venusPlacement &&
+        [7, 10].includes(venusPlacement.house) &&
+        sym.strengthOf("Venus") >= 60
+      );
+    },
+    conclude: (ctx, sym): DraftConclusion => {
+      const venusPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Venus")!;
+      const strength = sym.strengthOf("Venus");
+      return {
+        id: "career-venus-creative",
+        domain: "Career",
+        statement: `Venus in ${venusPlacement.house}th house with strength ${strength}/100 — creative, luxury, or relationship-focused career domains`,
+        confidence: strength,
+        probability: Math.round(strength * 0.78),
+        direction: "Positive",
+        timing: "Natal",
+        supportingEvidence: [
+          `Venus in house ${venusPlacement.house}, strength ${strength}/100`,
+          "Venus in 7th/10th: career in arts, beauty, luxury goods, relationships, or diplomacy",
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_CREATIVE", "VENUS_CAREER"],
+        planets: ["Venus"],
+      };
+    },
+  },
+
+  // ── Mars strong in 3rd/6th/10th → technical / engineering / martial career ─
+  {
+    id: "career-mars-technical",
+    domain: "Career",
+    priority: 27,
+    test: (ctx, sym) => {
+      const marsPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Mars");
+      return (
+        !!marsPlacement &&
+        [3, 6, 10].includes(marsPlacement.house) &&
+        sym.strengthOf("Mars") >= 60
+      );
+    },
+    conclude: (ctx, sym): DraftConclusion => {
+      const marsPlacement = ctx.chartSuite.D1.planets.find(p => p.planet === "Mars")!;
+      const strength = sym.strengthOf("Mars");
+      return {
+        id: "career-mars-technical",
+        domain: "Career",
+        statement: `Mars in ${marsPlacement.house}th house with strength ${strength}/100 — technical execution, engineering, defense, or competitive career`,
+        confidence: strength,
+        probability: Math.round(strength * 0.78),
+        direction: "Positive",
+        timing: "Natal",
+        supportingEvidence: [
+          `Mars in house ${marsPlacement.house}, strength ${strength}/100`,
+          "Mars in 3rd/6th/10th: drive, technical aptitude, and competitive edge channeled into career",
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_TECHNICAL", "CAREER_MARTIAL"],
+        planets: ["Mars"],
+      };
+    },
+  },
+
+  // ── 2nd lord + 11th lord both strong → career wealth potential ────────────
+  {
+    id: "career-wealth-foundation",
+    domain: "Career",
+    priority: 28,
+    test: (ctx, sym) =>
+      sym.strengthOfHouseLord(2) >= 60 && sym.strengthOfHouseLord(11) >= 60,
+    conclude: (ctx, sym): DraftConclusion => {
+      const lord2  = sym.lordOf(2);
+      const lord11 = sym.lordOf(11);
+      const str2   = lord2  ? sym.strengthOf(lord2)  : 60;
+      const str11  = lord11 ? sym.strengthOf(lord11) : 60;
+      const avg    = Math.round((str2 + str11) / 2);
+      const planets: PlanetName[] = [lord2, lord11].filter((p): p is PlanetName => !!p);
+      return {
+        id: "career-wealth-foundation",
+        domain: "Career",
+        statement: `2nd lord ${lord2 ?? "unknown"} (${str2}/100) and 11th lord ${lord11 ?? "unknown"} (${str11}/100) both strong — strong financial foundation and income gains from career`,
+        confidence: avg,
+        probability: Math.round(avg * 0.80),
+        direction: "Positive",
+        timing: "Natal",
+        supportingEvidence: [
+          `2nd lord ${lord2 ?? "unknown"}: ${str2}/100 — wealth accumulation`,
+          `11th lord ${lord11 ?? "unknown"}: ${str11}/100 — income and gains`,
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_WEALTH", "INCOME_GAINS"],
+        planets,
+      };
+    },
+  },
+
+  // ── 5th lord strong in kendra → intellectual / creative professional rise ───
+  {
+    id: "career-5th-lord-kendra",
+    domain: "Career",
+    priority: 29,
+    test: (ctx, sym) => {
+      const lord5Entry = ctx.chartSuite.D1.lords.find(l => l.house === 5);
+      const lord5      = sym.lordOf(5);
+      return (
+        !!lord5 &&
+        !!lord5Entry &&
+        [1, 4, 7, 10].includes(lord5Entry.lordPlacedInHouse) &&
+        sym.strengthOf(lord5) >= 60
+      );
+    },
+    conclude: (ctx, sym): DraftConclusion => {
+      const lord5      = sym.lordOf(5)!;
+      const lord5Entry = ctx.chartSuite.D1.lords.find(l => l.house === 5)!;
+      const strength   = sym.strengthOf(lord5);
+      return {
+        id: "career-5th-lord-kendra",
+        domain: "Career",
+        statement: `5th lord ${lord5} in kendra (house ${lord5Entry.lordPlacedInHouse}) with strength ${strength}/100 — intellect, strategy, and creative professional achievement`,
+        confidence: strength,
+        probability: Math.round(strength * 0.78),
+        direction: "Positive",
+        timing: "Natal",
+        supportingEvidence: [
+          `5th lord ${lord5} placed in kendra house ${lord5Entry.lordPlacedInHouse}, strength ${strength}/100`,
+          "5th lord in kendra: intelligence and creative aptitude channeled into professional achievement",
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_CREATIVE", "PROFESSIONAL_STATUS"],
+        planets: [lord5],
+      };
+    },
+  },
+
+  // ── D1 10th house afflicted by weak malefics → career obstacles / delays ───
+  {
+    id: "career-10th-malefic-afflicted",
+    domain: "Career",
+    priority: 30,
+    test: (ctx, sym) => {
+      const malefics: PlanetName[] = ["Saturn", "Mars", "Rahu", "Ketu", "Sun"];
+      return ctx.chartSuite.D1.planets.some(
+        p => p.house === 10 && malefics.includes(p.planet) && sym.strengthOf(p.planet) < 40,
+      );
+    },
+    conclude: (ctx, sym): DraftConclusion => {
+      const malefics: PlanetName[] = ["Saturn", "Mars", "Rahu", "Ketu", "Sun"];
+      const afflicting = ctx.chartSuite.D1.planets
+        .filter(p => p.house === 10 && malefics.includes(p.planet) && sym.strengthOf(p.planet) < 40)
+        .map(p => p.planet);
+      const avgWeakness = Math.round(
+        afflicting.reduce((s, p) => s + (100 - sym.strengthOf(p)), 0) / afflicting.length,
+      );
+      return {
+        id: "career-10th-malefic-afflicted",
+        domain: "Career",
+        statement: `D1 10th house afflicted by weak malefic(s) ${afflicting.join(", ")} — career obstacles: structural friction and delayed recognition`,
+        confidence: Math.min(85, avgWeakness),
+        probability: Math.round(Math.min(85, avgWeakness) * 0.65),
+        direction: "Negative",
+        timing: "Natal",
+        supportingEvidence: [
+          `Weak malefic(s) in D1 10th house: ${afflicting.join(", ")}`,
+          "Debilitated or weak malefics in the career house create friction and recognition delays",
+        ],
+        conflictingEvidence: [],
+        reasonCodes: ["CAREER_OBSTACLES", "CAREER_DELAYS"],
+        planets: afflicting,
       };
     },
   },

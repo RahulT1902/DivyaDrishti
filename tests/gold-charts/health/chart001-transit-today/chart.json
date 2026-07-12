@@ -1,0 +1,45 @@
+{
+  "id": "health-chart001-transit-today",
+  "description": "Temporal test — same Leo lagna chart, Moon transiting house 1 (Leo) today. Moon in lagna = vitality boost rule should fire.",
+  "ascendantSign": 5,
+  "planets": {
+    "Sun":     { "sign": 5,  "house": 1,  "degreeInSign": 15 },
+    "Moon":    { "sign": 2,  "house": 10, "degreeInSign": 20 },
+    "Mars":    { "sign": 10, "house": 6,  "degreeInSign": 12 },
+    "Mercury": { "sign": 6,  "house": 2,  "degreeInSign": 8  },
+    "Jupiter": { "sign": 5,  "house": 1,  "degreeInSign": 18 },
+    "Venus":   { "sign": 7,  "house": 3,  "degreeInSign": 22 },
+    "Saturn":  { "sign": 11, "house": 7,  "degreeInSign": 25 },
+    "Rahu":    { "sign": 3,  "house": 11, "degreeInSign": 10 },
+    "Ketu":    { "sign": 9,  "house": 5,  "degreeInSign": 10 }
+  },
+  "transitEvidence": [
+    {
+      "ruleId":      "transit-moon-1st-health",
+      "domain":      "Health",
+      "label":       "Moon in lagna: Physical vitality elevated",
+      "description": "Transiting Moon in the 1st house strengthens the body's energy and emotional resilience.",
+      "planet":      "Moon",
+      "natalHouse":  1,
+      "scoreDelta":  15,
+      "direction":   "Supportive",
+      "duration": {
+        "planet":   "Moon",
+        "typical":  "~2.5 days per sign",
+        "category": "Momentary"
+      },
+      "evidence": [
+        {
+          "id":          "transit-moon-1st-health-ev",
+          "category":    "Transit",
+          "description": "Moon in lagna: Physical vitality elevated",
+          "strength":    75,
+          "weight":      1.0,
+          "sourceChart": "D1",
+          "planet":      "Moon",
+          "house":       1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "health-chart001",
+  "description": "Strong constitution — Leo asc, Sun (lagna lord) in own sign in 1st, Jupiter in 1st, exalted Mars in 6th",
+  "ascendantSign": 5,
+  "planets": {
+    "Sun":     { "sign": 5,  "house": 1,  "degreeInSign": 15 },
+    "Moon":    { "sign": 2,  "house": 10, "degreeInSign": 20 },
+    "Mars":    { "sign": 10, "house": 6,  "degreeInSign": 12 },
+    "Mercury": { "sign": 6,  "house": 2,  "degreeInSign": 8  },
+    "Jupiter": { "sign": 5,  "house": 1,  "degreeInSign": 18 },
+    "Venus":   { "sign": 7,  "house": 3,  "degreeInSign": 22 },
+    "Saturn":  { "sign": 11, "house": 7,  "degreeInSign": 25 },
+    "Rahu":    { "sign": 3,  "house": 11, "degreeInSign": 10 },
+    "Ketu":    { "sign": 9,  "house": 5,  "degreeInSign": 10 }
+  }
+}
