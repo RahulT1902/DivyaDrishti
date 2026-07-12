@@ -75,11 +75,11 @@ export interface HealthAssessment {
   ruleSetVersion: string;
 
   // ── Temporal Stability ────────────────────────────────────────────────────
-  // How consistent is the health picture across daily/weekly/monthly/yearly?
-  // Present only when transit evidence is available.
-  // The LLM narrator uses `insight` to distinguish "today" from "this year":
-  //   Stable  → consistent outlook regardless of horizon asked
-  //   Volatile → "Long-term promise is strong, but a short-lived transit is
-  //               creating temporary sensitivity"
   temporalStability?: TemporalStabilityScore;
+
+  // ── Transit Evidence ──────────────────────────────────────────────────────
+  // The specific transit rules that fired at evaluation time.
+  // Used by buildPrompt() to generate today-specific observations
+  // without exposing raw planet/house terminology to the LLM.
+  transit?: import("../../core/transit-engine/types").TransitEvidence[];
 }

@@ -72,99 +72,63 @@ export class HealthEngine implements DomainEngine<HealthAssessment> {
       explainability:       ctx.explainability,
       ruleSetVersion:       CORE_RULESET.version,
       temporalStability:    ctx.temporalStability,
+      transit:              ctx.transit,
     };
   }
 
   buildPrompt(assessment: HealthAssessment, userQuery?: string): PromptContext {
-    const topSignals = [...assessment.signals]
-      .sort((a, b) => b.score - a.score)
-      .map(s => `  ${s.label}: ${s.score}/100`)
-      .join("\n");
-
-    const supportingList = assessment.supportingFactors.length > 0
-      ? assessment.supportingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const blockingList = assessment.blockingFactors.length > 0
-      ? assessment.blockingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const recsList = assessment.recommendations.length > 0
-      ? assessment.recommendations.map(r =>
-          `  ${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} ${r.action}` +
-          (r.timing ? ` [${r.timing}]` : ""),
-        ).join("\n")
-      : "  (no specific actions identified at this time)";
-
     const systemInstruction =
-`You are an experienced Vedic astrologer providing a health reading.
+`You are an experienced Vedic astrologer — a trusted Pundit speaking directly with a person.
 
-RULES:
-1. The symbolic engine has already computed all conclusions below — you narrate, not reason.
-2. Do NOT change any confidence scores, signal values, or recommendation priorities.
-3. Do NOT introduce astrological factors not present in the evidence provided.
-4. Write in warm, precise, professional language suitable for a thoughtful adult seeking real guidance.
-5. Do not name planets or houses — translate those into life terms (e.g., "constitutional resilience" not "strong lagna lord").
-6. Keep your response under 300 words.
-7. End with one concrete sentence the person can act on today.
-8. Note: D6 (Shashtamsha) analysis is planned for Phase A and will add specificity to health timing — qualify timing statements accordingly.`;
+ABSOLUTE RULES (any violation is a failure):
+1. NEVER use these words in your response: confidence, uncertainty, completeness, explainability,
+   activation, temporal stability, hypothesis, inference, decision graph, signal, score, dormant,
+   "Medium uncertainty", "/100", "Favorable state", "the engine", "the model".
+2. Do NOT describe how the reasoning system works — describe the person's situation.
+3. Do NOT name planets or houses. "Moon in 6th" → "digestion may be sensitive". "Strong lagna lord" → "your constitution is resilient".
+4. Answer the person's ACTUAL question. If they ask about today, focus on today — not lifelong patterns.
+5. Do NOT write generic sentences that could apply to anyone.
+6. Use simple Indian English — warm, caring, direct. Like a trusted family Pandit talking to a person.
+   Examples: "Today looks good for your health." "Be a little careful about your digestion today." "There is nothing to worry about right now."
+7. Length: 150–220 words. Natural, conversational — a Pundit speaking, not writing a report.
 
-    const uncertaintyLines = [
-      ...(assessment.uncertainty.missingData.map(m => `  Missing: ${m}`)),
-      ...(assessment.uncertainty.weakEvidence.map(w => `  Weak: ${w}`)),
-      ...(assessment.uncertainty.conflictingEvidence.map(c => `  Conflict: ${c}`)),
-    ].join("\n") || "  (none)";
+STRUCTURE — follow this order exactly for health questions:
+① ONE sentence: What today looks like for health overall.
+② ONE sentence: The strongest positive aspect in human terms (skip if nothing notable).
+③ ONE sentence: The main thing to be mindful of today (skip if nothing notable).
+④ ONE sentence: Whether this is a temporary influence or a longer pattern — only if transit influence is mentioned in the notes below.
+⑤ ONE or TWO sentences: Specific, practical actions for today.`;
 
-    const completenessLines = assessment.completeness.components
-      .map(c => `  ${c.status === "Full" ? "✓" : c.status === "Partial" ? "~" : "✗"} ${c.name} (${Math.round(c.weight * 100)}%)${c.note ? ` — ${c.note}` : ""}`)
-      .join("\n");
+    // ── Pre-translate engine state → pundit observations ──────────────────────
+    const overallPicture  = describeHealthState(assessment.currentState);
+    const strengths       = assessment.supportingFactors.slice(0, 2).map(f => f.label).join(", ") || null;
+    const cautions        = assessment.blockingFactors.slice(0, 2).map(f => f.label).join(", ") || null;
+    const transitNote     = buildHealthTransitNote(assessment.transit ?? []);
+    const stabilityNote   = buildStabilityNote(assessment.temporalStability);
+    const actions         = assessment.recommendations.slice(0, 2)
+      .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
+      .join("\n") || "• Eat on time, stay hydrated, and avoid overexertion";
 
     const userMessage =
-`HEALTH ASSESSMENT — Engine v${assessment.ruleSetVersion}
+`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
 
-OVERALL STATE: ${assessment.currentState}
-CONFIDENCE: ${assessment.confidence}/100
-HORIZON: ${assessment.horizon.label} — ${assessment.horizon.description}
-UNCERTAINTY: ${assessment.uncertainty.overallUncertainty}
+OVERALL DIRECTION: ${overallPicture}
 
-DOMAIN SIGNALS
-${topSignals}
+WHAT IS WORKING: ${strengths ?? "General balance — no strong concerns at present"}
 
-SUPPORTING FACTORS
-${supportingList}
+WHAT NEEDS CARE: ${cautions ?? "Nothing notable right now"}
 
-BLOCKING FACTORS
-${blockingList}
+TODAY'S SPECIFIC INFLUENCE:
+${transitNote ?? "No significant short-term planetary influence on health today."}
+${stabilityNote ? `PATTERN NOTE: ${stabilityNote}` : ""}
 
-TIMING: ${assessment.bestTiming.label}
-${assessment.bestTiming.description}
+PRACTICAL ACTIONS (use one or two of these in your response):
+${actions}
 
-RECOMMENDED ACTIONS
-${recsList}
-
-DATA QUALITY NOTES
-${uncertaintyLines}
-
-KNOWLEDGE COMPLETENESS: ${assessment.completeness.overall}/100
-${completenessLines}
-${assessment.completeness.missingComponents.length > 0
-  ? `  → ${assessment.completeness.missingComponents.length} reasoning module(s) not yet applied. Scores are reliable within the applied model; see missing components above.`
-  : "  → All available reasoning modules applied."}
-
-EXPLAINABILITY: ${assessment.explainability.coverageScore}/100  (${assessment.explainability.fullyExplainable}/${assessment.explainability.total} fully traceable, ${assessment.explainability.partiallyExplainable} partial, ${assessment.explainability.opaque} opaque)
-${assessment.temporalStability ? `
-TEMPORAL STABILITY: ${assessment.temporalStability.label} (range: ${assessment.temporalStability.range} points across daily/weekly/monthly/yearly)
-  Daily: ${assessment.temporalStability.scores.daily}  Weekly: ${assessment.temporalStability.scores.weekly}  Monthly: ${assessment.temporalStability.scores.monthly}  Yearly: ${assessment.temporalStability.scores.yearly}
-  Insight: ${assessment.temporalStability.insight}
-  → Use this to qualify your language: if Volatile, distinguish "today" from "this year". If Stable, one consistent reading applies across time horizons.` : ""}
 ---
-${userQuery ?? "Provide a comprehensive health assessment based on the above."}`;
+${userQuery ?? "How is my health today?"}`;
 
-    return {
-      domain: "Health",
-      systemInstruction,
-      userMessage,
-    };
+    return { domain: "Health", systemInstruction, userMessage };
   }
 }
 
@@ -242,20 +206,64 @@ function computeUncertainty(ctx: AstrologyContext, signals: DomainSignal[]): Unc
 }
 
 function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHorizon {
-  // If dasha is available, the assessment is anchored to current dasha cycle
   if (ctx.dasha) {
-    const dashaEnd = ctx.dasha.periodEnd;
     return {
       scope:       "CurrentDasha",
       label:       "Current Dasha Period",
-      description: `Assessment is anchored to the current dasha cycle (ending ${dashaEnd}). Re-evaluate when dasha changes.`,
+      description: `Assessment is anchored to the current dasha cycle (ending ${ctx.dasha.periodEnd}). Re-evaluate when dasha changes.`,
     };
   }
-
-  // Without dasha, the assessment reflects natal patterns — long-term but less timing-specific
   return {
     scope:       "LongTerm",
     label:       "Long-Term Natal Tendency",
     description: "Assessment reflects natal chart patterns — valid as a long-term tendency. Provide dasha periods for timing-specific guidance.",
   };
+}
+
+// ── Narrator translation helpers ──────────────────────────────────────────────
+// These convert engine state (Layer 1) → pundit observations (Layer 2).
+// The LLM narrator only sees Layer 2 and produces the human conversation (Layer 3).
+
+function describeHealthState(state: string): string {
+  const map: Record<string, string> = {
+    "Highly Favorable": "Today is very supportive for health — energy and vitality are well-supported.",
+    "Favorable":        "Today looks good for health overall — no significant concerns are indicated.",
+    "Moderate":         "Today is reasonably balanced for health, with a few things worth being mindful of.",
+    "Challenging":      "Today calls for some extra care — pace yourself and pay attention to your body.",
+    "Highly Challenging": "Today is a more demanding day for health — rest, hydration, and self-care are especially important.",
+  };
+  return map[state] ?? "Today is reasonably balanced for health.";
+}
+
+// Hardcoded observations per transit rule — this is astrological knowledge, not algorithm.
+const HEALTH_TRANSIT_OBSERVATIONS: Record<string, string> = {
+  "transit-moon-1st-health":      "Energy and vitality get a small natural lift today (short-lived, ~2–3 days).",
+  "transit-moon-6th-health":      "Digestion may be a little more sensitive than usual today (short-lived, ~2–3 days).",
+  "transit-moon-8th-health":      "There may be a sense of hidden fatigue or emotional heaviness today (short-lived, ~2–3 days).",
+  "transit-moon-12th-health":     "Sleep and rest may be unusually light or deep today — wind down early (short-lived, ~2–3 days).",
+  "transit-moon-4th-health":      "Emotional comfort supports recovery today — staying in familiar surroundings helps (short-lived, ~2–3 days).",
+  "transit-moon-5th-health":      "Mood and energy are slightly elevated today — a good day to stay gently active (short-lived, ~2–3 days).",
+  "transit-moon-9th-health":      "Mental clarity and positive outlook are good today (short-lived, ~2–3 days).",
+  "transit-jupiter-lagna-health": "A longer beneficial cycle is currently supporting overall constitution and vitality (ongoing).",
+  "transit-jupiter-6th-health":   "Immune resilience and recovery are strengthened by a positive cycle right now (ongoing).",
+  "transit-saturn-lagna-health":  "A slower, more demanding cycle is creating some background pressure on vitality — pace yourself (ongoing, months to years).",
+  "transit-saturn-6th-health":    "Health responds best to consistent routine and discipline right now — structure is the key (ongoing, months to years).",
+  "transit-saturn-8th-health":    "An ongoing cycle is drawing attention to chronic or underlying health matters — steady care matters (ongoing, months to years).",
+  "transit-mars-6th-health":      "The immune system is in a more reactive state right now — avoid overexertion and support recovery (weeks to months).",
+  "transit-mars-lagna-health":    "Physical drive and energy are elevated — good for activity, but avoid reckless effort (weeks to months).",
+};
+
+function buildHealthTransitNote(transit: import("../../core/transit-engine/types").TransitEvidence[]): string | null {
+  if (!transit.length) return null;
+  const lines = transit
+    .filter(t => t.direction !== "Neutral")
+    .map(t => HEALTH_TRANSIT_OBSERVATIONS[t.ruleId] ?? `${t.label} — ${t.direction.toLowerCase()} influence.`);
+  return lines.length ? lines.join(" ") : null;
+}
+
+function buildStabilityNote(stability: import("../../core/transit-engine/types").TemporalStabilityScore | undefined): string | null {
+  if (!stability) return null;
+  if (stability.label === "Volatile")  return "Note: today's reading is shaped by a temporary short-lived influence. The longer-term health picture looks different from today.";
+  if (stability.label === "Variable")  return "Note: today's picture differs somewhat from the longer-term pattern — this is partly driven by a passing influence.";
+  return null; // Stable / Moderate: no need to qualify
 }

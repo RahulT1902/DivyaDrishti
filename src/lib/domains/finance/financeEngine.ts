@@ -88,90 +88,52 @@ export class FinanceEngine implements DomainEngine<FinanceAssessment> {
   }
 
   buildPrompt(assessment: FinanceAssessment, userQuery?: string): PromptContext {
-    const topSignals = [...assessment.signals]
-      .sort((a, b) => b.score - a.score)
-      .map(s => `  ${s.label}: ${s.score}/100`)
-      .join("\n");
-
-    const supportingList = assessment.supportingFactors.length > 0
-      ? assessment.supportingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const blockingList = assessment.blockingFactors.length > 0
-      ? assessment.blockingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const recsList = assessment.recommendations.length > 0
-      ? assessment.recommendations.map(r =>
-          `  ${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} ${r.action}` +
-          (r.timing ? ` [${r.timing}]` : ""),
-        ).join("\n")
-      : "  (no specific actions identified at this time)";
-
     const systemInstruction =
-`You are an experienced Vedic astrologer providing a finance and wealth reading.
+`You are an experienced Vedic astrologer — a trusted family Pandit speaking directly with a person.
 
-RULES:
-1. The symbolic engine has already computed all conclusions below — you narrate, not reason.
-2. Do NOT change any confidence scores, signal values, or recommendation priorities.
-3. Do NOT introduce astrological factors not present in the evidence provided.
-4. Write in warm, precise, professional language suitable for a thoughtful adult seeking real financial guidance.
-5. Do not name planets or houses — translate those into life terms (e.g., "financial fortune is strongly supported" not "9th lord in 10th house").
-6. Keep your response under 300 words.
-7. End with one concrete financial action the person can take today.
-8. Note: D2 (Hora chart for wealth) analysis is planned for Phase A — current assessment is based on D1 natal chart patterns.`;
+ABSOLUTE RULES (any violation is a failure):
+1. NEVER use these words in your response: confidence, uncertainty, completeness, explainability,
+   activation, temporal stability, hypothesis, inference, decision graph, signal, score, dormant,
+   "/100", "Favorable state", "the engine", "the model".
+2. Do NOT describe how the reasoning system works — describe the person's situation.
+3. Do NOT name planets or houses. Translate them into plain life terms.
+4. Answer the person's ACTUAL question — growth, timing, savings, income, investment, or general wealth.
+5. Use simple Indian English — warm, direct, clear. Like a trusted Pandit talking to a person, not a finance report.
+   Examples: "Your chart shows good potential for saving money." "This is not a good time to take big financial risks." "Slow and steady will work well for you now."
+6. Length: 150–220 words. Natural, caring, honest.
 
-    const uncertaintyLines = [
-      ...(assessment.uncertainty.missingData.map(m => `  Missing: ${m}`)),
-      ...(assessment.uncertainty.weakEvidence.map(w => `  Weak: ${w}`)),
-      ...(assessment.uncertainty.conflictingEvidence.map(c => `  Conflict: ${c}`)),
-    ].join("\n") || "  (none)";
+STRUCTURE for finance questions (follow this order exactly):
+① ONE sentence: What the chart says about finances right now overall.
+② ONE sentence: The strongest financial advantage or opportunity this person has.
+③ ONE sentence: The main thing to be careful about (skip if nothing notable).
+④ ONE sentence: Timing — is this a good period to act, invest, or wait?
+⑤ ONE or TWO sentences: What to do — simple, practical, actionable.`;
 
-    const completenessLines = assessment.completeness.components
-      .map(c =>
-        `  ${c.status === "Full" ? "✓" : c.status === "Partial" ? "~" : "✗"} ${c.name} (${Math.round(c.weight * 100)}%)` +
-        (c.note ? ` — ${c.note}` : ""),
-      )
-      .join("\n");
+    // ── Pre-translate engine state → pundit observations ──────────────────────
+    const overallPicture = describeFinanceState(assessment.currentState);
+    const strengths      = assessment.supportingFactors.slice(0, 2).map(f => f.label).join("; ") || "Steady wealth-building potential";
+    const cautions       = assessment.blockingFactors.slice(0, 1).map(f => f.label).join(", ") || null;
+    const timingNote     = assessment.bestTiming.description;
+    const actions        = assessment.recommendations.slice(0, 2)
+      .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
+      .join("\n") || "• Track your expenses this month and avoid impulsive spending";
 
     const userMessage =
-`FINANCE ASSESSMENT — Engine v${assessment.ruleSetVersion}
+`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
 
-OVERALL STATE: ${assessment.currentState}
-CONFIDENCE: ${assessment.confidence}/100
-HORIZON: ${assessment.horizon.label} — ${assessment.horizon.description}
-UNCERTAINTY: ${assessment.uncertainty.overallUncertainty}
+OVERALL DIRECTION: ${overallPicture}
 
-DOMAIN SIGNALS
-${topSignals}
+WHAT IS WORKING: ${strengths}
 
-SUPPORTING FACTORS
-${supportingList}
+WHAT TO WATCH: ${cautions ?? "No major financial risks indicated right now"}
 
-BLOCKING FACTORS
-${blockingList}
+TIMING: ${timingNote}
 
-TIMING: ${assessment.bestTiming.label}
-${assessment.bestTiming.description}
-
-RECOMMENDED ACTIONS
-${recsList}
-
-DATA QUALITY NOTES
-${uncertaintyLines}
-
-KNOWLEDGE COMPLETENESS: ${assessment.completeness.overall}/100
-${completenessLines}
-${assessment.completeness.missingComponents.length > 0
-  ? `  → ${assessment.completeness.missingComponents.length} reasoning module(s) not yet applied. Scores are reliable within the applied model; see missing components above.`
-  : "  → All available reasoning modules applied."}
-
-EXPLAINABILITY: ${assessment.explainability.coverageScore}/100  (${assessment.explainability.fullyExplainable}/${assessment.explainability.total} fully traceable, ${assessment.explainability.partiallyExplainable} partial, ${assessment.explainability.opaque} opaque)
-
-PHASE A NOTE: D2 (Hora chart for wealth) analysis is not yet applied. When available, D2-specific planetary strengths and house placements will add a dedicated wealth-chart signal layer, improving accuracy for wealth accumulation and inheritance assessments.
+PRACTICAL ACTIONS (use one or two of these):
+${actions}
 
 ---
-${userQuery ?? "Provide a comprehensive finance and wealth assessment based on the above."}`;
+${userQuery ?? "How do my finances look right now?"}`;
 
     return {
       domain: "Finance",
@@ -274,20 +236,27 @@ function computeUncertainty(ctx: AstrologyContext, signals: DomainSignal[]): Unc
 }
 
 function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHorizon {
-  // If dasha is available, the assessment is anchored to the current dasha cycle
   if (ctx.dasha) {
-    const dashaEnd = ctx.dasha.periodEnd;
     return {
       scope:       "CurrentDasha",
       label:       "Current Dasha Period",
-      description: `Assessment is anchored to the current dasha cycle (ending ${dashaEnd}). Re-evaluate when dasha changes.`,
+      description: `Assessment is anchored to the current dasha cycle (ending ${ctx.dasha.periodEnd}). Re-evaluate when dasha changes.`,
     };
   }
-
-  // Without dasha, the assessment reflects natal patterns — long-term but less timing-specific
   return {
     scope:       "LongTerm",
     label:       "Long-Term Natal Tendency",
     description: "Assessment reflects natal chart patterns — valid as a long-term tendency. Provide dasha periods for timing-specific financial guidance.",
   };
+}
+
+function describeFinanceState(state: string): string {
+  const map: Record<string, string> = {
+    "Highly Favorable": "Your chart is showing very good indications for financial growth right now.",
+    "Favorable":        "Things are looking positive for money and finances — good time to save and plan.",
+    "Moderate":         "Finances are reasonably steady, with some good potential and a few things to be careful about.",
+    "Challenging":      "This is not the easiest time for big financial moves — caution and patience will serve you better.",
+    "Highly Challenging": "Financial matters need careful handling right now — avoid big risks and focus on stability.",
+  };
+  return map[state] ?? "Finances look steady — slow and careful is the right approach now.";
 }

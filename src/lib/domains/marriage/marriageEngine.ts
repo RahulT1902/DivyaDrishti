@@ -77,92 +77,55 @@ export class MarriageEngine implements DomainEngine<MarriageAssessment> {
   }
 
   buildPrompt(assessment: MarriageAssessment, userQuery?: string): PromptContext {
-    const topSignals = [...assessment.signals]
-      .sort((a, b) => b.score - a.score)
-      .map(s => `  ${s.label}: ${s.score}/100`)
-      .join("\n");
-
-    const supportingList = assessment.supportingFactors.length > 0
-      ? assessment.supportingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const blockingList = assessment.blockingFactors.length > 0
-      ? assessment.blockingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const recsList = assessment.recommendations.length > 0
-      ? assessment.recommendations.map(r =>
-          `  ${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} ${r.action}` +
-          (r.timing ? ` [${r.timing}]` : ""),
-        ).join("\n")
-      : "  (no specific actions identified at this time)";
-
     const systemInstruction =
-`You are an experienced Vedic astrologer providing a marriage and relationship reading.
+`You are an experienced Vedic astrologer — a trusted Pundit speaking directly with a person.
 
-RULES:
-1. The symbolic engine has already computed all conclusions below — you narrate, not reason.
-2. Do NOT change any confidence scores, signal values, or recommendation priorities.
-3. Do NOT introduce astrological factors not present in the evidence provided.
-4. Write in warm, precise, professional language suitable for a thoughtful adult seeking real guidance.
-5. Do not name planets or houses — translate those into life terms (e.g., "deep romantic capacity" not "strong Venus in 7th").
-6. Keep your response under 300 words.
-7. End with one concrete sentence the person can act on today.`;
+ABSOLUTE RULES (any violation is a failure):
+1. NEVER use these words in your response: confidence, uncertainty, completeness, explainability,
+   activation, temporal stability, hypothesis, inference, decision graph, signal, score, dormant,
+   "/100", "Favorable state", "the engine", "the model".
+2. Do NOT describe how the reasoning system works — describe the person's situation.
+3. Do NOT name planets or houses. Translate them: "strong Venus" → "deep capacity for love and harmony"; "7th lord" → "partnership and commitment energy".
+4. Answer the person's ACTUAL question — timing, current status, compatibility, or general reading.
+5. Be warm but honest — if there are real challenges, name them gently and clearly.
+6. Use simple Indian English — warm, caring, respectful. Like a trusted family Pandit talking directly to the person.
+   Examples: "Your chart shows good potential for a happy marriage." "This is a good time to think about your relationship." "Give some time and things will improve."
+7. Length: 150–220 words. Natural, conversational — not a formal report.
 
-    const uncertaintyLines = [
-      ...(assessment.uncertainty.missingData.map(m => `  Missing: ${m}`)),
-      ...(assessment.uncertainty.weakEvidence.map(w => `  Weak: ${w}`)),
-      ...(assessment.uncertainty.conflictingEvidence.map(c => `  Conflict: ${c}`)),
-    ].join("\n") || "  (none)";
+STRUCTURE for relationship questions (follow this order exactly):
+① ONE sentence: The overall picture for relationships and marriage in this chart.
+② ONE sentence: The strongest natural gift or advantage in love and partnership.
+③ ONE sentence: The main challenge or thing to be mindful of (skip if nothing notable).
+④ ONE sentence: Timing — is this a good period for relationship matters right now?
+⑤ ONE or TWO sentences: What the person can do — thoughtful, practical, today-relevant.`;
 
-    const completenessLines = assessment.completeness.components
-      .map(c =>
-        `  ${c.status === "Full" ? "✓" : c.status === "Partial" ? "~" : "✗"} ${c.name} (${Math.round(c.weight * 100)}%)${c.note ? ` — ${c.note}` : ""}`,
-      )
-      .join("\n");
+    // ── Pre-translate engine state → pundit observations ──────────────────────
+    const overallPicture = describeMarriageState(assessment.currentState);
+    const strengths      = assessment.supportingFactors.slice(0, 2).map(f => f.label).join("; ") || "Genuine capacity for partnership";
+    const cautions       = assessment.blockingFactors.slice(0, 1).map(f => f.label).join(", ") || null;
+    const timingNote     = assessment.bestTiming.description;
+    const actions        = assessment.recommendations.slice(0, 2)
+      .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
+      .join("\n") || "• Prioritize open, honest communication in your closest relationships";
 
     const userMessage =
-`MARRIAGE ASSESSMENT — Engine v${assessment.ruleSetVersion}
+`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
 
-OVERALL STATE: ${assessment.currentState}
-CONFIDENCE: ${assessment.confidence}/100
-HORIZON: ${assessment.horizon.label} — ${assessment.horizon.description}
-UNCERTAINTY: ${assessment.uncertainty.overallUncertainty}
+OVERALL DIRECTION: ${overallPicture}
 
-DOMAIN SIGNALS
-${topSignals}
+WHAT IS WORKING: ${strengths}
 
-SUPPORTING FACTORS
-${supportingList}
+WHAT TO WATCH: ${cautions ?? "No significant friction in relationships — nurture what you have"}
 
-BLOCKING FACTORS
-${blockingList}
+TIMING: ${timingNote}
 
-TIMING: ${assessment.bestTiming.label}
-${assessment.bestTiming.description}
-
-RECOMMENDED ACTIONS
-${recsList}
-
-DATA QUALITY NOTES
-${uncertaintyLines}
-
-KNOWLEDGE COMPLETENESS: ${assessment.completeness.overall}/100
-${completenessLines}
-${assessment.completeness.missingComponents.length > 0
-  ? `  → ${assessment.completeness.missingComponents.length} reasoning module(s) not yet applied. Scores are reliable within the applied model; see missing components above.`
-  : "  → All available reasoning modules applied."}
-
-EXPLAINABILITY: ${assessment.explainability.coverageScore}/100  (${assessment.explainability.fullyExplainable}/${assessment.explainability.total} fully traceable, ${assessment.explainability.partiallyExplainable} partial, ${assessment.explainability.opaque} opaque)
+PRACTICAL ACTIONS (use one or two of these):
+${actions}
 
 ---
-${userQuery ?? "Provide a comprehensive marriage and relationship assessment based on the above."}`;
+${userQuery ?? "How do relationships and marriage look in my chart?"}`;
 
-    return {
-      domain: "Marriage",
-      systemInstruction,
-      userMessage,
-    };
+    return { domain: "Marriage", systemInstruction, userMessage };
   }
 }
 
@@ -232,20 +195,27 @@ function computeUncertainty(ctx: AstrologyContext, signals: DomainSignal[]): Unc
 }
 
 function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHorizon {
-  // If dasha is available, the assessment is anchored to the current dasha cycle
   if (ctx.dasha) {
-    const dashaEnd = ctx.dasha.periodEnd;
     return {
       scope:       "CurrentDasha",
       label:       "Current Dasha Period",
-      description: `Assessment is anchored to the current dasha cycle (ending ${dashaEnd}). Re-evaluate when dasha changes.`,
+      description: `Assessment is anchored to the current dasha cycle (ending ${ctx.dasha.periodEnd}). Re-evaluate when dasha changes.`,
     };
   }
-
-  // Without dasha, the assessment reflects natal patterns — long-term but less timing-specific
   return {
     scope:       "LongTerm",
     label:       "Long-Term Natal Tendency",
     description: "Assessment reflects natal chart patterns — valid as a long-term tendency. Provide dasha periods for timing-specific guidance.",
   };
+}
+
+function describeMarriageState(state: string): string {
+  const map: Record<string, string> = {
+    "Highly Favorable": "The chart shows strong promise for love and partnership — this is a genuinely supportive period for relationships.",
+    "Favorable":        "Relationship conditions look positive — there is real capacity for meaningful partnership.",
+    "Moderate":         "Relationship potential is present but balanced with some nuance — there are genuine strengths and things worth navigating.",
+    "Challenging":      "Relationships require more intention and care right now — the promise is there but the timing has some friction.",
+    "Highly Challenging": "This is a more complex period for relationships — understanding and patience matter more than urgency.",
+  };
+  return map[state] ?? "Relationship potential is present with some nuance to navigate.";
 }

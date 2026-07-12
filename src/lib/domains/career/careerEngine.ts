@@ -77,90 +77,55 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
   }
 
   buildPrompt(assessment: CareerAssessment, userQuery?: string): PromptContext {
-    const topSignals = [...assessment.signals]
-      .sort((a, b) => b.score - a.score)
-      .map(s => `  ${s.label}: ${s.score}/100`)
-      .join("\n");
-
-    const supportingList = assessment.supportingFactors.length > 0
-      ? assessment.supportingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const blockingList = assessment.blockingFactors.length > 0
-      ? assessment.blockingFactors.map(f => `  • ${f.label} (${f.confidence}/100)`).join("\n")
-      : "  (none identified)";
-
-    const recsList = assessment.recommendations.length > 0
-      ? assessment.recommendations.map(r =>
-          `  ${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} ${r.action}` +
-          (r.timing ? ` [${r.timing}]` : ""),
-        ).join("\n")
-      : "  (no specific actions identified at this time)";
-
     const systemInstruction =
-`You are an experienced Vedic astrologer providing a career reading.
+`You are an experienced Vedic astrologer — a trusted Pundit speaking directly with a person.
 
-RULES:
-1. The symbolic engine has already computed all conclusions below — you narrate, not reason.
-2. Do NOT change any confidence scores, signal values, or recommendation priorities.
-3. Do NOT introduce astrological factors not present in the evidence provided.
-4. Write in warm, precise, professional language suitable for a thoughtful adult seeking real guidance.
-5. Do not name planets or houses — translate those into life terms (e.g., "organizational leadership" not "strong Sun in 10th").
-6. Keep your response under 300 words.
-7. End with one concrete sentence the person can act on today.`;
+ABSOLUTE RULES (any violation is a failure):
+1. NEVER use these words in your response: confidence, uncertainty, completeness, explainability,
+   activation, temporal stability, hypothesis, inference, decision graph, signal, score, dormant,
+   "/100", "Favorable state", "the engine", "the model".
+2. Do NOT describe how the reasoning system works — describe the person's situation.
+3. Do NOT name planets or houses. Translate them: "10th lord strong" → "career ambitions are well-supported".
+4. Answer the person's ACTUAL question. Do not give a generic overview if they ask about timing.
+5. Do NOT write sentences that could apply to anyone.
+6. Use simple Indian English — clear, warm, direct. Like a trusted Pandit talking to a person, not writing a report.
+   Examples: "This is a good time for you to focus on your work." "There may be some delay, but do not worry." "Keep doing your work sincerely."
+7. Length: 150–220 words. Natural, conversational.
 
-    const uncertaintyLines = [
-      ...(assessment.uncertainty.missingData.map(m => `  Missing: ${m}`)),
-      ...(assessment.uncertainty.weakEvidence.map(w => `  Weak: ${w}`)),
-      ...(assessment.uncertainty.conflictingEvidence.map(c => `  Conflict: ${c}`)),
-    ].join("\n") || "  (none)";
+STRUCTURE for career questions (follow this order exactly):
+① ONE sentence: The current overall direction for career — what the chart indicates right now.
+② ONE sentence: The strongest advantage the person has in their professional life.
+③ ONE sentence: The one real friction point or thing to be aware of (skip if nothing notable).
+④ ONE sentence: Timing note — is this a sustained period or a passing window?
+⑤ ONE or TWO sentences: What to actually do — specific, actionable, today-relevant.`;
 
-    const completenessLines = assessment.completeness.components
-      .map(c => `  ${c.status === "Full" ? "✓" : c.status === "Partial" ? "~" : "✗"} ${c.name} (${Math.round(c.weight * 100)}%)${c.note ? ` — ${c.note}` : ""}`)
-      .join("\n");
+    // ── Pre-translate engine state → pundit observations ──────────────────────
+    const overallPicture = describeCareerState(assessment.currentState);
+    const strengths      = assessment.supportingFactors.slice(0, 2).map(f => f.label).join("; ") || "Solid foundational chart indicators";
+    const cautions       = assessment.blockingFactors.slice(0, 1).map(f => f.label).join(", ") || null;
+    const timingNote     = assessment.bestTiming.description;
+    const actions        = assessment.recommendations.slice(0, 2)
+      .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
+      .join("\n") || "• Stay consistent and document your work — visibility matters now";
 
     const userMessage =
-`CAREER ASSESSMENT — Engine v${assessment.ruleSetVersion}
+`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
 
-OVERALL STATE: ${assessment.currentState}
-CONFIDENCE: ${assessment.confidence}/100
-HORIZON: ${assessment.horizon.label} — ${assessment.horizon.description}
-UNCERTAINTY: ${assessment.uncertainty.overallUncertainty}
+OVERALL DIRECTION: ${overallPicture}
 
-DOMAIN SIGNALS
-${topSignals}
+WHAT IS WORKING: ${strengths}
 
-SUPPORTING FACTORS
-${supportingList}
+WHAT TO WATCH: ${cautions ?? "No significant friction identified — focus on momentum"}
 
-BLOCKING FACTORS
-${blockingList}
+TIMING: ${timingNote}
 
-TIMING: ${assessment.bestTiming.label}
-${assessment.bestTiming.description}
-
-RECOMMENDED ACTIONS
-${recsList}
-
-DATA QUALITY NOTES
-${uncertaintyLines}
-
-KNOWLEDGE COMPLETENESS: ${assessment.completeness.overall}/100
-${completenessLines}
-${assessment.completeness.missingComponents.length > 0
-  ? `  → ${assessment.completeness.missingComponents.length} reasoning module(s) not yet applied. Scores are reliable within the applied model; see missing components above.`
-  : "  → All available reasoning modules applied."}
-
-EXPLAINABILITY: ${assessment.explainability.coverageScore}/100  (${assessment.explainability.fullyExplainable}/${assessment.explainability.total} fully traceable, ${assessment.explainability.partiallyExplainable} partial, ${assessment.explainability.opaque} opaque)
+PRACTICAL ACTIONS (use one or two of these):
+${actions}
 
 ---
-${userQuery ?? "Provide a comprehensive career assessment based on the above."}`;
+${userQuery ?? "How does my career look right now?"}`;
 
-    return {
-      domain: "Career",
-      systemInstruction,
-      userMessage,
-    };
+    return { domain: "Career", systemInstruction, userMessage };
   }
 }
 
@@ -236,20 +201,27 @@ function computeUncertainty(ctx: AstrologyContext, signals: DomainSignal[]): Unc
 }
 
 function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHorizon {
-  // If dasha is available, the assessment is anchored to current dasha cycle
   if (ctx.dasha) {
-    const dashaEnd = ctx.dasha.periodEnd;
     return {
       scope:       "CurrentDasha",
       label:       "Current Dasha Period",
-      description: `Assessment is anchored to the current dasha cycle (ending ${dashaEnd}). Re-evaluate when dasha changes.`,
+      description: `Assessment is anchored to the current dasha cycle (ending ${ctx.dasha.periodEnd}). Re-evaluate when dasha changes.`,
     };
   }
-
-  // Without dasha, the assessment reflects natal patterns — long-term but less timing-specific
   return {
     scope:       "LongTerm",
     label:       "Long-Term Natal Tendency",
     description: "Assessment reflects natal chart patterns — valid as a long-term tendency. Provide dasha periods for timing-specific guidance.",
   };
+}
+
+function describeCareerState(state: string): string {
+  const map: Record<string, string> = {
+    "Highly Favorable": "The chart strongly supports career ambitions right now — this is an active, productive period.",
+    "Favorable":        "Career conditions look positive — energy and opportunity are generally supportive.",
+    "Moderate":         "Career is moving along steadily, with some genuine strengths and a few things to navigate.",
+    "Challenging":      "Career requires deliberate effort right now — momentum is possible but not automatic.",
+    "Highly Challenging": "This is a more testing period for career — patience, strategy, and consistency matter more than ambition.",
+  };
+  return map[state] ?? "Career conditions are mixed — steady effort is the key.";
 }
