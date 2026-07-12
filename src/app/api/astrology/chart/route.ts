@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
@@ -51,14 +52,14 @@ export async function GET(req: NextRequest) {
     };
     const timeframe = timeframeParam as Timeframe;
 
-    const emailParam = searchParams.get("email") || "";
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (emailParam || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
+      return buildErrorResponse("AUTH_REQUIRED", "Authentication required.", 401);
+    }
 
-    // 1. Get User by email (or fall back to most recent for backward compat)
+    // 1. Get User by email
     const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 

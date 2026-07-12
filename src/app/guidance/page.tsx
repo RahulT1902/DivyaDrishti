@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import MorningBriefing from "@/components/dashboard/MorningBriefing";
 import { DailyBriefing } from "@/lib/guidance/guidanceCompressor";
+import { authFetch } from "@/lib/auth/webFetch";
 
 export default function GuidancePage() {
   const [briefing, setBriefing] = useState<DailyBriefing | null>(null);
@@ -13,8 +14,7 @@ export default function GuidancePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
-    fetch(`/api/guidance/daily?email=${encodeURIComponent(userEmail)}`)
+    authFetch("/api/guidance/daily")
       .then(r => r.json())
       .then(data => {
         if (data.success) {

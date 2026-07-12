@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
+import { computePanchang } from "@/lib/astrology/panchang";
 import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
@@ -8,6 +10,7 @@ import { extractIntent } from "@/lib/intelligence/intentExtractor";
 import { buildSuccessResponse, buildErrorResponse } from "@/lib/utils/apiResponse";
 import { callAI, hasAnyProvider } from "@/lib/ai/provider";
 import { computeBodyRiskProfile, getTopRisks, type BodyRiskProfile } from "@/lib/intelligence/health/bodyRiskProfile";
+import { buildHealthFindings, type HealthFindings } from "@/lib/intelligence/health/healthFindingsEngine";
 import { buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
 import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
 import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
@@ -16,7 +19,7 @@ import { NatalPromiseAnalyzer, LifeDomainActivationEngine } from "@/lib/intellig
 
 export async function POST(req: NextRequest) {
   try {
-    const { question, domain: forcedDomain, timeframe: forcedTimeframe, email: bodyEmail, conversationHistory } = await req.json();
+    const { question, domain: forcedDomain, timeframe: forcedTimeframe, conversationHistory } = await req.json();
     const history: Array<{ role: 'user' | 'assistant'; content: string }> = Array.isArray(conversationHistory)
       ? conversationHistory.map((m: any) => ({
           role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
@@ -28,12 +31,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Get User Context
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (bodyEmail || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
+      return buildErrorResponse("AUTH_REQUIRED", "Authentication required.", 401);
+    }
 
     const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 
@@ -43,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Intent Extraction
     const extractedIntent = extractIntent(question);
-    
+
     // Determine domain — fall back to history scan when current question is ambiguous
     let targetDomain = forcedDomain || extractedIntent.domain;
     if (!targetDomain || targetDomain === "general") {
@@ -61,7 +65,7 @@ export async function POST(req: NextRequest) {
       }
     }
     targetDomain = targetDomain || "general";
-    
+
     // Map extracted timeframe or timing query to corresponding API timeframes
     let targetTimeframe = "this-week";
     if (forcedTimeframe) {
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
     } else if (extractedIntent.timeframe === "year") {
       targetTimeframe = "this-year";
     } else if (
-      extractedIntent.type === "timing" || 
+      extractedIntent.type === "timing" ||
       /when|clear|expect|month|year|date|future|timeline/i.test(question)
     ) {
       // For general timing questions, expand scope to month or year to allow broader forecast horizons
@@ -102,13 +106,13 @@ export async function POST(req: NextRequest) {
 
     const moon = chart.planets.find(p => p.name === "Moon");
     if (!moon) throw new Error("Moon data required");
-    
+
     const nakshatra = getNakshatra(moon.longitude);
     const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
     const timeline = buildMahadashaTimeline(birthDetails.dateOfBirth, nakshatra.lord, balance);
     const temporal = getDashaContext(timeline, new Date());
     const currentTransits = await calculateCurrentTransits();
-    
+
     // 4. Intelligence Logic
     const narrative = generateNarrative(intent as any, targetTimeframe as any, chart, {
       ...temporal,
@@ -149,16 +153,43 @@ export async function POST(req: NextRequest) {
       const moonNakshatraName = moonTransit
         ? NAKSHATRAS[Math.min(26, Math.floor((moonTransit.longitude % 360) / (360 / 27)))]
         : null;
+      // Panchang context — Tithi, Yoga, Rahu Kaal derived from current transit positions
+      let panchangNote = "";
+      try {
+        const now = new Date();
+        const todayStr = now.toISOString().split("T")[0];
+        const sunPos = currentTransits.positions.find(p => p.name === "Sun");
+        const moonPos = currentTransits.positions.find(p => p.name === "Moon");
+        if (sunPos && moonPos) {
+          const panchangData = computePanchang({
+            sunLongitude: sunPos.longitude,
+            moonLongitude: moonPos.longitude,
+            date: todayStr,
+            lat: Number(birthDetails.latitude),
+            lng: Number(birthDetails.longitude),
+            timezone: birthDetails.timezone || "Asia/Kolkata",
+          });
+          const rahuKaal = panchangData.rahuKaal
+            ? `, Rahu Kaal ${panchangData.rahuKaal.start}–${panchangData.rahuKaal.end}`
+            : "";
+          panchangNote = `\nPanchang: Tithi ${panchangData.tithi} | Yoga ${panchangData.yoga}${rahuKaal}`;
+        }
+      } catch {
+        // Panchang is enrichment — don't block the chat on failure
+      }
+
       const moonTransitNote = moonSignName
-        ? `\nToday's Moon: ${moonSignName} at ${moonDeg}°${moonNakshatraName ? `, Nakshatra ${moonNakshatraName}` : ""}`
-        : "";
+        ? `\nToday's Moon: ${moonSignName} at ${moonDeg}°${moonNakshatraName ? `, Nakshatra ${moonNakshatraName}` : ""}${panchangNote}`
+        : panchangNote;
 
       // ── Body Risk Profile (health domain only) ───────────────────────────
       let bodyRiskProfile: BodyRiskProfile | null = null;
       let topRisks: Array<{ system: string; score: number }> = [];
+      let healthFindings: HealthFindings | null = null;
       if (targetDomain === "health" && temporal?.stack) {
         bodyRiskProfile = computeBodyRiskProfile(chart, temporal.stack, currentTransits.positions);
         topRisks = getTopRisks(bodyRiskProfile, 3);
+        healthFindings = buildHealthFindings(bodyRiskProfile);
       }
 
       // ── Vedic Chart-Specific Context ─────────────────────────────────────
@@ -248,6 +279,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         moonTransitNote,
         topRisks: topRisks.length > 0 ? topRisks : undefined,
         bodyRiskProfile: bodyRiskProfile ? (bodyRiskProfile as unknown as Record<string, number>) : undefined,
+        healthFindings: healthFindings ?? undefined,
         kundaliContext: kundaliContext || undefined,
       });
 

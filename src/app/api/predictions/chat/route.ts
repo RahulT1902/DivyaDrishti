@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
-import { 
-  getNakshatra, 
-  getBalanceYears, 
-  buildMahadashaTimeline, 
-  getCurrentDasha 
+import {
+  getNakshatra,
+  getBalanceYears,
+  buildMahadashaTimeline,
+  getCurrentDasha
 } from "@/lib/astrology/dasha";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
 import { Intent, IntentDomain } from "@/lib/intelligence/types";
@@ -15,7 +16,7 @@ import { computeBodyRiskProfile, getTopRisks, type BodyRiskProfile } from "@/lib
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, timeframe, domain, conversationHistory, email: bodyEmail } = await req.json();
+    const { message, timeframe, domain, conversationHistory } = await req.json();
 
     if (!message || !domain || !timeframe) {
       return NextResponse.json(
@@ -25,12 +26,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Get user context
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (bodyEmail || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
+      return NextResponse.json({ success: false, error: "Authentication required." }, { status: 401 });
+    }
 
     const user = await prisma.user.findFirst({
-      where: userEmail ? { email: userEmail } : undefined,
-      orderBy: userEmail ? undefined : { createdAt: "desc" },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 
@@ -72,9 +74,9 @@ export async function POST(req: NextRequest) {
 
     // 4. Generate DeepInsight JSON
     const insight = generateNarrative(
-      intent, 
-      timeframe as any, 
-      chart, 
+      intent,
+      timeframe as any,
+      chart,
       { stack: currentDasha, transits: transits.positions }
     );
 
@@ -115,7 +117,7 @@ The user asked: "${message}"
 Timeframe: ${timeframe}
 Conversation History: ${JSON.stringify(conversationHistory)}
 
-You have been given a bodyRiskProfile — an internal model that scores 24 body systems (0–100) for health sensitivity over the ${timeframe} window based on the user's natal chart, active Dasha, and current transits. Higher score = more astrological stress on that system.
+You have been given a bodyRiskProfile — an internal model that scores 20 health intelligence categories (0–100) for sensitivity over the ${timeframe} window based on the user's natal chart, active Dasha, and current transits. Higher score = more astrological predisposition / sensitivity in that system today. These are predisposition indicators, NOT diagnoses — always describe what the user "may notice" or "may be more sensitive to", never what they "will have".
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL — SCORES ARE STRICTLY INTERNAL
@@ -234,7 +236,7 @@ Your response MUST adhere strictly to the following Vedic-Financial Consult 5.0 
 - If the chart shows severe friction or if the user is in distress, do not attempt to sugar-coat the reality or find a silver lining. Be comfortable leaving interpretations stark or blunt.
 
 2. THE HIGH-FIDELITY VEDIC-FINANCIAL CONSULTATIVE REPORT BLUEPRINT:
-- When a user asks about career/financial recovery, timelines, or general astrological guidance, deliver a **masterfully detailed, deeply personalized, and beautifully spaced Jyotish Consultative Report** that sounds natural like a wise Pundit-strategist. 
+- When a user asks about career/financial recovery, timelines, or general astrological guidance, deliver a **masterfully detailed, deeply personalized, and beautifully spaced Jyotish Consultative Report** that sounds natural like a wise Pundit-strategist.
 - You MUST completely hide framework seams, structural placeholders, or sterile corporate terminology (avoid clinical words like "Paragraph 1", "Strategic Risk Window", "Psychological Layer", "Invisible Friction" - manifest all these concepts implicitly).
 - **ABSOLUTE BAN ON ALPHABETICAL/CLINICAL HEADINGS**: Never use letters or numbers to prefix headings (do NOT write "A. Holistic...", "B. Multi-Phase..."). Banish formal blueprint titles in favor of warm, human-understandable, and Pundit-like headings:
   * Instead of "Holistic Chart Signature & Diagnosis" -> Use: "What Your Chart is Saying Right Now" or "The Story in Your Chart".
@@ -326,7 +328,7 @@ ${JSON.stringify(insight, null, 2)}`;
         answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "AI gateway timeout."}\n\n[Deterministic Fallback]: ${insight.heroInsight}\n\n${insight.realityTranslation}`;
       }
     }
-    
+
     chatResponseText = answerText;
 
     // 6. Save conversation to database

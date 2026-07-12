@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
 import { calculateCurrentTransits } from "@/lib/astrology/transit";
@@ -18,10 +19,7 @@ function getMidnightUTC(date?: Date): Date {
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const emailParam = searchParams.get("email") || "";
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (emailParam || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
 
     if (!userEmail) {
       return NextResponse.json(

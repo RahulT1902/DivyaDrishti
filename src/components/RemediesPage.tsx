@@ -31,6 +31,63 @@ const translatePlanetHi = (name: string) => {
   return PLANET_NAMES_HI[name] || name;
 };
 
+/** Build domain-specific remedies for natal friction areas. */
+function getNatalFrictionRemedies(chartData: any, isHindi: boolean): Remedy[] {
+  const di = chartData?.domainIntelligence;
+  if (!di) return [];
+  const list: any[] = Array.isArray(di) ? di : Object.values(di);
+  const frictionDomains = list.filter(
+    (item: any) => typeof item.pressureLevel === "number" && item.pressureLevel >= 6
+  );
+  if (frictionDomains.length === 0) return [];
+
+  return frictionDomains.slice(0, 2).map((item: any): Remedy => {
+    const domain: string = item.domain || "general";
+    const restrictive: string[] = Array.isArray(item.restrictiveFactors) ? item.restrictiveFactors.slice(0, 2) : [];
+
+    if (domain === "career") {
+      return {
+        category: isHindi ? "जन्म-चार्ट कार्यक्षेत्र दबाव" : "Natal Career Friction",
+        icon: "🏛️",
+        title: isHindi ? "मंगल/शनि घर्षण निवारण: अनुशासित आउटपुट लॉग" : "Career Friction: Disciplined Output Log",
+        description: isHindi
+          ? `आपके जन्म-चार्ट में कार्यक्षेत्र पर दबाव है (${restrictive.join("; ") || "ग्रहीय प्रभाव"}). नियमित कार्य-लॉग से इस दबाव को अनुशासन में बदला जा सकता है।`
+          : `Your natal chart shows career friction (${restrictive.join("; ") || "planetary influence"}). A daily output log converts this friction into discipline.`,
+        detail: isHindi
+          ? "प्रतिदिन सायंकाल ३ कार्यों को लिखें जो आपने पूरे किए और एक जो कल पूरा होगा। यह आत्म-जवाबदेही शनि के दबाव को उत्पादकता में बदलती है।"
+          : "Each evening, write 3 tasks completed and 1 to carry forward tomorrow. This self-accountability converts Saturn-Mars pressure into forward momentum.",
+        color: "indigo",
+      };
+    }
+    if (domain === "finance") {
+      return {
+        category: isHindi ? "जन्म-चार्ट धन-क्षेत्र दबाव" : "Natal Finance Friction",
+        icon: "🌾",
+        title: isHindi ? "शुक्र/बुध घर्षण निवारण: साप्ताहिक व्यय लेखा" : "Finance Friction: Weekly Expense Ritual",
+        description: isHindi
+          ? `आपके जन्म-चार्ट में धन-क्षेत्र पर दबाव है (${restrictive.join("; ") || "ग्रहीय प्रभाव"}). साप्ताहिक व्यय जांच इस दबाव को नियंत्रण में लाती है।`
+          : `Your chart shows financial pressure (${restrictive.join("; ") || "planetary influence"}). A weekly expense review anchors this friction into conscious control.`,
+        detail: isHindi
+          ? "प्रत्येक रविवार अपने सप्ताह के व्यय को ध्यानपूर्वक देखें। एक अनावश्यक व्यय चुनें जिसे घटाया जा सकता है। यह छोटा कदम वित्तीय जागरूकता विकसित करता है।"
+          : "Every Sunday, review the week's spending mindfully. Identify one discretionary expense to reduce. This small discipline builds long-term financial awareness.",
+        color: "emerald",
+      };
+    }
+    return {
+      category: isHindi ? "जन्म-चार्ट जीवन-क्षेत्र दबाव" : "Natal Life Friction",
+      icon: "🌀",
+      title: isHindi ? "जीवन के दबाव क्षेत्र: मौन दैनिक स्मरण" : "Life Friction: Silent Daily Grounding",
+      description: isHindi
+        ? `आपके जन्म-चार्ट में सामान्य जीवन-क्षेत्र में दबाव है (${restrictive.join("; ") || "ग्रहीय प्रभाव"}). दैनिक मौन-समय इसे स्थिर करता है।`
+        : `Your chart shows general life-area friction (${restrictive.join("; ") || "planetary influence"}). Daily quiet time stabilizes this pressure.`,
+      detail: isHindi
+        ? "प्रतिदिन प्रातः ५ मिनट एकांत में बिताएं — बिना फोन, बिना कार्यसूची के। केवल श्वास और वर्तमान क्षण। यह सरल अभ्यास चेतना को स्थिर करता है।"
+        : "Spend 5 minutes each morning in complete quiet — no phone, no agenda. Just breath and presence. This simple practice stabilizes consciousness under friction.",
+      color: "amber",
+    };
+  });
+}
+
 export default function RemediesPage({ chartData, setActiveTab }: { chartData?: any; setActiveTab: (t: any) => void }) {
   const { isHindi } = useLanguage();
   const md = chartData?.temporal?.stack?.mahadasha || "Saturn";
@@ -225,6 +282,8 @@ export default function RemediesPage({ chartData, setActiveTab }: { chartData?: 
     },
   ];
 
+  const natalFrictionRemedies = getNatalFrictionRemedies(chartData, isHindi);
+
   return (
     <div className="min-h-screen bg-[#F8F5EF] text-[#3F2D1D] p-6 font-sans relative overflow-hidden transition-all duration-1000">
       
@@ -271,6 +330,61 @@ export default function RemediesPage({ chartData, setActiveTab }: { chartData?: 
             </p>
           </div>
         </div>
+
+        {/* Natal Friction Remedies — shown only when pressureLevel >= 6 domains exist */}
+        {natalFrictionRemedies.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-50 rounded-xl border border-rose-200 shrink-0">
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-rose-800 uppercase tracking-widest">
+                  {isHindi ? "जन्म-चार्ट घर्षण क्षेत्र" : "Natal Chart Friction Areas"}
+                </h3>
+                <p className="text-[11px] text-rose-700/60 mt-0.5">
+                  {isHindi
+                    ? "आपके जन्म-चार्ट में ये क्षेत्र अतिरिक्त ध्यान और अनुशासन मांगते हैं"
+                    : "These life areas carry structural pressure in your birth chart — targeted practice helps"}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+              {natalFrictionRemedies.map((remedy, i) => {
+                const c = colorMap[remedy.color] || colorMap.rose;
+                return (
+                  <motion.div
+                    key={`friction-${i}`}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1, duration: 0.4 }}
+                    className={`${c.bg} border ${c.border} rounded-2xl p-5 shadow-sm ring-1 ring-rose-200/40 space-y-3 relative overflow-hidden`}
+                  >
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50/60 rounded-bl-3xl pointer-events-none" />
+                    <div className="flex items-start gap-3">
+                      <span className={`text-xl p-2 ${c.iconBg} rounded-xl border border-rose-200/50`}>{remedy.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${c.badge} uppercase tracking-widest`}>
+                            {remedy.category}
+                          </span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200 uppercase tracking-widest">
+                            {isHindi ? "प्राथमिकता" : "Priority"}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-semibold text-[#3F2D1D] leading-snug">{remedy.title}</h4>
+                      </div>
+                    </div>
+                    <p className={`text-xs ${c.text} leading-relaxed font-light`}>{remedy.description}</p>
+                    <div className="border-t border-rose-100 pt-3">
+                      <p className="text-[11px] text-[#3F2D1D]/50 leading-relaxed font-light">{remedy.detail}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Remedies Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">

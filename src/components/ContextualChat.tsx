@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Sparkles, AlertCircle, TrendingUp, Shield } from "lucide-react";
 import { Intent, Timeframe, DeepInsight, AstroEvidence } from "@/lib/intelligence/types";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface ContextualChatProps {
   intent: Intent;
@@ -41,15 +42,12 @@ export default function ContextualChat({ intent, timeframe, initialMessage, vari
     setLoading(true);
 
     try {
-      const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
-      const response = await fetch("/api/predictions/chat", {
+      const response = await authFetch("/api/predictions/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMsg,
           timeframe,
           domain: intent.domain,
-          email: userEmail
         })
       });
 

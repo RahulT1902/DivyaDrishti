@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
+import { signToken } from "@/lib/auth/jwt";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,8 +24,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const token = signToken(user.id, user.email);
+
     return NextResponse.json({
       success: true,
+      token,
       user: { id: user.id, email: user.email, name: user.name },
     });
   } catch (error: unknown) {

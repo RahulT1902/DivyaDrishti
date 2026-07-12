@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Moon, Sun, Wind, CheckCircle2 } from "lucide-react";
+import { authFetch } from "@/lib/auth/webFetch";
 
 type Energy = "HIGH" | "NEUTRAL" | "LOW" | null;
 type Stress = "LOW" | "MEDIUM" | "HIGH" | null;
@@ -27,7 +28,7 @@ export default function ReflectionLogger() {
           return;
         }
 
-        const res = await fetch(`/api/reflections?email=${encodeURIComponent(email)}`);
+        const res = await authFetch("/api/reflections");
         const data = await res.json();
         
         if (data.success && data.hasLoggedToday) {

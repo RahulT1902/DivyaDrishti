@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 import { getEngine } from "@/lib/astrology/engine";
 import { computePanchang, PanchangResult } from "@/lib/astrology/panchang";
 import { Constants } from "@fusionstrings/swisseph-wasi";
@@ -26,17 +27,17 @@ function getTodayInTimezone(timezone: string): string {
 
 export async function GET(req: NextRequest) {
   try {
-    const email = (req.nextUrl.searchParams.get("email") || "").trim().toLowerCase();
-    if (!email) {
+    const userEmail = getAuthUser(req)?.email ?? "";
+    if (!userEmail) {
       return NextResponse.json(
-        { success: false, error: "Email required" },
-        { status: 400 },
+        { success: false, error: "Authentication required" },
+        { status: 401 },
       );
     }
 
     // ── 1. Load birth profile from DB ─────────────────────────────────────────
     const user = await prisma.user.findFirst({
-      where: { email },
+      where: { email: userEmail },
       include: { birthDetails: true },
     });
 

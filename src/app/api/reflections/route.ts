@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { EnergyLevel, StressLevel } from "@prisma/client";
+import { getAuthUser } from "@/lib/auth/getUser";
 
 // Normalize date to strictly midnight UTC for canonical daily anchoring
 function getMidnightUTC(dateString?: string): Date {
@@ -12,7 +13,7 @@ function getMidnightUTC(dateString?: string): Date {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get("email") || req.headers.get("x-user-email");
+    const email = getAuthUser(req)?.email || "";
     const dateStr = searchParams.get("date"); // Optional, defaults to today
 
     if (!email) {
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const email = body.email || req.headers.get("x-user-email");
+    const email = getAuthUser(req)?.email || (body.email ?? "");
 
     if (!email) {
       return NextResponse.json({ success: false, error: "Missing email" }, { status: 400 });

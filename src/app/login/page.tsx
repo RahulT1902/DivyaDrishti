@@ -24,9 +24,13 @@ export default function LoginPage() {
   }, [router]);
 
   const resolvePostAuthRoute = async (userEmail: string) => {
+    const token = typeof window !== "undefined" ? window.localStorage.getItem("divya:token") : null;
+    const headers: Record<string, string> = token
+      ? { "Authorization": `Bearer ${token}` }
+      : { "x-user-email": userEmail };
     const res = await fetch("/api/user", {
       cache: "no-store",
-      headers: { "x-user-email": userEmail },
+      headers,
     });
     const data = await res.json();
     if (!res.ok || !data?.success || !data?.user?.birthDetails) {
@@ -47,13 +51,19 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const r = await fetch("/api/auth/signup", {
+        const sr = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: name.trim(), email: cleanEmail, password }),
         });
-        const d = await r.json();
-        if (!r.ok || !d.success) { setError(d.error || "Could not create account."); return; }
+        const sd = await sr.json();
+        if (!sr.ok || !sd.success) { setError(sd.error || "Could not create account."); return; }
+        // Signup returns a token — store it and skip the separate login call
+        window.localStorage.setItem("divya:loggedIn", "true");
+        window.localStorage.setItem("divya:userEmail", cleanEmail);
+        if (sd.token) window.localStorage.setItem("divya:token", sd.token);
+        await resolvePostAuthRoute(cleanEmail);
+        return;
       }
       const r = await fetch("/api/auth/login", {
         method: "POST",
@@ -64,6 +74,7 @@ export default function LoginPage() {
       if (!r.ok || !d.success) { setError(d.error || "Invalid email or password."); return; }
       window.localStorage.setItem("divya:loggedIn", "true");
       window.localStorage.setItem("divya:userEmail", cleanEmail);
+      if (d.token) window.localStorage.setItem("divya:token", d.token);
       await resolvePostAuthRoute(cleanEmail);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -166,6 +177,12 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-amber-700/30 mt-6">
           Vedic wisdom, modern intelligence.
+        </p>
+        <p className="text-center text-[10px] text-amber-700/40 mt-2">
+          By signing up you agree to our{" "}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-600">Terms of Service</a>
+          {" "}and{" "}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-600">Privacy Policy</a>
         </p>
       </motion.div>
     </div>

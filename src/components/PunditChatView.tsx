@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, User, Compass, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface Message {
   role: "user" | "pundit";
@@ -43,15 +44,13 @@ export default function PunditChatView() {
     setLoading(true);
 
     try {
-      const userEmail = typeof window !== "undefined" ? localStorage.getItem("divya:userEmail") || "" : "";
       const history = messages.slice(1).slice(-6).map(m => ({
         role: m.role === "pundit" ? "assistant" : "user",
         content: m.content.slice(0, 600),
       }));
-      const res = await fetch("/api/astrology/chat", {
+      const res = await authFetch("/api/astrology/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text, email: userEmail, conversationHistory: history }),
+        body: JSON.stringify({ question: text, conversationHistory: history }),
       });
       const result = await res.json();
 

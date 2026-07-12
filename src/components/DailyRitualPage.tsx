@@ -6,6 +6,7 @@ import MorningBriefCard from "./MorningBriefCard";
 import PanchangCard from "./PanchangCard";
 import ReflectionCard from "./ReflectionCard";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface Props {
   user: {
@@ -44,8 +45,8 @@ export default function DailyRitualPage({ user }: Props) {
 
       // Concurrent fetching of Guidance and Panchang
       const [guidanceRes, panchangRes] = await Promise.all([
-        fetch(`/api/guidance/daily?email=${encodeURIComponent(user.email)}&mode=${mode}`),
-        fetch(`/api/panchang/today?email=${encodeURIComponent(user.email)}&language=${language}`)
+        authFetch(`/api/guidance/daily?mode=${mode}`),
+        authFetch(`/api/panchang/today?language=${language}`)
       ]);
 
       const guidanceData = await guidanceRes.json();

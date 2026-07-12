@@ -385,6 +385,20 @@ export default function NavigationDashboard({
 
               <div className="h-px bg-[#F1E7D0]" />
 
+              {/* Log Out */}
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    onLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-rose-50 border border-rose-200 hover:bg-rose-100 active:bg-rose-200 rounded-xl text-sm font-bold text-rose-700 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>{isHindi ? "लॉग आउट करें" : "Log Out"}</span>
+                </button>
+              )}
+
               <p className="text-[9px] text-amber-700/40 font-serif italic text-center leading-relaxed">
                 The entire experience adapts —{" "}
                 <br />

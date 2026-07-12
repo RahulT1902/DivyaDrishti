@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+import { signToken } from "@/lib/auth/jwt";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, name: true },
     });
 
-    return NextResponse.json({ success: true, user });
+    const token = signToken(user.id, user.email);
+    return NextResponse.json({ success: true, token, user });
   } catch (error: unknown) {
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Signup failed." },
