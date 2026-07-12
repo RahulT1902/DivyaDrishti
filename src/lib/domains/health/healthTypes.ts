@@ -78,8 +78,10 @@ export interface HealthAssessment {
   temporalStability?: TemporalStabilityScore;
 
   // ── Transit Evidence ──────────────────────────────────────────────────────
-  // The specific transit rules that fired at evaluation time.
-  // Used by buildPrompt() to generate today-specific observations
-  // without exposing raw planet/house terminology to the LLM.
   transit?: import("../../core/transit-engine/types").TransitEvidence[];
+
+  // ── Body System Diagnostic ────────────────────────────────────────────────
+  // Which body systems are specifically vulnerable today and why.
+  // This is the primary content for health narration — replaces generic advice.
+  bodySystemReports: import("./diagnostics").BodySystemReport[];
 }

@@ -4,6 +4,7 @@ import { DecisionGraphBuilder } from "../../core/decision-graph";
 import { CORE_RULESET } from "../../core/inference-engine";
 import { HEALTH_KNOWLEDGE_PACK } from "./knowledgePack";
 import { HealthAssessment } from "./healthTypes";
+import { evaluateBodySystems, formatBodySystemsForNarrator } from "./diagnostics";
 
 // HealthEngine is the Health domain implementation of DomainEngine<T>.
 // It follows the CareerEngine reference pattern exactly:
@@ -73,6 +74,7 @@ export class HealthEngine implements DomainEngine<HealthAssessment> {
       ruleSetVersion:       CORE_RULESET.version,
       temporalStability:    ctx.temporalStability,
       transit:              ctx.transit,
+      bodySystemReports:    evaluateBodySystems(ctx),
     };
   }
 
@@ -92,37 +94,43 @@ ABSOLUTE RULES (any violation is a failure):
    Examples: "Today looks good for your health." "Be a little careful about your digestion today." "There is nothing to worry about right now."
 7. Length: 150–220 words. Natural, conversational — a Pundit speaking, not writing a report.
 
-STRUCTURE — follow this order exactly for health questions:
-① ONE sentence: What today looks like for health overall.
-② ONE sentence: The strongest positive aspect in human terms (skip if nothing notable).
-③ ONE sentence: The main thing to be mindful of today (skip if nothing notable).
-④ ONE sentence: Whether this is a temporary influence or a longer pattern — only if transit influence is mentioned in the notes below.
-⑤ ONE or TWO sentences: Specific, practical actions for today.`;
+STRUCTURE — follow this EXACT order:
+1. ONE sentence: Overall health picture for today.
+2. BODY SYSTEMS — this is the MOST IMPORTANT part. Look at BODY SYSTEM ASSESSMENT below:
+   - If any system is marked [VULNERABLE]: NAME it and say what's likely.
+     "Your respiratory system is a little sensitive today — slightly higher chance of sore throat
+      or nasal congestion, especially if you go out in the cold."
+   - If digestive: "Digestion may be a bit sensitive — acidity or bloating is possible."
+   - If nothing vulnerable: "No specific health concern stands out today."
+   - NEVER list systems that are not vulnerable. Do NOT say "sleep is fine, digestion is fine."
+3. ONE sentence on duration — only if a [VULNERABLE] system is present.
+4. ONE or TWO sentences: Specific practical advice tied to the vulnerable system(s).
+   Respiratory flagged → "Drink warm water. Avoid cold drinks and cold air."
+   Digestive flagged → "Eat light and on time. Avoid oily or heavy food today."
+   Nothing flagged → simple general advice only.
 
-    // ── Pre-translate engine state → pundit observations ──────────────────────
-    const overallPicture  = describeHealthState(assessment.currentState);
-    const strengths       = assessment.supportingFactors.slice(0, 2).map(f => f.label).join(", ") || null;
-    const cautions        = assessment.blockingFactors.slice(0, 2).map(f => f.label).join(", ") || null;
-    const transitNote     = buildHealthTransitNote(assessment.transit ?? []);
-    const stabilityNote   = buildStabilityNote(assessment.temporalStability);
-    const actions         = assessment.recommendations.slice(0, 2)
-      .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
-      .join("\n") || "• Eat on time, stay hydrated, and avoid overexertion";
+Length: 130–200 words. Never mention engine terms.`;
+
+    // ── Body system reports are the core of the health answer ─────────────────
+    const bodySystemSection = formatBodySystemsForNarrator(assessment.bodySystemReports);
+    const overallPicture    = describeHealthState(assessment.currentState);
+    const stabilityNote     = buildStabilityNote(assessment.temporalStability);
+    const actions = assessment.recommendations
+      .filter(r => r.stars >= 4)
+      .slice(0, 2)
+      .map(r => `• ${r.action}`)
+      .join("\n") || "• Stay hydrated and eat on time";
 
     const userMessage =
-`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
+`PUNDIT NOTES — translate into natural conversation. Never quote labels, numbers, or engine terms.
 
-OVERALL DIRECTION: ${overallPicture}
+OVERALL PICTURE: ${overallPicture}
 
-WHAT IS WORKING: ${strengths ?? "General balance — no strong concerns at present"}
+BODY SYSTEM ASSESSMENT (this drives the specifics of your answer):
+${bodySystemSection}
+${stabilityNote ? `\nPATTERN NOTE: ${stabilityNote}` : ""}
 
-WHAT NEEDS CARE: ${cautions ?? "Nothing notable right now"}
-
-TODAY'S SPECIFIC INFLUENCE:
-${transitNote ?? "No significant short-term planetary influence on health today."}
-${stabilityNote ? `PATTERN NOTE: ${stabilityNote}` : ""}
-
-PRACTICAL ACTIONS (use one or two of these in your response):
+FALLBACK ACTIONS if no specific system is vulnerable:
 ${actions}
 
 ---
