@@ -77,50 +77,74 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
   }
 
   buildPrompt(assessment: CareerAssessment, userQuery?: string): PromptContext {
+    // Pre-compute — LLM fills the template
+    const overallLine = describeCareerState(assessment.currentState);
+    const opportunity = assessment.supportingFactors[0]?.label ?? "Consistent effort is building long-term credibility";
+    const challenge   = assessment.blockingFactors[0]?.label   ?? null;
+    const timingNote  = assessment.bestTiming.description;
+    const actions     = assessment.recommendations.slice(0, 2)
+      .map(r => `• ${r.action}`)
+      .join("\n") || "• Focus on quality and visibility — both matter equally now";
+
     const systemInstruction =
-`You are an experienced Vedic astrologer — a trusted Pundit speaking directly with a person.
+`You are writing a Vedic career consultation for a premium mobile app.
 
-ABSOLUTE RULES (any violation is a failure):
-1. NEVER use these words in your response: confidence, uncertainty, completeness, explainability,
-   activation, temporal stability, hypothesis, inference, decision graph, signal, score, dormant,
-   "/100", "Favorable state", "the engine", "the model".
-2. Do NOT describe how the reasoning system works — describe the person's situation.
-3. Do NOT name planets or houses. Translate them: "10th lord strong" → "career ambitions are well-supported".
-4. Answer the person's ACTUAL question. Do not give a generic overview if they ask about timing.
-5. Do NOT write sentences that could apply to anyone.
-6. Use simple Indian English — clear, warm, direct. Like a trusted Pandit talking to a person, not writing a report.
-   Examples: "This is a good time for you to focus on your work." "There may be some delay, but do not worry." "Keep doing your work sincerely."
-7. Length: 150–220 words. Natural, conversational.
+RULES (mandatory):
+1. Never mention: planet names, house numbers, yoga names, engine terms, scores, percentages.
+2. The WHY THIS PERIOD sentence must be used verbatim from PUNDIT NOTES.
+3. Output EXACTLY in this template — no extra text, no extra sections.
 
-STRUCTURE for career questions (follow this order exactly):
-① ONE sentence: The current overall direction for career — what the chart indicates right now.
-② ONE sentence: The strongest advantage the person has in their professional life.
-③ ONE sentence: The one real friction point or thing to be aware of (skip if nothing notable).
-④ ONE sentence: Timing note — is this a sustained period or a passing window?
-⑤ ONE or TWO sentences: What to actually do — specific, actionable, today-relevant.`;
+OUTPUT TEMPLATE:
 
-    // ── Pre-translate engine state → pundit observations ──────────────────────
-    const overallPicture = describeCareerState(assessment.currentState);
-    const strengths      = assessment.supportingFactors.slice(0, 2).map(f => f.label).join("; ") || "Solid foundational chart indicators";
-    const cautions       = assessment.blockingFactors.slice(0, 1).map(f => f.label).join(", ") || null;
-    const timingNote     = assessment.bestTiming.description;
-    const actions        = assessment.recommendations.slice(0, 2)
-      .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
-      .join("\n") || "• Stay consistent and document your work — visibility matters now";
+💼 Career Outlook
+
+Overall: [OVERALL LINE]
+
+Main Opportunity
+
+[Translate the OPPORTUNITY into a 1–2 sentence human observation. Be specific and direct.
+Example: "This is a real window for career advancement — your chart is showing strong support for
+recognition and growth. If you've been waiting to have a key conversation or push for a bigger role,
+now is a good time to do it."]
+
+${challenge ? `Main Challenge
+
+[Translate the CHALLENGE into 1–2 sentences. Be honest but not alarming.
+Example: "The chart also shows some friction around recognition — what you achieve may not be
+immediately acknowledged. Keep doing the work regardless — the results will show up."]
+
+` : ""}Best Period For
+[One sentence: what is this period specifically suited for — boldness, patience, learning, visibility, etc.]
+
+Why this period?
+[WHY THIS PERIOD — verbatim from notes]
+
+Recommended Action
+[GUIDANCE BULLETS]
+
+Outlook
+[OUTLOOK LINE]`;
+
+    const whyPeriod = buildCareerWhySentence(assessment.currentState, challenge !== null);
+    const outlookLine = buildCareerOutlookLine(assessment.currentState, timingNote);
 
     const userMessage =
-`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
+`PUNDIT NOTES — use this content to fill the template:
 
-OVERALL DIRECTION: ${overallPicture}
+OVERALL LINE: ${overallLine}
 
-WHAT IS WORKING: ${strengths}
+OPPORTUNITY: ${opportunity}
 
-WHAT TO WATCH: ${cautions ?? "No significant friction identified — focus on momentum"}
+${challenge ? `CHALLENGE: ${challenge}` : "CHALLENGE: None significant — omit that section"}
 
-TIMING: ${timingNote}
+TIMING / BEST PERIOD FOR: ${timingNote}
 
-PRACTICAL ACTIONS (use one or two of these):
+WHY THIS PERIOD (verbatim): ${whyPeriod}
+
+GUIDANCE BULLETS:
 ${actions}
+
+OUTLOOK LINE: ${outlookLine}
 
 ---
 ${userQuery ?? "How does my career look right now?"}`;
@@ -217,11 +241,28 @@ function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHo
 
 function describeCareerState(state: string): string {
   const map: Record<string, string> = {
-    "Highly Favorable": "The chart strongly supports career ambitions right now — this is an active, productive period.",
-    "Favorable":        "Career conditions look positive — energy and opportunity are generally supportive.",
-    "Moderate":         "Career is moving along steadily, with some genuine strengths and a few things to navigate.",
-    "Challenging":      "Career requires deliberate effort right now — momentum is possible but not automatic.",
-    "Highly Challenging": "This is a more testing period for career — patience, strategy, and consistency matter more than ambition.",
+    "Highly Favorable":   "Strong. The chart is actively supporting career growth and recognition right now.",
+    "Favorable":          "Good. Career conditions are positive — energy and opportunity are supportive.",
+    "Moderate":           "Steady. Career is moving forward with some genuine strengths and a few things to navigate.",
+    "Challenging":        "A more effortful period — momentum is possible but requires deliberate work.",
+    "Highly Challenging": "A testing period — patience and consistency matter more than ambition right now.",
   };
-  return map[state] ?? "Career conditions are mixed — steady effort is the key.";
+  return map[state] ?? "Mixed — steady effort is the key right now.";
+}
+
+function buildCareerWhySentence(state: string, hasChallenge: boolean): string {
+  if (state === "Highly Favorable") return "A strong combination of long-term chart patterns and current timing is creating genuine career momentum — this window is real, not coincidental.";
+  if (state === "Favorable")        return "The current period in your chart aligns well with career growth — the foundation is solid and the timing is supportive.";
+  if (state === "Moderate")         return "The chart shows a period of consolidation — what you build now is durable, even if results feel slower than expected.";
+  if (state === "Challenging")      return "The current period asks for more discipline and less reliance on external validation — the chart rewards consistency over ambition right now.";
+  return "The current period favors steady, deliberate work over bold moves — what you plant now grows later.";
+}
+
+function buildCareerOutlookLine(state: string, timingNote: string): string {
+  if (state === "Highly Favorable")   return "This is a genuinely active career window — make the most of it.";
+  if (state === "Favorable")          return "Career prospects are good. Stay consistent and take the opportunities that come.";
+  if (state === "Moderate")           return "No major concern — progress is steady. The next active window is coming.";
+  if (state === "Challenging")        return "This phase will pass. Keep building — what you create in a difficult period has lasting value.";
+  if (state === "Highly Challenging") return "A patient period. Focus on skill and relationships — these will matter when the next cycle opens.";
+  return timingNote || "Career looks steady — continue with focus and consistency.";
 }

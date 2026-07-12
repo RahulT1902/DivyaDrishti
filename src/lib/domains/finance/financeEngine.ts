@@ -88,58 +88,79 @@ export class FinanceEngine implements DomainEngine<FinanceAssessment> {
   }
 
   buildPrompt(assessment: FinanceAssessment, userQuery?: string): PromptContext {
-    const systemInstruction =
-`You are an experienced Vedic astrologer — a trusted family Pandit speaking directly with a person.
-
-ABSOLUTE RULES (any violation is a failure):
-1. NEVER use these words in your response: confidence, uncertainty, completeness, explainability,
-   activation, temporal stability, hypothesis, inference, decision graph, signal, score, dormant,
-   "/100", "Favorable state", "the engine", "the model".
-2. Do NOT describe how the reasoning system works — describe the person's situation.
-3. Do NOT name planets or houses. Translate them into plain life terms.
-4. Answer the person's ACTUAL question — growth, timing, savings, income, investment, or general wealth.
-5. Use simple Indian English — warm, direct, clear. Like a trusted Pandit talking to a person, not a finance report.
-   Examples: "Your chart shows good potential for saving money." "This is not a good time to take big financial risks." "Slow and steady will work well for you now."
-6. Length: 150–220 words. Natural, caring, honest.
-
-STRUCTURE for finance questions (follow this order exactly):
-① ONE sentence: What the chart says about finances right now overall.
-② ONE sentence: The strongest financial advantage or opportunity this person has.
-③ ONE sentence: The main thing to be careful about (skip if nothing notable).
-④ ONE sentence: Timing — is this a good period to act, invest, or wait?
-⑤ ONE or TWO sentences: What to do — simple, practical, actionable.`;
-
-    // ── Pre-translate engine state → pundit observations ──────────────────────
-    const overallPicture = describeFinanceState(assessment.currentState);
-    const strengths      = assessment.supportingFactors.slice(0, 2).map(f => f.label).join("; ") || "Steady wealth-building potential";
-    const cautions       = assessment.blockingFactors.slice(0, 1).map(f => f.label).join(", ") || null;
-    const timingNote     = assessment.bestTiming.description;
-    const actions        = assessment.recommendations.slice(0, 2)
+    // Pre-compute — LLM fills the template
+    const overallLine = describeFinanceState(assessment.currentState);
+    const moneyFlow   = assessment.supportingFactors[0]?.label ?? "Steady wealth-building potential";
+    const risk        = assessment.blockingFactors[0]?.label   ?? null;
+    const opportunity = assessment.supportingFactors[1]?.label ?? assessment.bestTiming.description;
+    const timingNote  = assessment.bestTiming.description;
+    const actions     = assessment.recommendations.slice(0, 2)
       .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
       .join("\n") || "• Track your expenses this month and avoid impulsive spending";
 
+    const systemInstruction =
+`You are writing a Vedic financial consultation for a premium mobile app.
+
+RULES (mandatory):
+1. Never mention: planet names, house numbers, yoga names, engine terms, scores, percentages.
+2. The WHY THIS PERIOD sentence must be used verbatim from PUNDIT NOTES.
+3. Output EXACTLY in this template — no extra text, no extra sections.
+4. Be warm, honest, and direct. Do not be vague to avoid difficult truths.
+
+OUTPUT TEMPLATE:
+
+💰 Financial Outlook
+
+Overall: [OVERALL LINE]
+
+Money Flow
+
+[Translate MONEY FLOW into 1–2 honest sentences about the current financial energy — income, spending, savings potential.]
+
+${risk ? `Risk to Watch
+
+[Translate RISK into 1–2 sentences. Be honest but not alarming.
+Example: "There is some risk of unplanned expenses right now. Being a little careful before making large commitments will help."]
+
+` : ""}Opportunity Right Now
+[One sentence: what this period is specifically well-suited for — saving, investing, income growth, etc.]
+
+Why this period?
+[WHY THIS PERIOD — verbatim from notes]
+
+Recommendation
+[GUIDANCE BULLETS]
+
+Outlook
+[OUTLOOK LINE]`;
+
+    const whyPeriod  = buildFinanceWhySentence(assessment.currentState, risk !== null);
+    const outlookLine = buildFinanceOutlookLine(assessment.currentState);
+
     const userMessage =
-`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
+`PUNDIT NOTES — use this content to fill the template:
 
-OVERALL DIRECTION: ${overallPicture}
+OVERALL LINE: ${overallLine}
 
-WHAT IS WORKING: ${strengths}
+MONEY FLOW: ${moneyFlow}
 
-WHAT TO WATCH: ${cautions ?? "No major financial risks indicated right now"}
+${risk ? `RISK: ${risk}` : "RISK: None significant — omit the 'Risk to Watch' section entirely"}
+
+OPPORTUNITY RIGHT NOW: ${opportunity}
 
 TIMING: ${timingNote}
 
-PRACTICAL ACTIONS (use one or two of these):
+WHY THIS PERIOD (verbatim): ${whyPeriod}
+
+GUIDANCE BULLETS:
 ${actions}
+
+OUTLOOK LINE: ${outlookLine}
 
 ---
 ${userQuery ?? "How do my finances look right now?"}`;
 
-    return {
-      domain: "Finance",
-      systemInstruction,
-      userMessage,
-    };
+    return { domain: "Finance", systemInstruction, userMessage };
   }
 }
 
@@ -252,11 +273,30 @@ function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHo
 
 function describeFinanceState(state: string): string {
   const map: Record<string, string> = {
-    "Highly Favorable": "Your chart is showing very good indications for financial growth right now.",
-    "Favorable":        "Things are looking positive for money and finances — good time to save and plan.",
-    "Moderate":         "Finances are reasonably steady, with some good potential and a few things to be careful about.",
-    "Challenging":      "This is not the easiest time for big financial moves — caution and patience will serve you better.",
-    "Highly Challenging": "Financial matters need careful handling right now — avoid big risks and focus on stability.",
+    "Highly Favorable":   "Strong. The chart shows excellent conditions for financial growth and wealth-building right now.",
+    "Favorable":          "Good. Financial energy is positive — a solid time to save, plan, and take measured steps.",
+    "Moderate":           "Steady. Finances are moving along with genuine strengths and a few things to navigate carefully.",
+    "Challenging":        "A more careful period — big financial moves deserve extra thought before acting.",
+    "Highly Challenging": "Financial matters need careful handling right now — stability and patience matter more than ambition.",
   };
   return map[state] ?? "Finances look steady — slow and careful is the right approach now.";
+}
+
+function buildFinanceWhySentence(state: string, hasRisk: boolean): string {
+  if (state === "Highly Favorable") return "A strong alignment of long-term chart patterns and current timing is supporting financial momentum — this is a genuine window for growth, not coincidence.";
+  if (state === "Favorable")        return "The current period in your chart supports financial activity — conditions are supportive for saving, planning, and careful investment.";
+  if (state === "Moderate")         return "The chart shows a consolidation period — what you save and build now is durable, even if big gains feel slower than expected.";
+  if (state === "Challenging")      return "The current period asks for more caution and less reliance on big moves — the chart rewards careful, steady financial behaviour right now.";
+  return hasRisk
+    ? "This period calls for financial care and patience — steady management goes further than bold decisions right now."
+    : "The current chart period supports steady, careful financial progress — what you plant now grows later.";
+}
+
+function buildFinanceOutlookLine(state: string): string {
+  if (state === "Highly Favorable")   return "An excellent period for financial progress — make the most of this window.";
+  if (state === "Favorable")          return "Financial outlook is positive. Stay consistent and take the opportunities that come your way.";
+  if (state === "Moderate")           return "No major concern — steady progress is happening. The next active financial window is building.";
+  if (state === "Challenging")        return "This phase will ease. Careful management now protects you for the stronger period ahead.";
+  if (state === "Highly Challenging") return "A patient period — focus on stability and essentials. Things will settle and improve in time.";
+  return "Finances look steady — continue with focus and care.";
 }

@@ -77,50 +77,71 @@ export class MarriageEngine implements DomainEngine<MarriageAssessment> {
   }
 
   buildPrompt(assessment: MarriageAssessment, userQuery?: string): PromptContext {
+    // Pre-compute — LLM fills the template
+    const overallLine = describeMarriageState(assessment.currentState);
+    const climate     = assessment.supportingFactors[0]?.label ?? "Genuine warmth and capacity for partnership";
+    const tension     = assessment.blockingFactors[0]?.label   ?? null;
+    const timingNote  = assessment.bestTiming.description;
+    const actions     = assessment.recommendations.slice(0, 2)
+      .map(r => `• ${r.action}`)
+      .join("\n") || "• Prioritise open, honest communication in your closest relationships";
+
     const systemInstruction =
-`You are an experienced Vedic astrologer — a trusted Pundit speaking directly with a person.
+`You are writing a Vedic relationship consultation for a premium mobile app.
 
-ABSOLUTE RULES (any violation is a failure):
-1. NEVER use these words in your response: confidence, uncertainty, completeness, explainability,
-   activation, temporal stability, hypothesis, inference, decision graph, signal, score, dormant,
-   "/100", "Favorable state", "the engine", "the model".
-2. Do NOT describe how the reasoning system works — describe the person's situation.
-3. Do NOT name planets or houses. Translate them: "strong Venus" → "deep capacity for love and harmony"; "7th lord" → "partnership and commitment energy".
-4. Answer the person's ACTUAL question — timing, current status, compatibility, or general reading.
-5. Be warm but honest — if there are real challenges, name them gently and clearly.
-6. Use simple Indian English — warm, caring, respectful. Like a trusted family Pandit talking directly to the person.
-   Examples: "Your chart shows good potential for a happy marriage." "This is a good time to think about your relationship." "Give some time and things will improve."
-7. Length: 150–220 words. Natural, conversational — not a formal report.
+RULES (mandatory):
+1. Never mention: planet names, house numbers, yoga names, engine terms, scores, percentages.
+2. The WHY THIS PERIOD sentence must be used verbatim from PUNDIT NOTES.
+3. Output EXACTLY in this template — no extra text, no extra sections.
+4. Be warm, honest, and direct. Do not be vague to avoid difficult truths.
 
-STRUCTURE for relationship questions (follow this order exactly):
-① ONE sentence: The overall picture for relationships and marriage in this chart.
-② ONE sentence: The strongest natural gift or advantage in love and partnership.
-③ ONE sentence: The main challenge or thing to be mindful of (skip if nothing notable).
-④ ONE sentence: Timing — is this a good period for relationship matters right now?
-⑤ ONE or TWO sentences: What the person can do — thoughtful, practical, today-relevant.`;
+OUTPUT TEMPLATE:
 
-    // ── Pre-translate engine state → pundit observations ──────────────────────
-    const overallPicture = describeMarriageState(assessment.currentState);
-    const strengths      = assessment.supportingFactors.slice(0, 2).map(f => f.label).join("; ") || "Genuine capacity for partnership";
-    const cautions       = assessment.blockingFactors.slice(0, 1).map(f => f.label).join(", ") || null;
-    const timingNote     = assessment.bestTiming.description;
-    const actions        = assessment.recommendations.slice(0, 2)
-      .map(r => `• ${r.action}${r.timing ? ` (${r.timing})` : ""}`)
-      .join("\n") || "• Prioritize open, honest communication in your closest relationships";
+💝 Relationship Outlook
+
+Overall: [OVERALL LINE]
+
+Emotional Climate
+
+[Translate CLIMATE into 1–2 warm, honest sentences about the quality of emotional connection and relationship energy right now.]
+
+${tension ? `Area to Navigate
+
+[Translate CHALLENGE into 1–2 honest sentences about what deserves care or attention. Be clear, not alarming.
+Never say "this means bad luck for marriage" — say "this is a period where X deserves extra care."]
+
+` : ""}Communication
+[One sentence on how communication and connection feel right now — easy and warm, or requiring more effort?]
+
+Why this period?
+[WHY THIS PERIOD — verbatim from notes]
+
+Guidance
+[GUIDANCE BULLETS]
+
+Outlook
+[OUTLOOK LINE]`;
+
+    const whyPeriod  = buildMarriageWhySentence(assessment.currentState, tension !== null);
+    const outlookLine = buildMarriageOutlookLine(assessment.currentState);
 
     const userMessage =
-`PUNDIT NOTES — translate these into natural guidance. Never quote labels, numbers, or internal terms.
+`PUNDIT NOTES — use this content to fill the template:
 
-OVERALL DIRECTION: ${overallPicture}
+OVERALL LINE: ${overallLine}
 
-WHAT IS WORKING: ${strengths}
+CLIMATE: ${climate}
 
-WHAT TO WATCH: ${cautions ?? "No significant friction in relationships — nurture what you have"}
+${tension ? `CHALLENGE: ${tension}` : "CHALLENGE: None — omit the 'Area to Navigate' section entirely"}
 
 TIMING: ${timingNote}
 
-PRACTICAL ACTIONS (use one or two of these):
+WHY THIS PERIOD (verbatim): ${whyPeriod}
+
+GUIDANCE BULLETS:
 ${actions}
+
+OUTLOOK LINE: ${outlookLine}
 
 ---
 ${userQuery ?? "How do relationships and marriage look in my chart?"}`;
@@ -211,11 +232,30 @@ function computeHorizon(confidence: number, ctx: AstrologyContext): PredictionHo
 
 function describeMarriageState(state: string): string {
   const map: Record<string, string> = {
-    "Highly Favorable": "The chart shows strong promise for love and partnership — this is a genuinely supportive period for relationships.",
-    "Favorable":        "Relationship conditions look positive — there is real capacity for meaningful partnership.",
-    "Moderate":         "Relationship potential is present but balanced with some nuance — there are genuine strengths and things worth navigating.",
-    "Challenging":      "Relationships require more intention and care right now — the promise is there but the timing has some friction.",
-    "Highly Challenging": "This is a more complex period for relationships — understanding and patience matter more than urgency.",
+    "Highly Favorable":   "Strong. The chart shows excellent support for love, partnership, and emotional connection right now.",
+    "Favorable":          "Good. Relationship energy is warm and supportive — genuine connection is available.",
+    "Moderate":           "Steady. Relationships are moving along with genuine strengths and a few things worth navigating.",
+    "Challenging":        "A period that requires more care and intention in relationships — the potential is there, but communication matters more than usual.",
+    "Highly Challenging": "A complex period for relationships — patience, understanding, and giving each other space are more valuable than pressure.",
   };
-  return map[state] ?? "Relationship potential is present with some nuance to navigate.";
+  return map[state] ?? "Relationship energy is present, with some nuance to navigate.";
+}
+
+function buildMarriageWhySentence(state: string, hasTension: boolean): string {
+  if (state === "Highly Favorable") return "A deeply supportive period for emotional connection and partnership — the chart aligns well with closeness and commitment right now.";
+  if (state === "Favorable")        return "The current period in your chart supports open-heartedness and meaningful connection — a good time to invest in your closest relationships.";
+  if (state === "Moderate")         return "The chart shows a period where relationships reward effort and honest communication — not effortless, but deeply worthwhile.";
+  if (state === "Challenging")      return "The current period brings some relational complexity — it is a time for understanding and patience, not pressure or urgency.";
+  return hasTension
+    ? "This period asks for more patience and care in relationships than usual — understanding goes further than urgency right now."
+    : "The current chart period supports steady, genuine connection — warmth is available if you reach for it.";
+}
+
+function buildMarriageOutlookLine(state: string): string {
+  if (state === "Highly Favorable")   return "An excellent time for deepening relationships, commitment, or beginning new ones.";
+  if (state === "Favorable")          return "Relationships look warm and supportive. Nurture what you have and be open to what comes.";
+  if (state === "Moderate")           return "Relationships are progressing steadily. Consistent communication and warmth will serve you well.";
+  if (state === "Challenging")        return "This phase will ease. The relationship lessons of this period often create deeper bonds later.";
+  if (state === "Highly Challenging") return "A patient period — prioritise understanding over resolution. Things will settle in time.";
+  return "Steady progress in relationships. Stay warm and communicative.";
 }

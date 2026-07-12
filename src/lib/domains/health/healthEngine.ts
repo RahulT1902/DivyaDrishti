@@ -160,77 +160,89 @@ ${userQuery ?? "How is my health today?"}`;
     moonNakshatraIndex: number | undefined,
     userQuery?:         string,
   ): PromptContext {
-    const systemInstruction =
-`You are a trusted Vedic astrologer speaking directly with a person.
-
-ABSOLUTE RULES (any violation is a failure):
-1. Never say: confidence, score, uncertainty, engine, model, signal, inference, temporal stability,
-   yoga names, planet names (Sun/Moon/Saturn etc.), house numbers like "6th house" or "8th house".
-2. Use simple Indian English — warm, caring, direct. Like a trusted family Pandit.
-3. Be SPECIFIC to what is flagged. Never say just "eat on time" or "stay hydrated" as the main point.
-4. Do NOT write section headers like "What's happening:" or "Why:" — write as natural flowing sentences.
-5. Length: 150–200 words.
-
-STRUCTURE (natural flow, no headers):
-1. Name the SPECIFIC health area of focus today. Say what is likely. Be direct.
-   "Your respiratory system needs a little extra attention today — there's a higher chance of..."
-   "Your digestion is more sensitive than usual today — acidity or mild bloating is possible..."
-2. ONE simple sentence on why this is happening today (zero technical words).
-3. TWO or THREE very specific things to do TODAY tied to the exact system that was flagged.
-4. ONE sentence on timing — when does this specific influence pass.
-5. ONE sentence on background health and confidence.`;
-
+    // Pre-compute all content — LLM fills the template, it does not reason
     const primary     = healthFindings.primaryFocus;
     const secondary   = healthFindings.secondaryFocus;
-    const symptoms    = healthFindings.symptoms.slice(0, 4).join(", ");
-    const energyArc   = healthFindings.energyArc;
-    const digestNote  = healthFindings.digestiveNote;
-    const recovNote   = healthFindings.recoveryNote;
+    const isConcerning = primary.score >= 58;
 
-    const nakshatraWhy = moonNakshatraIndex !== undefined
-      ? (NAKSHATRA_WHY_MAP[moonNakshatraIndex] ?? "Today's chart position creates a mild sensitivity in this area.")
-      : "Today's chart position creates a mild sensitivity in this area.";
+    const primaryEmoji   = SYSTEM_EMOJIS[primary.system]   ?? "🩺";
+    const secondaryEmoji = secondary ? (SYSTEM_EMOJIS[secondary.system] ?? "🩺") : null;
 
-    const dashaNote = buildDashaHealthContext(dashaInfo?.mahadasha, dashaInfo?.antardasha);
-    const dashaEnd  = dashaInfo?.periodEnd ? formatPeriodEnd(dashaInfo.periodEnd) : "this period";
+    const overallLine   = buildHealthOverallLine(assessment.currentState, isConcerning, primary.displayName);
+    const symptoms      = healthFindings.symptoms.slice(0, 4);
+    const durationLine  = buildHealthDurationLine(assessment.transit ?? [], moonNakshatraIndex);
+    const whyToday      = buildWhyTodaySentence(moonNakshatraIndex, assessment.transit ?? [], primary.system, primary.displayName);
+    const outlookLine   = buildHealthOutlookLine(assessment.currentState, dashaInfo, isConcerning);
+    const dashaNote     = buildDashaHealthContext(dashaInfo?.mahadasha, dashaInfo?.antardasha);
 
-    // Symbolic body reports add specificity when transit rules fire
-    const symbolicDetail = assessment.bodySystemReports
-      .filter(r => r.isVulnerable && r.vulnerability >= 60)
-      .map(r => `${r.system}: ${r.tendencies.slice(0, 2).join(", ")} (${r.duration})`)
-      .join("; ");
+    const actions = [
+      SYSTEM_SPECIFIC_ACTIONS[primary.system]?.[0],
+      SYSTEM_SPECIFIC_ACTIONS[primary.system]?.[1],
+      secondary ? SYSTEM_SPECIFIC_ACTIONS[secondary.system]?.[0] : null,
+    ].filter(Boolean) as string[];
 
-    const actions1 = SYSTEM_SPECIFIC_ACTIONS[primary.system]?.[0] ?? "Avoid overexertion and support your body today.";
-    const actions2 = SYSTEM_SPECIFIC_ACTIONS[primary.system]?.[1] ?? "Eat lightly and rest well tonight.";
-    const actions3 = secondary ? (SYSTEM_SPECIFIC_ACTIONS[secondary.system]?.[0] ?? "") : "";
+    const systemInstruction =
+`You are writing a Vedic health consultation for a premium mobile app.
+
+RULES (mandatory — any violation is a failure):
+1. Never mention: planet names, house numbers, yoga names, engine terms, scores, percentages.
+2. Never invent causal chains between separate body systems. If two systems are flagged,
+   present them as separate — never say one is "because of" the other.
+3. The WHY TODAY sentence must be used VERBATIM from PUNDIT NOTES — do not rephrase.
+4. Do not add any text outside the template sections.
+5. Write warmly but concisely.
+
+OUTPUT IN EXACTLY THIS FORMAT (with emojis, line breaks, and bullets as shown):
+
+🌿 Today's Health
+
+Overall: [OVERALL LINE]
+
+Primary area to watch
+
+[EMOJI] [SYSTEM NAME]
+
+You may be slightly more prone than usual to:
+
+[SYMPTOM BULLETS — one per line with •]
+
+[DURATION LINE]
+
+Why today?
+[WHY TODAY — verbatim from notes]
+
+[IF SECONDARY SYSTEM: add section "Also worth noting" with emoji, name, and one line]
+
+Today's guidance
+[GUIDANCE BULLETS — one per line with •, tied to the specific flagged system]
+
+Outlook
+[OUTLOOK LINE]`;
 
     const userMessage =
-`PUNDIT NOTES — narrate as warm, natural, specific guidance. Do not quote these labels.
+`PUNDIT NOTES — use this content to fill the template. Do not add, remove, or rephrase.
 
-WHAT IS HAPPENING TODAY:
-Primary health focus: ${primary.displayName} (sensitivity elevated — not alarming, just needs awareness)
-What is likely: ${symptoms}
-${secondary ? `Secondary area: ${secondary.displayName} — also mildly sensitive today` : ""}
+OVERALL LINE: ${overallLine}
 
-WHY TODAY (simple translation — use this, don't invent other reasons):
-"${nakshatraWhy}"
-${dashaNote ? `Background pattern: "${dashaNote}"` : ""}
+EMOJI: ${primaryEmoji}
+SYSTEM NAME: ${primary.displayName}
+SYMPTOM BULLETS:
+${symptoms.map(s => `• ${s.charAt(0).toUpperCase() + s.slice(1)}`).join("\n")}
 
-${symbolicDetail ? `ADDITIONAL SIGNALS FROM CHART:\n${symbolicDetail}\n` : ""}ENERGY TODAY: ${energyArc}
-DIGESTION TODAY: ${digestNote}
-RECOVERY TODAY: ${recovNote}
+DURATION LINE: ${durationLine}
 
-WHAT TO DO (tie specifically to the system flagged — not generic advice):
-• ${actions1}
-• ${actions2}
-${actions3 ? `• ${actions3}` : ""}
+WHY TODAY (use verbatim): ${whyToday}
 
-TIMING:
-Today's specific influence: passes in 1–2 days as chart positions shift
-Current period overall: runs ${dashaEnd}
+${secondary && secondaryEmoji ? `SECONDARY SYSTEM: Yes
+SECONDARY EMOJI: ${secondaryEmoji}
+SECONDARY NAME: ${secondary.displayName}
+SECONDARY LINE: ${SYSTEM_SPECIFIC_ACTIONS[secondary.system]?.[0] ?? "Be mildly aware of " + secondary.displayName.toLowerCase() + " sensitivity today."}
+` : `SECONDARY SYSTEM: None — omit the "Also worth noting" section entirely
+`}GUIDANCE BULLETS:
+${actions.map(a => `• ${a}`).join("\n")}
 
-CONFIDENCE:
-${dashaInfo ? "Good — reading is grounded in both birth chart patterns and today's specific position." : "Based on birth chart patterns — add timing data for more precision."}
+OUTLOOK LINE: ${outlookLine}
+${dashaNote ? `\nBACKGROUND NOTE (include only in Outlook if relevant, one line max): ${dashaNote}` : ""}
 
 ---
 ${userQuery ?? "How is my health today?"}`;
@@ -524,4 +536,82 @@ function formatPeriodEnd(periodEnd: string): string {
   } catch {
     return "through this period";
   }
+}
+
+// ── Template format helpers (used by buildEnrichedPrompt) ─────────────────────
+
+const SYSTEM_EMOJIS: Record<string, string> = {
+  respiratorySystem:       "🫁",
+  coldViralSusceptibility: "🤧",
+  throat:                  "🗣️",
+  digestiveSystem:         "🫃",
+  stomach:                 "🥗",
+  head:                    "🧠",
+  energyStamina:           "⚡",
+  sleep:                   "😴",
+  mentalWellness:          "💭",
+  joints:                  "🦴",
+  back:                    "🦴",
+  inflammation:            "🌡️",
+  immuneSystem:            "🛡️",
+  nervousSystem:           "🧬",
+  allergySensitivity:      "🌿",
+  skinHealth:              "✨",
+  "General Vitality":      "💪",
+};
+
+function buildHealthOverallLine(state: string, isConcerning: boolean, systemName: string): string {
+  if (state === "Highly Favorable") return "Excellent. Strong health support across all areas today.";
+  if (state === "Favorable" && !isConcerning) return "Good. Your health looks stable today with no significant concern.";
+  if (state === "Favorable")   return `Good, with a temporary sensitivity around the ${systemName.toLowerCase()}.`;
+  if (state === "Moderate")    return `Moderate. Worth being aware of some sensitivity around the ${systemName.toLowerCase()} today.`;
+  if (state === "Challenging") return `A day that calls for some extra care, particularly around the ${systemName.toLowerCase()}.`;
+  return `Stable overall, with a mild ${systemName.toLowerCase()} sensitivity worth noting today.`;
+}
+
+function buildHealthDurationLine(
+  transit: import("../../core/transit-engine/types").TransitEvidence[],
+  _nakshatraIndex: number | undefined,
+): string {
+  const hasSaturn = transit.some(t => t.planet === "Saturn" && t.direction === "Challenging");
+  if (hasSaturn) return "Note: this is a longer-term influence lasting months, not just today.";
+  const hasMars   = transit.some(t => t.planet === "Mars"   && t.direction === "Challenging");
+  if (hasMars)   return "This influence is likely to last a few weeks.";
+  return "This influence appears temporary and is likely to ease within 1–2 days.";
+}
+
+function buildWhyTodaySentence(
+  nakshatraIndex: number | undefined,
+  transit: import("../../core/transit-engine/types").TransitEvidence[],
+  _primarySystem: string,
+  displayName: string,
+): string {
+  // Priority 1: specific fired transit rule
+  const TRANSIT_WHY: Record<string, string> = {
+    "transit-moon-6th-health":     "A short-lived planetary influence is creating some digestive sensitivity today — this passes in about 2 days as the chart shifts.",
+    "transit-moon-8th-health":     "A brief planetary influence is drawing energy inward today, which can create a sense of hidden fatigue — this passes in about 2 days.",
+    "transit-moon-12th-health":    "A short-lived influence is making sleep and rest more variable today — this passes in about 2 days.",
+    "transit-saturn-lagna-health": "A longer-term planetary influence is creating some background pressure on overall vitality — this one lasts months, not days.",
+    "transit-saturn-8th-health":   "A longer-term influence is drawing attention to underlying health matters — this is a background pattern, not an acute event.",
+    "transit-mars-6th-health":     "A planetary influence over the coming weeks is making the immune system more reactive than usual.",
+  };
+  const challengingTransit = transit.find(t => t.direction === "Challenging" && TRANSIT_WHY[t.ruleId]);
+  if (challengingTransit) return TRANSIT_WHY[challengingTransit.ruleId];
+
+  // Priority 2: Moon nakshatra
+  if (nakshatraIndex !== undefined && NAKSHATRA_WHY_MAP[nakshatraIndex]) {
+    return NAKSHATRA_WHY_MAP[nakshatraIndex];
+  }
+  return `A short-lived influence in today's chart is creating some sensitivity in the ${displayName.toLowerCase()} area. This should ease in a day or two.`;
+}
+
+function buildHealthOutlookLine(state: string, dashaInfo: DashaInfo | undefined, isConcerning: boolean): string {
+  if (!isConcerning) return "There are no signs of a significant health disturbance today. Health looks stable.";
+  if (state === "Challenging") {
+    return "This appears to be a temporary pattern rather than a long-term health issue. If symptoms persist beyond 2–3 days, it is worth paying closer attention.";
+  }
+  if (dashaInfo) {
+    return "This looks like a short-term transit effect, not a long-term health issue. No reason for lasting concern.";
+  }
+  return "This is a temporary influence — no indication of a lasting health concern.";
 }
