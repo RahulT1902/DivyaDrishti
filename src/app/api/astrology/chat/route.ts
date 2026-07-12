@@ -16,6 +16,15 @@ import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
 import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
 import { buildV5Prompt } from "@/lib/intelligence/v5/promptBuilder";
 import { NatalPromiseAnalyzer, LifeDomainActivationEngine } from "@/lib/intelligence/lifeInsights/services";
+import { adaptEngineOutput, buildChartSuite } from "@/lib/core/chart-engine";
+import { AstrologyContextBuilder } from "@/lib/core/context-builder/astroContextBuilder";
+import { TransitAnalyzer, evaluateTransitRules, HEALTH_TRANSIT_RULES } from "@/lib/core/transit-engine";
+import type { DashaInfo, Sign, PlanetName } from "@/lib/core/types";
+import type { TransitSnapshot } from "@/lib/core/transit-engine/types";
+import { HealthEngine } from "@/lib/domains/health";
+import { CareerEngine } from "@/lib/domains/career";
+import { MarriageEngine } from "@/lib/domains/marriage";
+import { FinanceEngine } from "@/lib/domains/finance";
 
 export async function POST(req: NextRequest) {
   try {
@@ -112,6 +121,55 @@ export async function POST(req: NextRequest) {
     const timeline = buildMahadashaTimeline(birthDetails.dateOfBirth, nakshatra.lord, balance);
     const temporal = getDashaContext(timeline, new Date());
     const currentTransits = await calculateCurrentTransits();
+
+    // ── Symbolic Engine Build ─────────────────────────────────────────────────
+    // Build ChartSuite (the 8-layer pipeline's input) from the SwissEph raw output.
+    const { planets: sePlanets, lagna: seLagna } = adaptEngineOutput(chart.planets, chart.lagna);
+    const chartSuite = buildChartSuite(sePlanets, seLagna);
+
+    // Convert current transit positions → TransitSnapshot for the symbolic transit engine.
+    const _SIGN_NAMES = [
+      "Aries","Taurus","Gemini","Cancer","Leo","Virgo",
+      "Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces",
+    ];
+    const transitSnapshot: TransitSnapshot = {
+      date:   new Date().toISOString().split("T")[0],
+      julDay: 0,
+      positions: currentTransits.positions.map(p => ({
+        planet:       p.name as PlanetName,
+        longitude:    p.longitude,
+        sign:         p.sign as Sign,
+        signName:     _SIGN_NAMES[p.sign - 1] ?? "Aries",
+        degreeInSign: p.longitude % 30,
+        speed:        p.speed,
+        isRetrograde: p.speed < 0 && p.name !== "Sun" && p.name !== "Moon",
+        isCombust:    false,
+      })),
+    };
+
+    // Derive transit facts (which natal house each transiting planet occupies).
+    const transitFacts = new TransitAnalyzer().analyze(
+      transitSnapshot,
+      chart.lagna.sign as Sign,
+      chartSuite.D1.planets,
+    );
+    // Evaluate health transit rules (used for all domains — other domain rules will be added later).
+    const symbolicTransitEvidence = evaluateTransitRules(transitFacts, HEALTH_TRANSIT_RULES);
+
+    // Build DashaInfo from the dasha context (mahadasha + antardasha period dates).
+    const dashaInfo: DashaInfo | undefined = temporal ? {
+      mahadasha:   temporal.stack.mahadasha as PlanetName,
+      antardasha:  temporal.stack.antardasha as PlanetName,
+      periodStart: temporal.timing.startsAt.toISOString().split("T")[0],
+      periodEnd:   temporal.timing.endsAt.toISOString().split("T")[0],
+    } : undefined;
+
+    // Run the full 8-layer symbolic pipeline: yoga detection → activation → inference → hypothesis → graph.
+    const symbolicCtx = new AstrologyContextBuilder().build(chartSuite, {
+      dasha:   dashaInfo,
+      transit: symbolicTransitEvidence,
+      horizon: "daily",
+    });
 
     // 4. Intelligence Logic
     const narrative = generateNarrative(intent as any, targetTimeframe as any, chart, {
@@ -284,15 +342,44 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
       });
 
       try {
-        const { text } = await callAI({ prompt, temperature: 0.72 });
+        // ── Symbolic Engine Path (supported domains: health, career, marriage, finance) ──
+        // The symbolic engine has already run the full 8-layer pipeline above.
+        // Here we select the domain engine, evaluate the AstrologyContext, and build
+        // a structured prompt (systemInstruction + userMessage) for the LLM narrator.
+        // The narrator receives pre-computed conclusions — it narrates, not reasons.
+        const symbolicEngineRunners: Partial<Record<string, () => { systemInstruction: string; userMessage: string }>> = {
+          health:       () => { const e = new HealthEngine();   return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+          career:       () => { const e = new CareerEngine();   return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+          relationship: () => { const e = new MarriageEngine(); return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+          family:       () => { const e = new MarriageEngine(); return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+          finance:      () => { const e = new FinanceEngine();  return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+          business:     () => { const e = new FinanceEngine();  return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+        };
+        const buildSymbolicPromptCtx = symbolicEngineRunners[targetDomain];
+
+        let rawText: string;
+        if (buildSymbolicPromptCtx) {
+          // Symbolic path: domain engine drives the reasoning; LLM only narrates.
+          const promptCtx = buildSymbolicPromptCtx();
+          const { text } = await callAI({
+            system:      promptCtx.systemInstruction,
+            prompt:      promptCtx.userMessage,
+            temperature: 0.72,
+          });
+          rawText = text;
+        } else {
+          // V5 fallback: general and unsupported domains use the brief-based V5 prompt.
+          const { text } = await callAI({ prompt, temperature: 0.72 });
+          rawText = text;
+        }
 
         // Extract the LLM-generated follow-up suggestion (EXPLORE: line)
         // and strip it from the visible answer.
-        const exploreMatch = text.match(/\nEXPLORE:\s*(.+?)(?:\n|$)/);
+        const exploreMatch = rawText.match(/\nEXPLORE:\s*(.+?)(?:\n|$)/);
         if (exploreMatch?.[1]) {
           followUpText = exploreMatch[1].trim();
         }
-        answerText = text.replace(/\nEXPLORE:\s*.+?(?:\n|$)/g, "").trimEnd();
+        answerText = rawText.replace(/\nEXPLORE:\s*.+?(?:\n|$)/g, "").trimEnd();
       } catch (aiError: any) {
         console.error("AI Generation failed (all providers):", aiError);
         answerText = `[API Error - LLM Gateway Failed]: ${aiError.message || "AI gateway timeout."}\n\n[Deterministic Fallback]: ${narrative.heroInsight}\n\n${narrative.realityTranslation}`;
