@@ -198,30 +198,131 @@ export default function PunditChatView() {
   );
 }
 
-function PunditResponse({ content }: { content: string }) {
-  const parts = content.split("\n\n");
-
+// Renders a single block of text — handles bullet lines, section headers, and body text.
+function ContentBlock({ text }: { text: string }) {
+  const lines = text.split("\n");
   return (
-    <div className="space-y-4">
-      {parts.map((part, i) => {
-        if (i === 0) return (
-          <p key={i} className="text-base font-serif font-medium text-amber-900 border-l-2 border-amber-500 pl-4 py-1 leading-snug">
-            {part}
-          </p>
-        );
+    <div className="space-y-1.5">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
 
-        if (i === parts.length - 1) return (
-          <p key={i} className="text-xs font-bold text-amber-600 border-t border-amber-100 pt-3 tracking-wide">
-            {part}
-          </p>
-        );
+        // Bullet point
+        if (trimmed.startsWith("•")) {
+          return (
+            <p key={i} className="text-sm text-amber-800 pl-3 leading-relaxed">
+              {trimmed}
+            </p>
+          );
+        }
 
+        // "Overall:" label line
+        if (trimmed.startsWith("Overall:")) {
+          return (
+            <p key={i} className="text-sm font-semibold text-amber-900 leading-snug">
+              {trimmed}
+            </p>
+          );
+        }
+
+        // Section headers like "Why today?", "Today's guidance", "Outlook", etc.
+        // (short lines with no trailing period that don't start with emoji)
+        const isHeader = trimmed.length < 60 && !trimmed.startsWith("•") && !trimmed.includes(". ") &&
+          /^[A-Z🌿💼💰💝]/.test(trimmed);
+        if (isHeader && !/^(Overall:|Duration:|Also worth noting)/.test(trimmed)) {
+          const isDomainHeader = ["🌿", "💼", "💰", "💝"].some(e => trimmed.startsWith(e));
+          return (
+            <p key={i} className={isDomainHeader
+              ? "text-sm font-bold text-amber-900 tracking-wide"
+              : "text-xs font-bold text-amber-700 uppercase tracking-widest mt-3"
+            }>
+              {trimmed}
+            </p>
+          );
+        }
+
+        // Body text
         return (
-          <p key={i} className="text-sm text-amber-800 font-normal leading-relaxed whitespace-pre-wrap">
-            {part}
+          <p key={i} className="text-sm text-amber-800 leading-relaxed">
+            {trimmed}
           </p>
         );
       })}
+    </div>
+  );
+}
+
+const DOMAIN_EMOJIS = ["🌿", "💼", "💰", "💝"];
+const WHY_MARKER = /^Why (today|tomorrow|this period)\?/m;
+
+function PunditResponse({ content }: { content: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Detect whether this is a structured domain response
+  const isStructured = DOMAIN_EMOJIS.some(e => content.trimStart().startsWith(e));
+
+  if (!isStructured) {
+    // Legacy paragraph rendering for non-domain responses
+    const parts = content.split("\n\n");
+    return (
+      <div className="space-y-4">
+        {parts.map((part, i) => {
+          if (i === 0) return (
+            <p key={i} className="text-base font-serif font-medium text-amber-900 border-l-2 border-amber-500 pl-4 py-1 leading-snug">
+              {part}
+            </p>
+          );
+          if (i === parts.length - 1) return (
+            <p key={i} className="text-xs font-bold text-amber-600 border-t border-amber-100 pt-3 tracking-wide">
+              {part}
+            </p>
+          );
+          return (
+            <p key={i} className="text-sm text-amber-800 font-normal leading-relaxed whitespace-pre-wrap">
+              {part}
+            </p>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Split at "Why today?" / "Why this period?" — summary above, details below
+  const whyMatch = WHY_MARKER.exec(content);
+  if (!whyMatch) {
+    return <ContentBlock text={content} />;
+  }
+
+  const summary = content.slice(0, whyMatch.index).trimEnd();
+  const details = content.slice(whyMatch.index);
+
+  return (
+    <div className="space-y-3">
+      <ContentBlock text={summary} />
+
+      {!expanded ? (
+        <button
+          onClick={() => setExpanded(true)}
+          className="flex items-center gap-2 text-[10px] font-bold text-amber-600 uppercase tracking-widest border-t border-amber-100 pt-3 w-full hover:text-amber-800 transition-colors"
+        >
+          <span>See Details</span>
+          <span className="text-amber-400">↓</span>
+        </button>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="border-t border-amber-100 pt-3 space-y-3"
+        >
+          <ContentBlock text={details} />
+          <button
+            onClick={() => setExpanded(false)}
+            className="text-[10px] font-bold text-amber-500 uppercase tracking-widest hover:text-amber-700 transition-colors"
+          >
+            Show Less ↑
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }
