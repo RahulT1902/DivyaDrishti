@@ -357,7 +357,16 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         // a structured prompt (systemInstruction + userMessage) for the LLM narrator.
         // The narrator receives pre-computed conclusions — it narrates, not reasons.
         const symbolicEngineRunners: Partial<Record<string, () => { systemInstruction: string; userMessage: string }>> = {
-          health:       () => { const e = new HealthEngine();   return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+          // Health: uses enriched prompt (body risk profile + symbolic) for guaranteed specificity.
+          // healthFindings always ranks and scores every body system — no "no concerns" fallback.
+          health: () => {
+            const e = new HealthEngine();
+            const assessment = e.evaluate(symbolicCtx);
+            if (healthFindings) {
+              return e.buildEnrichedPrompt(assessment, healthFindings, dashaInfo, moonNakshatraIndex, question);
+            }
+            return e.buildPrompt(assessment, question);
+          },
           career:       () => { const e = new CareerEngine();   return e.buildPrompt(e.evaluate(symbolicCtx), question); },
           relationship: () => { const e = new MarriageEngine(); return e.buildPrompt(e.evaluate(symbolicCtx), question); },
           family:       () => { const e = new MarriageEngine(); return e.buildPrompt(e.evaluate(symbolicCtx), question); },

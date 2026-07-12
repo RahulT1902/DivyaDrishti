@@ -1,10 +1,11 @@
-import { AstrologyContext, UncertaintyProfile, PredictionHorizon } from "../../core/types";
+import { AstrologyContext, UncertaintyProfile, PredictionHorizon, DashaInfo } from "../../core/types";
 import { DomainEngine, DomainSignalEngine, RecommendationEngine, PromptContext, DomainSignal } from "../../core/domain";
 import { DecisionGraphBuilder } from "../../core/decision-graph";
 import { CORE_RULESET } from "../../core/inference-engine";
 import { HEALTH_KNOWLEDGE_PACK } from "./knowledgePack";
 import { HealthAssessment } from "./healthTypes";
 import { evaluateBodySystems, formatBodySystemsForNarrator } from "./diagnostics";
+import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
 
 // HealthEngine is the Health domain implementation of DomainEngine<T>.
 // It follows the CareerEngine reference pattern exactly:
@@ -137,6 +138,99 @@ ${stabilityNote ? `\nPATTERN NOTE: ${stabilityNote}` : ""}
 
 FALLBACK ACTIONS if no specific system is vulnerable:
 ${actions}
+
+---
+${userQuery ?? "How is my health today?"}`;
+
+    return { domain: "Health", systemInstruction, userMessage };
+  }
+
+  // ── Decision Intelligence Format (Phase 2) ───────────────────────────────────
+  // Uses healthFindings (body risk profile — always produces output) as the primary
+  // data source for "What is happening?" and "What to do?", and the symbolic
+  // assessment for "Why?" and "When will it change?".
+  //
+  // This ensures a specific health observation EVERY day, not just when transit
+  // house rules fire. bodyRiskProfile always ranks every system.
+
+  buildEnrichedPrompt(
+    assessment:         HealthAssessment,
+    healthFindings:     HealthFindings,
+    dashaInfo:          DashaInfo | undefined,
+    moonNakshatraIndex: number | undefined,
+    userQuery?:         string,
+  ): PromptContext {
+    const systemInstruction =
+`You are a trusted Vedic astrologer speaking directly with a person.
+
+ABSOLUTE RULES (any violation is a failure):
+1. Never say: confidence, score, uncertainty, engine, model, signal, inference, temporal stability,
+   yoga names, planet names (Sun/Moon/Saturn etc.), house numbers like "6th house" or "8th house".
+2. Use simple Indian English — warm, caring, direct. Like a trusted family Pandit.
+3. Be SPECIFIC to what is flagged. Never say just "eat on time" or "stay hydrated" as the main point.
+4. Do NOT write section headers like "What's happening:" or "Why:" — write as natural flowing sentences.
+5. Length: 150–200 words.
+
+STRUCTURE (natural flow, no headers):
+1. Name the SPECIFIC health area of focus today. Say what is likely. Be direct.
+   "Your respiratory system needs a little extra attention today — there's a higher chance of..."
+   "Your digestion is more sensitive than usual today — acidity or mild bloating is possible..."
+2. ONE simple sentence on why this is happening today (zero technical words).
+3. TWO or THREE very specific things to do TODAY tied to the exact system that was flagged.
+4. ONE sentence on timing — when does this specific influence pass.
+5. ONE sentence on background health and confidence.`;
+
+    const primary     = healthFindings.primaryFocus;
+    const secondary   = healthFindings.secondaryFocus;
+    const symptoms    = healthFindings.symptoms.slice(0, 4).join(", ");
+    const energyArc   = healthFindings.energyArc;
+    const digestNote  = healthFindings.digestiveNote;
+    const recovNote   = healthFindings.recoveryNote;
+
+    const nakshatraWhy = moonNakshatraIndex !== undefined
+      ? (NAKSHATRA_WHY_MAP[moonNakshatraIndex] ?? "Today's chart position creates a mild sensitivity in this area.")
+      : "Today's chart position creates a mild sensitivity in this area.";
+
+    const dashaNote = buildDashaHealthContext(dashaInfo?.mahadasha, dashaInfo?.antardasha);
+    const dashaEnd  = dashaInfo?.periodEnd ? formatPeriodEnd(dashaInfo.periodEnd) : "this period";
+
+    // Symbolic body reports add specificity when transit rules fire
+    const symbolicDetail = assessment.bodySystemReports
+      .filter(r => r.isVulnerable && r.vulnerability >= 60)
+      .map(r => `${r.system}: ${r.tendencies.slice(0, 2).join(", ")} (${r.duration})`)
+      .join("; ");
+
+    const actions1 = SYSTEM_SPECIFIC_ACTIONS[primary.system]?.[0] ?? "Avoid overexertion and support your body today.";
+    const actions2 = SYSTEM_SPECIFIC_ACTIONS[primary.system]?.[1] ?? "Eat lightly and rest well tonight.";
+    const actions3 = secondary ? (SYSTEM_SPECIFIC_ACTIONS[secondary.system]?.[0] ?? "") : "";
+
+    const userMessage =
+`PUNDIT NOTES — narrate as warm, natural, specific guidance. Do not quote these labels.
+
+WHAT IS HAPPENING TODAY:
+Primary health focus: ${primary.displayName} (sensitivity elevated — not alarming, just needs awareness)
+What is likely: ${symptoms}
+${secondary ? `Secondary area: ${secondary.displayName} — also mildly sensitive today` : ""}
+
+WHY TODAY (simple translation — use this, don't invent other reasons):
+"${nakshatraWhy}"
+${dashaNote ? `Background pattern: "${dashaNote}"` : ""}
+
+${symbolicDetail ? `ADDITIONAL SIGNALS FROM CHART:\n${symbolicDetail}\n` : ""}ENERGY TODAY: ${energyArc}
+DIGESTION TODAY: ${digestNote}
+RECOVERY TODAY: ${recovNote}
+
+WHAT TO DO (tie specifically to the system flagged — not generic advice):
+• ${actions1}
+• ${actions2}
+${actions3 ? `• ${actions3}` : ""}
+
+TIMING:
+Today's specific influence: passes in 1–2 days as chart positions shift
+Current period overall: runs ${dashaEnd}
+
+CONFIDENCE:
+${dashaInfo ? "Good — reading is grounded in both birth chart patterns and today's specific position." : "Based on birth chart patterns — add timing data for more precision."}
 
 ---
 ${userQuery ?? "How is my health today?"}`;
@@ -279,4 +373,155 @@ function buildStabilityNote(stability: import("../../core/transit-engine/types")
   if (stability.label === "Volatile")  return "Note: today's reading is shaped by a temporary short-lived influence. The longer-term health picture looks different from today.";
   if (stability.label === "Variable")  return "Note: today's picture differs somewhat from the longer-term pattern — this is partly driven by a passing influence.";
   return null; // Stable / Moderate: no need to qualify
+}
+
+// ── Phase 2 Decision Intelligence helpers ──────────────────────────────────────
+// Used by buildEnrichedPrompt() — provides the "why" and "what to do" content.
+
+// Nakshatra-specific "why" statements — simple human language, no technical terms.
+// Index 0–26 = Ashwini → Revati.
+const NAKSHATRA_WHY_MAP: Record<number, string> = {
+  0:  "Today's chart position creates a slight tendency toward nervous energy and mild head heaviness.",
+  1:  "Today the chart makes the throat and ear-nose-throat area slightly more reactive than usual.",
+  2:  "Today's chart position creates a mild tendency toward heat and inflammation.",
+  3:  "Today's position connects emotional state with throat and stomach sensitivity.",
+  4:  "Today's chart position creates a tendency toward stiffness in joints and back.",
+  5:  "Today's Moon position is one that classically brings cold-onset and congestion sensitivity.",
+  6:  "Today's position mildly affects the digestive fire, making the stomach more reactive.",
+  7:  "Today's chart makes the stomach and gut slightly more sensitive to irregular eating.",
+  8:  "Today's Moon placement increases mucus-related sensitivity and cold-food reactivity.",
+  9:  "Today's position creates some variability in energy levels through the day.",
+  10: "Today's placement mildly affects energy and skin sensitivity.",
+  11: "Today's position creates a link between digestion and lower back sensitivity.",
+  12: "Today's Moon heightens the nervous system slightly — the mind-body connection is stronger today.",
+  13: "Today's chart makes the skin and digestive system more reactive than usual.",
+  14: "Today's Moon is in a position that classically brings sensitivity to breathing and throat.",
+  15: "Today's position creates emotional-digestive sensitivity — the gut is more reactive to stress.",
+  16: "Today's chart position mildly affects heart and immune sensitivity.",
+  17: "Today's Moon creates a link between mental stress and physical symptoms — particularly in the back.",
+  18: "Today's position creates a tendency toward back and joint stiffness.",
+  19: "Today's Moon placement is classically associated with joint and respiratory sensitivity.",
+  20: "Today's chart position creates mild joint and cardiovascular load.",
+  21: "Today's Moon creates ENT — throat and ear — sensitivity.",
+  22: "Today's position creates mild joint stiffness and energy fluctuation.",
+  23: "Today's Moon is in a position that affects the immune system and creates mild viral susceptibility.",
+  24: "Today's placement creates mental restlessness and some immune sensitivity.",
+  25: "Today's chart position makes recovery and energy management more important than usual.",
+  26: "Today's Moon position mildly affects digestion and immunity.",
+};
+
+// System-specific practical actions — tied to the body system, not generic.
+const SYSTEM_SPECIFIC_ACTIONS: Record<string, string[]> = {
+  respiratorySystem:       [
+    "Drink warm water through the day — avoid cold or iced drinks completely today",
+    "Stay away from cold air, dust, and rain as much as possible",
+    "If the throat feels dry, a steam inhalation in the evening will help",
+  ],
+  coldViralSusceptibility: [
+    "Drink warm water or ginger tea through the day",
+    "Avoid cold food, ice, and cold environments — your body is slightly more vulnerable today",
+    "Wash hands more often and avoid being around people who are unwell",
+  ],
+  throat:                  [
+    "Gargle with warm salt water morning and evening",
+    "Avoid cold drinks and dry, dusty environments",
+    "Rest your voice if you have to speak a lot today",
+  ],
+  digestiveSystem:         [
+    "Eat light today — avoid oily, very spicy, or heavy food",
+    "Don't skip meals, but keep portions moderate and eat slowly",
+    "Warm water after meals helps the digestive fire",
+  ],
+  stomach:                 [
+    "Eat on time and avoid eating very late at night",
+    "Prefer warm, easily digestible food — avoid raw salads and cold meals",
+    "Ginger in your food or tea today helps settle the stomach",
+  ],
+  head:                    [
+    "Take a break from screens every hour — your eyes and head will thank you",
+    "Keep yourself well-hydrated — mild headaches often respond to water",
+    "Avoid loud, chaotic environments if possible",
+  ],
+  energyStamina:           [
+    "Don't overcommit today — moderate pace is better than pushing hard",
+    "A short rest after lunch will help sustain energy through the evening",
+    "Light food and adequate water will help more than caffeine today",
+  ],
+  sleep:                   [
+    "Wind down by 9:30 PM tonight — no screens after 9 PM",
+    "A warm drink before bed (warm milk or herbal tea) helps settle the mind",
+    "Keep your sleeping space cool and quiet tonight",
+  ],
+  mentalWellness:          [
+    "Avoid emotionally draining conversations or difficult decisions today if possible",
+    "20 minutes of quiet — a short walk, meditation, or simply sitting without screens — will help significantly",
+    "Good sleep tonight will reset things — prioritize it",
+  ],
+  joints:                  [
+    "Light stretching in the morning helps joint stiffness significantly",
+    "Avoid sitting or standing in one position for too long today",
+    "Keep joints warm — avoid cold water on the knees or joints",
+  ],
+  back:                    [
+    "Take a 5-minute walk every hour if you are sitting at work",
+    "Gentle back stretches before sleeping will ease tension",
+    "Avoid heavy lifting and stooping today",
+  ],
+  inflammation:            [
+    "Stay cool — avoid overexertion and very hot, humid environments",
+    "Eat clean and light today — fried and very spicy food aggravates the inflammatory tendency",
+    "Coconut water or cooling foods help if body heat feels high",
+  ],
+  immuneSystem:            [
+    "Sleep well tonight — immune recovery happens primarily during deep sleep",
+    "Eat nourishing food — avoid junk food and excess sugar today",
+    "A warm drink with ginger or turmeric supports immune function",
+  ],
+  nervousSystem:           [
+    "Reduce screen time after 7 PM today",
+    "Short, quiet breaks between tasks will help the nervous system settle",
+    "Avoid caffeine in the afternoon — it can amplify nervous system reactivity",
+  ],
+  allergySensitivity:      [
+    "Avoid known allergens — dust, pollen, strong perfumes — more than usual today",
+    "Keep your living space clean and ventilated",
+    "An antihistamine on hand is wise if you're allergy-prone",
+  ],
+  skinHealth:              [
+    "Avoid harsh skin products and excessive sun exposure today",
+    "Stay well-hydrated — skin sensitivity responds strongly to water intake",
+    "A light, non-irritating moisturizer helps if skin feels dry",
+  ],
+  "General Vitality":      [
+    "Take it a little easier today — don't push through fatigue",
+    "Eat nourishing food and rest well tonight",
+    "Stay hydrated — energy dips are more likely when you're under-hydrated",
+  ],
+};
+
+// Dasha-planet → background health context (long-term pattern).
+function buildDashaHealthContext(mahadasha?: string, antardasha?: string): string | null {
+  const planet = antardasha ?? mahadasha;
+  if (!planet) return null;
+  const map: Record<string, string> = {
+    Saturn:  "The current period in your chart brings a background tendency toward dryness, joint stiffness, and slower recovery — consistency matters more than intensity.",
+    Rahu:    "The current period adds some background viral and allergy sensitivity — unusual or hard-to-diagnose symptoms can occur. Trust your body.",
+    Ketu:    "The current period can bring mysterious or fluctuating health patterns — spiritual and mental well-being strongly affect physical health now.",
+    Mars:    "The current period has a background tendency toward heat and inflammation — cooling diet and avoiding overexertion help.",
+    Moon:    "The current period makes emotions more directly connected to physical health — mental peace directly supports physical well-being.",
+    Jupiter: "The current period supports good immunity and recovery — the body handles stress better than usual.",
+    Mercury: "The current period connects nervous system sensitivity with health — overthinking and anxiety can manifest physically.",
+    Venus:   "The current period supports kidney and skin health — adequate hydration matters more now.",
+    Sun:     "The current period supports overall vitality and immunity — a good time to build health habits.",
+  };
+  return map[planet] ?? null;
+}
+
+function formatPeriodEnd(periodEnd: string): string {
+  try {
+    const d = new Date(periodEnd);
+    return `until ${d.toLocaleString("en-IN", { month: "long" })} ${d.getFullYear()}`;
+  } catch {
+    return "through this period";
+  }
 }
