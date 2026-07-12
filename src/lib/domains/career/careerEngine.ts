@@ -4,6 +4,7 @@ import { DecisionGraphBuilder } from "../../core/decision-graph";
 import { CORE_RULESET } from "../../core/inference-engine";
 import { CAREER_KNOWLEDGE_PACK } from "./knowledgePack";
 import { CareerAssessment } from "./careerTypes";
+import { evaluateCareerSituations } from "./diagnostics";
 
 // CareerEngine is the reference implementation of DomainEngine<T>.
 // Every future domain engine (Finance, Marriage, Health, Education, Spirituality)
@@ -52,6 +53,8 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
     // ── Step 6: Prediction horizon ────────────────────────────────────────
     const horizon = computeHorizon(decisionGraph.confidence, ctx);
 
+    const careerSituations = evaluateCareerSituations(ctx);
+
     return {
       domain:                    "Career",
       currentState:              decisionGraph.currentState,
@@ -70,6 +73,7 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
       decisionGraph,
       uncertainty,
       horizon,
+      careerSituations,
       completeness:              ctx.completeness,
       explainability:            ctx.explainability,
       ruleSetVersion:            CORE_RULESET.version,
@@ -77,14 +81,29 @@ export class CareerEngine implements DomainEngine<CareerAssessment> {
   }
 
   buildPrompt(assessment: CareerAssessment, userQuery?: string): PromptContext {
-    // Pre-compute — LLM fills the template
+    // Pre-compute — LLM fills the template.
+    // Diagnostic layer (careerSituations) takes priority over generic factor labels
+    // because it maps actual yoga activations and dasha character to named situations.
     const overallLine = describeCareerState(assessment.currentState);
-    const opportunity = assessment.supportingFactors[0]?.label ?? "Consistent effort is building long-term credibility";
-    const challenge   = assessment.blockingFactors[0]?.label   ?? null;
-    const timingNote  = assessment.bestTiming.description;
-    const actions     = assessment.recommendations.slice(0, 2)
-      .map(r => `• ${r.action}`)
-      .join("\n") || "• Focus on quality and visibility — both matter equally now";
+    const situations  = assessment.careerSituations ?? [];
+    const primary     = situations.find(s => s.priority === "Primary");
+    const secondary   = situations.find(s => s.priority === "Secondary");
+
+    const opportunity = primary
+      ? `${primary.headline} ${primary.detail}`
+      : (assessment.supportingFactors[0]?.label ?? "Consistent effort is building long-term credibility");
+
+    const challenge = secondary && ["High Effort Period", "Strategic Patience", "Building Phase"].includes(secondary.situation)
+      ? secondary.headline
+      : (assessment.blockingFactors[0]?.label ?? null);
+
+    const timingNote = primary
+      ? `${assessment.bestTiming.description}. ${primary.timing}.`
+      : assessment.bestTiming.description;
+
+    const actions = primary
+      ? primary.actions.slice(0, 3).map(a => `• ${a}`).join("\n")
+      : (assessment.recommendations.slice(0, 2).map(r => `• ${r.action}`).join("\n") || "• Focus on quality and visibility — both matter equally now");
 
     const systemInstruction =
 `You are writing a Vedic career consultation for a premium mobile app.

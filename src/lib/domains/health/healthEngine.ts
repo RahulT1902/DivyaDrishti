@@ -159,7 +159,9 @@ ${userQuery ?? "How is my health today?"}`;
     dashaInfo:          DashaInfo | undefined,
     moonNakshatraIndex: number | undefined,
     userQuery?:         string,
+    temporalLabel?:     string,
   ): PromptContext {
+    const tLabel = temporalLabel ?? "Today";
     // Pre-compute all content — LLM fills the template, it does not reason
     const primary     = healthFindings.primaryFocus;
     const secondary   = healthFindings.secondaryFocus;
@@ -194,7 +196,7 @@ RULES (mandatory — any violation is a failure):
 
 OUTPUT IN EXACTLY THIS FORMAT (with emojis, line breaks, and bullets as shown):
 
-🌿 Today's Health
+🌿 ${tLabel}'s Health
 
 Overall: [OVERALL LINE]
 
@@ -208,12 +210,12 @@ You may be slightly more prone than usual to:
 
 [DURATION LINE]
 
-Why today?
+Why ${tLabel.toLowerCase()}?
 [WHY TODAY — verbatim from notes]
 
 [IF SECONDARY SYSTEM: add section "Also worth noting" with emoji, name, and one line]
 
-Today's guidance
+${tLabel}'s guidance
 [GUIDANCE BULLETS — one per line with •, tied to the specific flagged system]
 
 Outlook
@@ -245,7 +247,7 @@ OUTLOOK LINE: ${outlookLine}
 ${dashaNote ? `\nBACKGROUND NOTE (include only in Outlook if relevant, one line max): ${dashaNote}` : ""}
 
 ---
-${userQuery ?? "How is my health today?"}`;
+${userQuery ?? `How is my health ${tLabel.toLowerCase()}?`}`;
 
     return { domain: "Health", systemInstruction, userMessage };
   }

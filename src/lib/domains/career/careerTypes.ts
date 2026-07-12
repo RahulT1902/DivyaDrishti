@@ -1,5 +1,6 @@
 import { DecisionFactor, TimingWindow, DecisionGraph, UncertaintyProfile, PredictionHorizon, KnowledgeCompletenessScore, ExplainabilityCoverage } from "../../core/types";
 import { DomainSignal, Recommendation } from "../../core/domain";
+import type { CareerSituationReport } from "./diagnostics";
 
 // CareerAssessment is the structured output of the Career Domain Engine.
 //
@@ -65,6 +66,11 @@ export interface CareerAssessment {
   // Fact → Inference → Hypothesis → Decision chain. A transparency metric —
   // opaque conclusions cannot be interrogated by "Why?" traversal.
   explainability: ExplainabilityCoverage;
+
+  // ── Career situations (from diagnostic layer) ─────────────────────────────
+  // Named, human-readable career situations derived from yoga activations,
+  // dasha character, and inference rules. Primary source for narrator content.
+  careerSituations?: CareerSituationReport[];
 
   // ── Traceability ──────────────────────────────────────────────────────────
   ruleSetVersion: string;

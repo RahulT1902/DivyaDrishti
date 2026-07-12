@@ -75,10 +75,17 @@ export async function POST(req: NextRequest) {
     }
     targetDomain = targetDomain || "general";
 
+    // Detect temporal shift — "tomorrow" changes which transit positions we fetch
+    const isTomorrow = /\btomorrow\b/i.test(question);
+    const transitDate = isTomorrow ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined;
+    const temporalLabel = isTomorrow ? "Tomorrow" : "Today";
+
     // Map extracted timeframe or timing query to corresponding API timeframes
     let targetTimeframe = "this-week";
     if (forcedTimeframe) {
       targetTimeframe = forcedTimeframe;
+    } else if (isTomorrow) {
+      targetTimeframe = "today"; // tomorrow treated as a day-level forecast
     } else if (extractedIntent.timeframe === "today") {
       targetTimeframe = "today";
     } else if (extractedIntent.timeframe === "week") {
@@ -120,7 +127,7 @@ export async function POST(req: NextRequest) {
     const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
     const timeline = buildMahadashaTimeline(birthDetails.dateOfBirth, nakshatra.lord, balance);
     const temporal = getDashaContext(timeline, new Date());
-    const currentTransits = await calculateCurrentTransits();
+    const currentTransits = await calculateCurrentTransits(transitDate);
 
     // ── Symbolic Engine Build ─────────────────────────────────────────────────
     // Build ChartSuite (the 8-layer pipeline's input) from the SwissEph raw output.
@@ -133,7 +140,7 @@ export async function POST(req: NextRequest) {
       "Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces",
     ];
     const transitSnapshot: TransitSnapshot = {
-      date:   new Date().toISOString().split("T")[0],
+      date:   (transitDate ?? new Date()).toISOString().split("T")[0],
       julDay: 0,
       positions: currentTransits.positions.map(p => ({
         planet:       p.name as PlanetName,
@@ -211,7 +218,7 @@ export async function POST(req: NextRequest) {
         .join("\n");
 
       // Date and Moon transit note
-      const todayLabel = new Date().toLocaleDateString("en-US", {
+      const todayLabel = (transitDate ?? new Date()).toLocaleDateString("en-US", {
         weekday: "long", month: "long", day: "numeric", year: "numeric",
       });
       const moonTransit = currentTransits.positions.find(p => p.name === "Moon");
@@ -363,7 +370,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             const e = new HealthEngine();
             const assessment = e.evaluate(symbolicCtx);
             if (healthFindings) {
-              return e.buildEnrichedPrompt(assessment, healthFindings, dashaInfo, moonNakshatraIndex, question);
+              return e.buildEnrichedPrompt(assessment, healthFindings, dashaInfo, moonNakshatraIndex, question, temporalLabel);
             }
             return e.buildPrompt(assessment, question);
           },

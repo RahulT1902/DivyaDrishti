@@ -22,13 +22,13 @@ export interface TransitPosition {
 }
 
 /**
- * Calculates real-time planetary positions (UTC) with impact weights.
- * This is the foundation of the Environmental Layer.
+ * Calculates planetary positions (UTC) with impact weights.
+ * Pass `forDate` to compute for a date other than now (e.g. tomorrow).
  */
-export async function calculateCurrentTransits() {
+export async function calculateCurrentTransits(forDate?: Date) {
   const eph = await getEngine();
-  const now = new Date();
-  
+  const now = forDate ?? new Date();
+
   // Use UTC for all transit calculations to ensure global consistency
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth() + 1;
