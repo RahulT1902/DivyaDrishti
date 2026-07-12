@@ -96,18 +96,23 @@ ABSOLUTE RULES (any violation is a failure):
 
 STRUCTURE — follow this EXACT order:
 1. ONE sentence: Overall health picture for today.
-2. BODY SYSTEMS — this is the MOST IMPORTANT part. Look at BODY SYSTEM ASSESSMENT below:
-   - If any system is marked [VULNERABLE]: NAME it and say what's likely.
-     "Your respiratory system is a little sensitive today — slightly higher chance of sore throat
-      or nasal congestion, especially if you go out in the cold."
-   - If digestive: "Digestion may be a bit sensitive — acidity or bloating is possible."
-   - If nothing vulnerable: "No specific health concern stands out today."
-   - NEVER list systems that are not vulnerable. Do NOT say "sleep is fine, digestion is fine."
-3. ONE sentence on duration — only if a [VULNERABLE] system is present.
-4. ONE or TWO sentences: Specific practical advice tied to the vulnerable system(s).
-   Respiratory flagged → "Drink warm water. Avoid cold drinks and cold air."
-   Digestive flagged → "Eat light and on time. Avoid oily or heavy food today."
-   Nothing flagged → simple general advice only.
+2. BODY SYSTEMS — this is the MOST IMPORTANT part. Look at BODY SYSTEM ASSESSMENT below.
+   Read both "AREAS NEEDING SPECIFIC ATTENTION TODAY" and "MILDLY SENSITIVE" sections:
+   - "AREAS NEEDING SPECIFIC ATTENTION": NAME it clearly and say what's likely.
+     Example: "Your respiratory system is a little sensitive today — slightly higher chance
+     of sore throat or nasal congestion, especially if you go out in the cold."
+   - "MILDLY SENSITIVE": NAME it and mention gently.
+     Example: "Your digestion is slightly more sensitive today — light food will help."
+     Example: "Your throat may feel a little dry — warm water through the day is helpful."
+   - If neither section has anything: "No specific health concern stands out today."
+   - NEVER list systems not mentioned in the assessment. Never say "X is fine."
+3. ONE sentence on duration — only if a system is flagged.
+4. ONE or TWO sentences: Practical advice tied to what was flagged.
+   Respiratory → "Drink warm water. Avoid cold drinks and cold air."
+   Digestive → "Eat light and on time. Avoid oily or heavy food today."
+   Joints/Back → "Light stretching helps. Avoid sitting in one position too long."
+   Sleep/Mental → "Wind down early tonight. Avoid screens before bed."
+   Nothing flagged → one simple general tip only.
 
 Length: 130–200 words. Never mention engine terms.`;
 

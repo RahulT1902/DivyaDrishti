@@ -570,6 +570,10 @@ export interface AstrologyContext {
   // How consistent is the transit picture across daily/weekly/monthly/yearly horizons?
   // Present only when transit evidence is available; absent = can't measure stability.
   temporalStability?:  import("./transit-engine/types").TemporalStabilityScore;
+  // Today's Moon nakshatra index (0–26, Ashwini→Revati) — primary daily health differentiator.
+  // Moon shifts nakshatra every ~24 hours; this is what makes health readings day-specific
+  // even when no major transit house rules fire.
+  moonNakshatraIndex?: number;
 }
 
 // ── Chart suite — all divisional charts for one birth ───────────────────────

@@ -21,6 +21,9 @@ export interface BuildOptions {
   // Temporal horizon — controls how fast vs slow planet transits are weighted.
   // Defaults to "daily" when omitted.
   horizon?: TemporalHorizon;
+  // Today's Moon nakshatra index (0–26). Passed from the route where the transit Moon
+  // position is available. Used by domain engines as the daily health differentiator.
+  moonNakshatraIndex?: number;
 }
 
 // AstrologyContextBuilder is the single orchestration layer.
@@ -110,9 +113,10 @@ export class AstrologyContextBuilder {
       planetRoles,
       planetStrengths,
       yogaAnalysis,
-      dasha:             options.dasha,
-      transit:           options.transit,
+      dasha:               options.dasha,
+      transit:             options.transit,
       temporalStability,
+      moonNakshatraIndex:  options.moonNakshatraIndex,
     };
 
     // ── Layer 5: Inference (pre-derived conclusions, provenance-stamped) ──────

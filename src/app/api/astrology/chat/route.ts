@@ -164,11 +164,20 @@ export async function POST(req: NextRequest) {
       periodEnd:   temporal.timing.endsAt.toISOString().split("T")[0],
     } : undefined;
 
+    // Today's Moon nakshatra index (0–26) — primary daily health differentiator.
+    // Moon transits one nakshatra every ~24–27 hours; this makes the reading day-specific
+    // even on days when no major house-based transit rules fire.
+    const moonForNakshatra = currentTransits.positions.find(p => p.name === "Moon");
+    const moonNakshatraIndex = moonForNakshatra
+      ? Math.min(26, Math.floor((moonForNakshatra.longitude % 360) / (360 / 27)))
+      : undefined;
+
     // Run the full 8-layer symbolic pipeline: yoga detection → activation → inference → hypothesis → graph.
     const symbolicCtx = new AstrologyContextBuilder().build(chartSuite, {
-      dasha:   dashaInfo,
-      transit: symbolicTransitEvidence,
-      horizon: "daily",
+      dasha:              dashaInfo,
+      transit:            symbolicTransitEvidence,
+      horizon:            "daily",
+      moonNakshatraIndex,
     });
 
     // 4. Intelligence Logic

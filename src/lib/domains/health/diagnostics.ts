@@ -211,8 +211,74 @@ export function evaluateBodySystems(ctx: AstrologyContext): BodySystemReport[] {
   // Don't add a report for positive transits; the narrator will mention general
   // vitality is good in the absence of vulnerable systems.
 
+  // ── Moon Nakshatra — primary DAILY differentiator ────────────────────────
+  // Moon changes nakshatra every ~24–27 hours. This is the most day-specific
+  // health signal available. Even on days when no house-based transit rules fire,
+  // the Moon's nakshatra creates a mild daily-specific body tendency.
+  //
+  // Only add if no stronger transit rules already fired for the same system.
+  const activeSystems = new Set(reports.map(r => r.system));
+  const nakshatraIndex = ctx.moonNakshatraIndex;
+
+  if (nakshatraIndex !== undefined) {
+    const entry = NAKSHATRA_BODY_SYSTEM_MAP[nakshatraIndex];
+    if (entry && !activeSystems.has(entry.system)) {
+      reports.push({
+        system:       entry.system,
+        isVulnerable: true,
+        vulnerability: entry.isSignificant ? 65 : 55,
+        tendencies:   entry.tendencies,
+        avoidance:    entry.avoidance,
+        duration:     "today (~1 day, passes as Moon moves on)",
+        source:       "transit",
+      });
+    }
+  }
+
   return reports;
 }
+
+// ── Moon Nakshatra → Body System Map ─────────────────────────────────────────
+// Based on classical Vedic karakatva of each nakshatra.
+// Index 0–26 = Ashwini → Revati.
+// isSignificant = true for nakshatras classically associated with illness onset.
+
+interface NakshatraBodyEntry {
+  system:        BodySystem;
+  tendencies:    string[];
+  avoidance:     string;
+  isSignificant: boolean;
+}
+
+const NAKSHATRA_BODY_SYSTEM_MAP: Record<number, NakshatraBodyEntry> = {
+  0:  { system: "Mental",          isSignificant: false, tendencies: ["mild head heaviness", "slight mental restlessness"],               avoidance: "Take short breaks. Avoid prolonged screen time." },
+  1:  { system: "Respiratory",     isSignificant: true,  tendencies: ["throat sensitivity", "mild ENT — ear, nose, throat"],              avoidance: "Drink warm water through the day. Avoid dusty environments." },
+  2:  { system: "Inflammatory",    isSignificant: false, tendencies: ["slightly elevated heat sensitivity", "mild fever tendency if ill"], avoidance: "Stay cool. Avoid overexertion in hot conditions." },
+  3:  { system: "Digestive",       isSignificant: false, tendencies: ["throat and stomach mildly sensitive", "slight indigestion"],        avoidance: "Eat light and on time. Avoid heavy or oily food today." },
+  4:  { system: "Musculoskeletal", isSignificant: false, tendencies: ["back and joint stiffness tendency", "mild respiratory sensitivity"], avoidance: "Light stretching helps. Avoid staying seated too long." },
+  5:  { system: "Respiratory",     isSignificant: true,  tendencies: ["congestion and cold-onset tendency", "breathing slightly more sensitive"], avoidance: "Avoid cold and damp environments. Warm water and steam help." },
+  6:  { system: "Digestive",       isSignificant: false, tendencies: ["stomach mildly sensitive", "digestion slightly slower today"],      avoidance: "Eat light meals. Avoid skipping meals or eating in a rush." },
+  7:  { system: "Digestive",       isSignificant: false, tendencies: ["stomach and gut sensitivity", "mild acidity possible"],             avoidance: "Prefer light, nourishing meals. Avoid very spicy food." },
+  8:  { system: "Digestive",       isSignificant: true,  tendencies: ["cold and mucus-prone tendency", "digestion more sensitive today"],  avoidance: "Avoid cold food and drinks. Warm food preferred." },
+  9:  { system: "General Vitality",isSignificant: false, tendencies: ["energy may fluctuate through the day", "mild back fatigue"],        avoidance: "Take rest when tired. Don't push through low-energy moments." },
+  10: { system: "General Vitality",isSignificant: false, tendencies: ["energy needs a little extra attention", "mild skin sensitivity"],   avoidance: "Rest adequately. Avoid prolonged sun exposure today." },
+  11: { system: "Digestive",       isSignificant: false, tendencies: ["mild digestive and lower back sensitivity"],                        avoidance: "Light meals and gentle back movement through the day." },
+  12: { system: "Mental",          isSignificant: false, tendencies: ["nervous system more reactive today", "mild overthinking tendency"],  avoidance: "Reduce screen overload. Avoid stress-inducing conversations." },
+  13: { system: "Inflammatory",    isSignificant: false, tendencies: ["mild skin sensitivity", "slight digestive and allergy reactivity"], avoidance: "Avoid harsh skin products. Eat clean, avoid junk today." },
+  14: { system: "Respiratory",     isSignificant: true,  tendencies: ["respiratory and throat more sensitive today", "mild mental restlessness"], avoidance: "Avoid cold, pollution, and dusty areas. Warm water helps." },
+  15: { system: "Mental",          isSignificant: false, tendencies: ["emotional tension possible", "mild kidney and digestive sensitivity"], avoidance: "Avoid emotionally draining situations. Eat on time." },
+  16: { system: "Immunity",        isSignificant: false, tendencies: ["heart and immune system slightly more sensitive", "stomach may feel uneasy"], avoidance: "Avoid overexertion. Nourishing food matters more today." },
+  17: { system: "Mental",          isSignificant: false, tendencies: ["back and nervous system sensitivity", "mental load feels heavier"],  avoidance: "Take breaks from work. Light back stretches help." },
+  18: { system: "Musculoskeletal", isSignificant: false, tendencies: ["back and joint stiffness", "digestion slightly more sluggish"],     avoidance: "Stay active with light movement. Avoid very heavy meals." },
+  19: { system: "Musculoskeletal", isSignificant: true,  tendencies: ["joints and back more sensitive today", "mild respiratory tendency"], avoidance: "Keep joints warm. Avoid cold and damp environments." },
+  20: { system: "Musculoskeletal", isSignificant: false, tendencies: ["joint and back stiffness tendency", "heart may feel extra load"],   avoidance: "Avoid heavy physical strain. Rest adequately." },
+  21: { system: "Respiratory",     isSignificant: false, tendencies: ["ENT — throat and ear sensitivity", "nervous system mildly reactive"], avoidance: "Warm water and steam help. Avoid loud and polluted environments." },
+  22: { system: "Musculoskeletal", isSignificant: false, tendencies: ["joint stiffness", "energy may fluctuate"],                          avoidance: "Light stretching. Pace your physical energy through the day." },
+  23: { system: "Immunity",        isSignificant: true,  tendencies: ["immune system mildly sensitive", "cold and viral susceptibility slightly higher", "sleep quality may be affected"], avoidance: "Sleep early and well. Avoid skipping meals. Dress warmly." },
+  24: { system: "Mental",          isSignificant: false, tendencies: ["mental restlessness possible", "immune sensitivity mildly elevated"], avoidance: "Wind down early. Avoid overthinking and screen use at night." },
+  25: { system: "General Vitality",isSignificant: false, tendencies: ["recovery may be a little slower today", "energy needs extra support"], avoidance: "Rest more than usual. Don't push through fatigue." },
+  26: { system: "Digestive",       isSignificant: false, tendencies: ["digestion mildly sensitive", "immunity slightly reduced today"],    avoidance: "Eat light and nourishing food. Rest well tonight." },
+};
 
 // ── Formatting helpers for buildPrompt() ─────────────────────────────────────
 
