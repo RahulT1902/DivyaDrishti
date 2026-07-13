@@ -12,9 +12,9 @@
 // In delta and direct modes, the domain engine is NOT rerun. The LLM
 // receives a tight prompt that answers only what was asked.
 
-import type { ResolvedConsultationIntent } from "./intentResolver";
+import type { ConsultationIntent, ResolvedConsultationIntent } from "./intentResolver";
 import type { ConversationState } from "./conversationState";
-import type { AstrologyContext, PlanetStrength } from "../core/types";
+import type { AstrologyContext } from "../core/types";
 import type { DashaInfo } from "../core/types";
 
 export type ResponseMode = "full" | "delta" | "direct";
