@@ -71,14 +71,15 @@ function buildDeltaPrompt(
     state.entities.employer ? `Context entity: ${state.entities.employer}` : null,
   ].filter(Boolean).join("\n");
 
-  const intentHint = {
+  const INTENT_HINTS: Partial<Record<ConsultationIntent, string>> = {
     Decision:    "Give clear advice: yes/no/qualified, then 1 sentence of reasoning.",
     Advice:      "Give a specific action recommendation in plain language.",
     Timing:      "Give a specific timing answer — which period, how long, or what to watch for.",
     Probability: "Give a direct probability / likelihood assessment in plain language.",
     Comparison:  "Compare directly to what was established — better, same, or worse, and why.",
     FollowUp:    "Continue the consultation naturally. Answer only what they asked.",
-  }[intent.type] ?? "Answer only what they asked.";
+  };
+  const intentHint = INTENT_HINTS[intent.type] ?? "Answer only what they asked.";
 
   const system =
 `You are a Vedic astrologer in a continuous consultation with this person.
