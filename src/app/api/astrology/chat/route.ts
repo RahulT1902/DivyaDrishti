@@ -25,6 +25,9 @@ import { HealthEngine } from "@/lib/domains/health";
 import { CareerEngine } from "@/lib/domains/career";
 import { MarriageEngine } from "@/lib/domains/marriage";
 import { FinanceEngine } from "@/lib/domains/finance";
+import { buildConversationState } from "@/lib/consultation/conversationState";
+import { resolveConsultationIntent } from "@/lib/consultation/intentResolver";
+import { planConsultation } from "@/lib/consultation/questionPlanner";
 
 export async function POST(req: NextRequest) {
   try {
@@ -362,6 +365,13 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
       });
 
       try {
+        // ── Consultation Intelligence Layer ───────────────────────────────────
+        // Runs before the domain engine. Decides whether to reuse prior reasoning
+        // (delta/direct) or trigger a fresh domain evaluation (full).
+        const consultState  = buildConversationState(question, history);
+        const consultIntent = resolveConsultationIntent(question, consultState);
+        const consultPlan   = planConsultation(consultIntent, consultState, symbolicCtx, dashaInfo);
+
         // ── Symbolic Engine Path (supported domains: health, career, marriage, finance) ──
         // The symbolic engine has already run the full 8-layer pipeline above.
         // Here we select the domain engine, evaluate the AstrologyContext, and build
@@ -387,8 +397,16 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         const buildSymbolicPromptCtx = symbolicEngineRunners[targetDomain];
 
         let rawText: string;
-        if (buildSymbolicPromptCtx) {
-          // Symbolic path: domain engine drives the reasoning; LLM only narrates.
+        if (consultPlan.responseMode !== "full" && consultPlan.directPrompt) {
+          // ── Consultation path: delta or direct — answer only the specific question ──
+          const { text } = await callAI({
+            system:      consultPlan.directPrompt.system,
+            prompt:      consultPlan.directPrompt.user,
+            temperature: 0.65,
+          });
+          rawText = text;
+        } else if (buildSymbolicPromptCtx) {
+          // ── Symbolic path: domain engine drives the reasoning; LLM only narrates ──
           const promptCtx = buildSymbolicPromptCtx();
           const { text } = await callAI({
             system:      promptCtx.systemInstruction,
@@ -397,7 +415,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
           });
           rawText = text;
         } else {
-          // V5 fallback: general and unsupported domains use the brief-based V5 prompt.
+          // ── V5 fallback: general and unsupported domains use the brief-based V5 prompt ──
           const { text } = await callAI({ prompt, temperature: 0.72 });
           rawText = text;
         }
