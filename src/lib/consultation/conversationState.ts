@@ -3,6 +3,11 @@
 // Extracts structured context from conversation history so the question
 // planner can decide whether to reuse prior reasoning or trigger a fresh
 // domain evaluation.
+//
+// When storedMemories are provided (cross-session), they seed the prior
+// assessment if no in-session assessment has been established yet.
+
+import type { StoredDomainMemory } from "./sessionMemory";
 
 export interface PriorAssessment {
   domain:      string;   // "Career" | "Health" | etc.
@@ -129,17 +134,46 @@ function extractPriorTopics(history: Array<{ role: string; content: string }>): 
   return [...topics];
 }
 
+// ─── Stored memory → PriorAssessment ────────────────────────────────────────
+
+function memoryToPriorAssessment(memory: StoredDomainMemory): PriorAssessment | null {
+  if (!memory.overallLine) return null;
+  return {
+    domain:      memory.domain,
+    overallLine: memory.overallLine,
+    whySentence: memory.whySentence ?? null,
+    state:       memory.state       ?? null,
+  };
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function buildConversationState(
-  question:  string,
-  history:   Array<{ role: string; content: string }>,
+  question:       string,
+  history:        Array<{ role: string; content: string }>,
+  storedMemories?: StoredDomainMemory[],
 ): ConversationState {
   const turnCount = history.filter(m => m.role === "user").length;
 
-  // Last assistant message → prior assessment
+  // Last assistant message → in-session prior assessment
   const lastAssistant = history.filter(m => m.role === "assistant").slice(-1)[0];
-  const priorAssessment = lastAssistant ? extractPriorAssessment(lastAssistant.content) : null;
+  let priorAssessment = lastAssistant ? extractPriorAssessment(lastAssistant.content) : null;
+
+  // No in-session assessment yet — try seeding from cross-session memory.
+  // Use the most recently updated stored memory to orient the conversation.
+  if (!priorAssessment && storedMemories && storedMemories.length > 0) {
+    // Prefer domain-matched memory if the question has a clear domain signal
+    const questionLower = question.toLowerCase();
+    const domainMatch = storedMemories.find(m =>
+      questionLower.includes(m.domain) ||
+      (m.domain === "health"       && /health|sick|body|sleep|energy/i.test(question)) ||
+      (m.domain === "career"       && /career|job|work|promot/i.test(question))        ||
+      (m.domain === "finance"      && /finance|money|income|invest/i.test(question))   ||
+      (m.domain === "relationship" && /relation|marriage|partner|love/i.test(question)),
+    );
+    const candidate = domainMatch ?? storedMemories[0];
+    priorAssessment = memoryToPriorAssessment(candidate);
+  }
 
   // Active domain — from prior assessment or last domain-keyword in user messages
   const activeDomain = priorAssessment?.domain ?? null;

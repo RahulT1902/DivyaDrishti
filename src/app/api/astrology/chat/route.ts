@@ -28,6 +28,7 @@ import { FinanceEngine } from "@/lib/domains/finance";
 import { buildConversationState } from "@/lib/consultation/conversationState";
 import { resolveConsultationIntent } from "@/lib/consultation/intentResolver";
 import { planConsultation } from "@/lib/consultation/questionPlanner";
+import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } from "@/lib/consultation/sessionMemory";
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,6 +57,9 @@ export async function POST(req: NextRequest) {
     if (!user || !user.birthDetails) {
       return buildErrorResponse("DATA_MALFORMATION", "User profile not found.", 404);
     }
+
+    // Load cross-session memories (non-blocking — failure returns empty array)
+    const storedMemories = await loadUserMemories(user.id);
 
     // 2. Intent Extraction
     const extractedIntent = extractIntent(question);
@@ -368,7 +372,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         // ── Consultation Intelligence Layer ───────────────────────────────────
         // Runs before the domain engine. Decides whether to reuse prior reasoning
         // (delta/direct) or trigger a fresh domain evaluation (full).
-        const consultState  = buildConversationState(question, history);
+        const consultState  = buildConversationState(question, history, storedMemories);
         const consultIntent = resolveConsultationIntent(question, consultState);
         const consultPlan   = planConsultation(consultIntent, consultState, symbolicCtx, dashaInfo);
 
@@ -414,6 +418,12 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             temperature: 0.72,
           });
           rawText = text;
+
+          // Persist this domain assessment for future sessions (fire-and-forget)
+          const memoryData = extractMemoryFromResponse(targetDomain, rawText, dashaInfo, consultState.priorTopics);
+          if (memoryData) {
+            void saveConsultationMemory(user.id, memoryData);
+          }
         } else {
           // ── V5 fallback: general and unsupported domains use the brief-based V5 prompt ──
           const { text } = await callAI({ prompt, temperature: 0.72 });

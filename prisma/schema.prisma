@@ -16,7 +16,7 @@ model User {
   reputationScore    Float                @default(50.0)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
-  
+
   // Relations
   profile            UserProfile?
   birthChart         BirthChart?
@@ -29,13 +29,43 @@ model User {
   lifeInsightFeedbacks          LifeInsightFeedback[]
   lifeInsightAnalytics          LifeInsightAnalytics[]
   lifeInsightPredictionJournals LifeInsightPredictionJournal[]
-  
+  consultationMemory ConsultationMemory[]
+
   // Legacy/Internal (Keeping for migration safety)
   birthDetails       BirthDetails?
   portfolios         LifePortfolio[]
   predictions        PredictionRecord[]
   accountability     AccountabilityNode[]
   actions            ActionUnit[]
+}
+
+// Stores the last known domain assessment per user across sessions.
+// When a new session starts the Pundit already knows the person's
+// active domain state without them having to re-establish context.
+model ConsultationMemory {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  domain       String   // "career" | "health" | "finance" | "relationship"
+
+  state        String?  // "Favorable" | "Moderate" | "Challenging" etc.
+  overallLine  String?  // The "Overall: ..." sentence from the last response
+  whySentence  String?  // The "Why today/this period?" sentence
+  situation    String?  // Career: "Promotion Window", "Building Phase", etc.
+
+  // Dasha snapshot — used to detect stale memory when period changes
+  mahadasha    String?
+  antardasha   String?
+  dashaEndDate String?  // ISO date; memory is stale if this is in the past
+
+  topics       Json?    // string[] — sub-topics discussed: ["promotion", "management"]
+
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, domain])
+  @@index([userId])
 }
 
 model UserProfile {
