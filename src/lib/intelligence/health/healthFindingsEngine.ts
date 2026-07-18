@@ -23,11 +23,12 @@ export interface HealthFindings {
   primaryFocus:   HealthFinding;
   secondaryFocus: HealthFinding | null;
   tertiaryFocus:  HealthFinding | null;
-  activeSystems:  string[];   // all systems with score >= ACTIVE_THRESHOLD
-  symptoms:       string[];   // 4–6 specific symptoms across primary + secondary
-  energyArc:      string;     // plain-language energy pattern through the day
-  digestiveNote:  string;     // 1 sentence on digestion
-  recoveryNote:   string;     // 1 sentence on recovery speed
+  rankedSystems:  HealthFinding[];  // ALL active systems scored >= ACTIVE_THRESHOLD, ranked high→low
+  activeSystems:  string[];         // same systems as rankedSystems, just the keys
+  symptoms:       string[];         // 4–6 specific symptoms across primary + secondary
+  energyArc:      string;           // plain-language energy pattern through the day
+  digestiveNote:  string;           // 1 sentence on digestion
+  recoveryNote:   string;           // 1 sentence on recovery speed
   confidence:     "low" | "medium" | "high";
 }
 
@@ -91,15 +92,16 @@ export function buildHealthFindings(profile: BodyRiskProfile): HealthFindings {
     .sort(([, a], [, b]) => b - a);
 
   const top = ranked.slice(0, 3);
-  const activeSystems = ranked
-    .filter(([, score]) => score >= ACTIVE_THRESHOLD)
-    .map(([sys]) => sys);
 
   const toFinding = ([sys, score]: [string, number]): HealthFinding => ({
     system: sys,
     displayName: DISPLAY_NAMES[sys] ?? sys,
     score,
   });
+
+  const activeRanked = ranked.filter(([, score]) => score >= ACTIVE_THRESHOLD);
+  const rankedSystems = activeRanked.map(toFinding);
+  const activeSystems = activeRanked.map(([sys]) => sys);
 
   const primaryFinding   = toFinding(top[0]);
   const secondaryFinding = top[1] && top[1][1] >= ACTIVE_THRESHOLD ? toFinding(top[1]) : null;
@@ -144,6 +146,7 @@ export function buildHealthFindings(profile: BodyRiskProfile): HealthFindings {
     primaryFocus:   primaryFinding,
     secondaryFocus: secondaryFinding,
     tertiaryFocus:  tertiaryFinding,
+    rankedSystems,
     activeSystems,
     symptoms,
     energyArc,

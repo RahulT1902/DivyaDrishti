@@ -14,7 +14,7 @@
 
 import type {
   AstrologicalDiagnosis, IntentAnalysis,
-  ConsultationBrief, HealthBrief, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, RelationshipBrief, SpiritualityBrief,
+  ConsultationBrief, HealthBrief, HealthSystemScore, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, RelationshipBrief, SpiritualityBrief,
 } from "./types";
 import type { BodyRiskProfile } from "../../intelligence/health/bodyRiskProfile";
 import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
@@ -260,6 +260,7 @@ function interpretHealth(
         : "Healthy",
       primarySystem:      "General vitality",
       primarySystemKey:   "immuneSystem",
+      rankedSystems:      null,
       bodyParts:          [],
       symptoms:           [],
       strongAreas:        [],
@@ -363,11 +364,17 @@ function interpretHealth(
       ? `What's worth noting is how strong your ${strongAreas[0]?.toLowerCase()} and ${strongAreas[1]?.toLowerCase()} are — most people in this dasha phase show weakness there`
       : null;
 
+  // Build ranked system list for multi-system awareness
+  const rankedSystems: HealthSystemScore[] | null = findings.rankedSystems.length > 0
+    ? findings.rankedSystems.map(f => ({ name: f.displayName, score: f.score }))
+    : null;
+
   return {
     type: "health",
     overallStatus,
     primarySystem:    findings.primaryFocus.displayName,
     primarySystemKey: findings.primaryFocus.system,
+    rankedSystems,
     bodyParts,
     symptoms:         findings.symptoms,
     strongAreas,
@@ -921,7 +928,25 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   ];
 
   if (db.type === "health") {
-    lines.push(`PRIMARY AREA: ${db.primarySystem}`);
+    // Multi-system ranked list — the key architectural upgrade
+    if (db.rankedSystems && db.rankedSystems.length > 0) {
+      lines.push(`ALL ACTIVE BODY SYSTEMS (ranked by astrological sensitivity, highest first):`);
+      for (const sys of db.rankedSystems) {
+        const bar = "█".repeat(Math.round(sys.score / 10));
+        const pad = " ".repeat(Math.max(1, 28 - sys.name.length));
+        lines.push(`  ${sys.name}:${pad}${sys.score}  ${bar}`);
+      }
+      const primary   = db.rankedSystems[0];
+      const secondary = db.rankedSystems[1];
+      if (secondary && secondary.score >= primary.score - 8) {
+        lines.push(`  NOTE: ${primary.name} leads, but ${secondary.name} is almost equally activated (${secondary.score} vs ${primary.score}).`);
+        lines.push(`  If the user mentions symptoms of ${secondary.name.toLowerCase()}, acknowledge that system directly.`);
+      } else if (secondary) {
+        lines.push(`  PRIMARY: ${primary.name} (${primary.score}) — strongest active system. Narrate this first.`);
+      }
+    } else {
+      lines.push(`PRIMARY AREA: ${db.primarySystem}`);
+    }
     if (db.bodyParts.length > 0)
       lines.push(`SPECIFIC AREA: ${db.bodyParts.join("  ·  ")}`);
     if (db.symptoms.length > 0) {

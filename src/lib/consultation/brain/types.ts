@@ -218,11 +218,17 @@ export interface AnswerPlan {
 // These are domain-specific structured diagnoses produced BEFORE the LLM runs.
 // The engine concludes; the LLM only speaks.
 
+export interface HealthSystemScore {
+  name:  string;   // display name e.g. "Respiratory System"
+  score: number;   // 0–100 sensitivity score
+}
+
 export interface HealthBrief {
   type:               "health";
   overallStatus:      "Healthy" | "Mild Sensitivity" | "Moderate Concern" | "Significant Concern";
   primarySystem:      string;    // "Respiratory System" | "ENT — Ear, Nose & Throat"
   primarySystemKey:   string;    // internal key for remedy lookup
+  rankedSystems:      HealthSystemScore[] | null;  // ALL active systems ranked high→low
   bodyParts:          string[];  // ["Throat", "Nasal passages", "Upper airways"]
   symptoms:           string[];  // ["Throat irritation", "Mild cough", "Nasal congestion"]
   strongAreas:        string[];  // ["Digestion", "Cardiovascular", "Immunity"]
