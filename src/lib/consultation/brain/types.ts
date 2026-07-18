@@ -222,6 +222,7 @@ export interface HealthBrief {
   type:               "health";
   overallStatus:      "Healthy" | "Mild Sensitivity" | "Moderate Concern" | "Significant Concern";
   primarySystem:      string;    // "Respiratory System" | "ENT — Ear, Nose & Throat"
+  primarySystemKey:   string;    // internal key for remedy lookup
   bodyParts:          string[];  // ["Throat", "Nasal passages", "Upper airways"]
   symptoms:           string[];  // ["Throat irritation", "Mild cough", "Nasal congestion"]
   strongAreas:        string[];  // ["Digestion", "Cardiovascular", "Immunity"]
@@ -279,6 +280,7 @@ export interface ConsultationBrief {
   mainConclusion:        string;    // THE direct answer in one sentence
   unexpectedObservation: string | null;
   recommendation:        string;
+  remedies:              string[];  // 1–2 specific astrological remedies, pre-computed by DIE
   domainBrief:           DomainBrief;
 }
 

@@ -418,10 +418,18 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             temperature: brain.temperature,
             ...(chatMessages ? { messages: chatMessages } : {}),
           });
+
+          // Strip emoji and collapse stray blank lines — the model sometimes
+          // ignores the "no emoji" instruction despite it being first in the prompt.
+          const cleanText = text
+            .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+
           // Prepend the pre-rendered summary card above the LLM narrative
           rawText = brain.renderedSummaryCard
-            ? `${brain.renderedSummaryCard}\n\n${text}`
-            : text;
+            ? `${brain.renderedSummaryCard}\n\n${cleanText}`
+            : cleanText;
         }
 
         // Persist domain assessment for future sessions (fire-and-forget)

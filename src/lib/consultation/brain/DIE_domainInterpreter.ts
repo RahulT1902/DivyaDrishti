@@ -57,6 +57,77 @@ const BODY_PARTS: Record<string, string[]> = {
   recovery:                ["physical recovery", "cellular repair", "post-exertion bounce-back"],
 };
 
+// ── Remedy lookup tables ──────────────────────────────────────────────────────
+// Pre-computed remedies keyed by system / domain state.
+// 2 remedies per key: [practical, astrological]. Pick both or just [1].
+
+const HEALTH_REMEDIES: Record<string, [string, string]> = {
+  respiratorySystem:       ["Drink warm turmeric milk tonight and avoid cold water", "Chant Mahamrityunjaya mantra 11 times — it specifically supports immunity and respiratory health"],
+  coldViralSusceptibility: ["Gargle with warm salt water morning and evening, drink ginger-tulsi tea", "Chant Om Chandraya Namah 11 times tonight — the Moon governs cold and viral sensitivity"],
+  throat:                  ["Gargle with warm salt water, avoid cold drinks completely today", "Chant Om Saraswatyai Namah 11 times — Saraswati governs the throat and speech"],
+  head:                    ["Apply warm sesame oil to the scalp before sleeping tonight", "Offer water to the Sun at sunrise tomorrow morning (Surya Arghya) — it strengthens the head and vitality"],
+  joints:                  ["Apply warm sesame oil to the affected joints before sleeping", "Donate sesame seeds on Saturday — Saturn governs the joints and bones"],
+  back:                    ["Apply warm sesame oil to the lower back, avoid lifting anything heavy today", "Chant Om Namah Shivaya 108 times — Shiva's energy supports spinal strength"],
+  heart:                   ["Eat light today — no heavy, oily, or fried food. Avoid emotional stress", "Chant Om Hreem Suryaya Namah at sunrise — the Sun governs the heart"],
+  digestiveSystem:         ["Eat warm, light meals only. Avoid raw, cold, or processed food today", "Chant Om Gam Ganapataye Namah before meals — Ganesha governs the digestive system"],
+  stomach:                 ["Eat small, warm meals. Drink warm water with a pinch of rock salt", "Chant Om Namah Shivaya after meals — it calms the digestive fire"],
+  energyStamina:           ["Avoid heavy, oily meals today — prefer khichdi or sattvic food", "Offer water to the Sun at sunrise (Surya Arghya) — the Sun directly governs stamina and vitality"],
+  immuneSystem:            ["Take amla or a vitamin C source today. Avoid overexertion — rest supports immunity", "Chant Mahamrityunjaya mantra 11 times — it is specifically linked to immune protection in Vedic tradition"],
+  mentalWellness:          ["Sit in moonlight or a calm outdoor space for 10 minutes this evening", "Chant Om Chandraya Namah 11 times before bed — the Moon governs the mind and emotional body"],
+  nervousSystem:           ["Avoid screens 1 hour before sleeping. Apply warm oil to the soles of your feet", "Chant Om Shanti three times before sleeping — it directly calms the nervous system"],
+  sleep:                   ["Apply warm ghee or sesame oil to the feet before sleeping. No screens after 9 pm", "Chant Om Shanti three times before lying down — it settles the nervous system for rest"],
+  recovery:                ["Rest — don't push through fatigue today. Drink warm water with raw honey", "Light a sesame oil lamp in the evening — it invites Saturn's energy of patience and recovery"],
+  skinHealth:              ["Apply coconut or neem oil to the skin. Avoid synthetic products and harsh chemicals today", "Chant Om Shukraya Namah on Friday — Venus governs skin, beauty, and sensitivity"],
+  kidneys:                 ["Drink at least 8 glasses of water today. Avoid excessive salt", "Chant Om Namah Shivaya 11 times — Shiva governs the water element and kidney function"],
+  liver:                   ["Avoid alcohol, heavy food, and fried items completely today. Drink warm lemon water", "Chant Om Gurave Namah on Thursday — Jupiter governs the liver"],
+  allergySensitivity:      ["Avoid known allergens — dust, pollen, strong perfumes. Wear cotton today", "Chant Om Chandraya Namah — the Moon governs sensitivities, allergies, and fluid-related reactions"],
+  inflammation:            ["Apply warm sesame oil to inflamed areas. Avoid sour, spicy, and fermented food", "Drink turmeric milk (golden milk) tonight — turmeric is directly referenced in Ayurveda for reducing Mars-related inflammation"],
+};
+
+const CAREER_REMEDIES: Record<string, [string, string]> = {
+  "Building favorably": ["Prepare well and be visible in key meetings this week", "Offer green grass to a cow on Wednesday — Mercury governs career recognition and communication"],
+  "Stable":             ["Stay consistent with your work — this is a period for laying groundwork", "Chant Om Gam Ganapataye Namah before important meetings — Ganesha removes career obstacles"],
+  "Under pressure":     ["Focus on completing existing commitments, not starting new ones", "Light a sesame oil lamp on Saturday evening and chant Om Shanaischaraya Namah — Saturn governs career stability"],
+};
+
+const FINANCE_REMEDIES: Record<string, [string, string]> = {
+  "Growing":          ["This is a reasonable time for planned financial decisions you've been considering", "Keep a copper coin in your wallet and offer yellow flowers to Lakshmi on Friday evening"],
+  "Stable":           ["Prefer smaller, safer moves over large financial commitments for now", "Light a ghee lamp on Friday evening — Lakshmi Puja on Fridays strengthens financial stability"],
+  "Under Pressure":   ["Avoid new financial commitments this week. Focus on protecting existing assets", "Chant Om Shreem Mahalakshmyai Namah 108 times on Friday — this invites financial relief"],
+  "Volatile":         ["Avoid speculation, loans, or risky investments until the period stabilises", "Feed crows or dogs on Saturday morning — this appeases Saturn, who governs financial pressure"],
+};
+
+const RELATIONSHIP_REMEDIES: Record<string, [string, string]> = {
+  "Low":              ["Small, consistent gestures matter more than grand ones right now", "Offer white flowers to your home deity on Friday — Venus governs relationship harmony"],
+  "Mild":             ["Plan a gentle, unhurried conversation — not during rushed moments", "Light a rose or jasmine incense stick at home each evening — it invites Venus's calming energy"],
+  "Moderate":         ["Avoid escalating conversations this week. Give space, then reconnect", "Chant Om Shukraya Namah 11 times on Friday — Venus directly governs relationships and emotional harmony"],
+  "High":             ["Avoid confrontational conversations on no-moon days. Give this time to settle", "Chant Om Shukraya Namah 108 times on Friday and offer white sweets to a cow — it calms Venus-Mars tension"],
+};
+
+function computeRemedies(domain: string, brief: ConsultationBrief["domainBrief"]): string[] {
+  if (brief.type === "health") {
+    const entry = HEALTH_REMEDIES[brief.primarySystemKey];
+    return entry ?? ["Drink warm water throughout the day", "Chant Mahamrityunjaya mantra 11 times for overall health protection"];
+  }
+  if (brief.type === "career") {
+    const key = Object.keys(CAREER_REMEDIES).find(k =>
+      brief.overallProbability >= 65 ? k === "Building favorably"
+      : brief.overallProbability >= 45 ? k === "Stable"
+      : k === "Under pressure"
+    ) ?? "Stable";
+    return CAREER_REMEDIES[key] ?? CAREER_REMEDIES["Stable"];
+  }
+  if (brief.type === "finance") {
+    const entry = FINANCE_REMEDIES[brief.primaryFlow];
+    return entry ?? FINANCE_REMEDIES["Stable"];
+  }
+  if (brief.type === "relationship") {
+    const entry = RELATIONSHIP_REMEDIES[brief.conflictRisk];
+    return entry ?? RELATIONSHIP_REMEDIES["Mild"];
+  }
+  return ["Chant Om Namah Shivaya 11 times this evening for overall protection"];
+}
+
 // Display names for the "stable today" column
 const STRONG_DISPLAY: Record<string, string> = {
   digestiveSystem:  "Digestion",
@@ -88,6 +159,7 @@ function interpretHealth(
         : s === "Moderate"    ? "Mild Sensitivity"
         : "Healthy",
       primarySystem:      "General vitality",
+      primarySystemKey:   "immuneSystem",
       bodyParts:          [],
       symptoms:           [],
       strongAreas:        [],
@@ -164,9 +236,10 @@ function interpretHealth(
   return {
     type: "health",
     overallStatus,
-    primarySystem: findings.primaryFocus.displayName,
+    primarySystem:    findings.primaryFocus.displayName,
+    primarySystemKey: findings.primaryFocus.system,
     bodyParts,
-    symptoms:      findings.symptoms,
+    symptoms:         findings.symptoms,
     strongAreas,
     illnessProbability,
     severity,
@@ -475,12 +548,15 @@ export function buildConsultationBrief(
     }
   }
 
+  const remedies = computeRemedies(domain, domainBrief);
+
   return {
     domain,
     overallVerdict,
     mainConclusion,
     unexpectedObservation,
     recommendation,
+    remedies,
     domainBrief,
   };
 }
@@ -558,6 +634,10 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   if (brief.unexpectedObservation)
     lines.push(`UNEXPECTED OBSERVATION: ${brief.unexpectedObservation}`);
   lines.push(`CLOSING RECOMMENDATION: ${brief.recommendation}`);
+  if (brief.remedies.length > 0) {
+    lines.push(`ASTROLOGICAL REMEDIES (weave these naturally into your recommendation paragraph):`);
+    brief.remedies.forEach(r => lines.push(`  • ${r}`));
+  }
 
   return lines.join("\n");
 }

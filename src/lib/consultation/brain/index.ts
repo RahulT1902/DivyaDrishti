@@ -34,6 +34,17 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
   const sections: string[] = [];
 
+  // ── FORMAT OVERRIDE — must be first; overrides any model training ─────────
+  sections.push(
+    `RESPONSE FORMAT — READ THIS FIRST, IT OVERRIDES EVERYTHING ELSE:\n` +
+    `• Write EXACTLY 4 short paragraphs. Each paragraph: 2–3 sentences only.\n` +
+    `• NO emoji anywhere. Not even one. 🌿 💼 🤧 or any symbol = automatic failure.\n` +
+    `• NO section headers, NO bullet-point lists, NO "Primary area to watch", NO "Outlook" headers.\n` +
+    `• NO bold/italic markdown formatting. Plain sentences only.\n` +
+    `• If your output contains any emoji or section header, it is wrong. Rewrite it.\n` +
+    `• The 4th paragraph is the recommendation — it will be visually highlighted, so make it count.`
+  );
+
   // ── PERMANENT CONSTITUTION — identity, purpose, philosophy ────────────────
   // This never changes regardless of domain, question, or user.
   sections.push(
