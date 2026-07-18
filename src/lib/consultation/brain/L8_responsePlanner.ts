@@ -182,6 +182,77 @@ function buildRecommendation(
   return map[domain]?.[diagnosis.overallState] ?? "Stay consistent with your current energy.";
 }
 
+// ── Severity (how bad is the concern — only for negative states) ──────────────
+
+function buildSeverity(
+  domain:    string,
+  diagnosis: AstrologicalDiagnosis,
+): "Minor" | "Moderate" | "Significant" | "Life-changing" | null {
+  if (diagnosis.overallState === "Highly Favorable" || diagnosis.overallState === "Favorable") return null;
+
+  if (domain === "health") {
+    if (diagnosis.overallState === "Moderate")    return "Minor";
+    if (diagnosis.overallState === "Challenging") return "Moderate";
+    if (diagnosis.overallState === "Difficult")   return "Significant";
+  }
+  if (domain === "career" || domain === "finance") {
+    if (diagnosis.overallState === "Challenging") return "Minor";
+    if (diagnosis.overallState === "Difficult")   return "Moderate";
+  }
+  if (domain === "relationship") {
+    if (diagnosis.overallState === "Challenging") return "Moderate";
+    if (diagnosis.overallState === "Difficult")   return "Significant";
+  }
+  return null;
+}
+
+// ── Affected area (specific sub-domain, not just the domain name) ─────────────
+
+function buildAffectedArea(
+  domain:    string,
+  diagnosis: AstrologicalDiagnosis,
+  intent:    IntentAnalysis,
+): string | null {
+  const q = intent.stated.toLowerCase();
+
+  if (domain === "health") {
+    if (/sleep|rest|tired|fatigue|insomnia/.test(q))     return "Sleep & Energy";
+    if (/digest|stomach|gut|acid|bloat/.test(q))          return "Digestive System";
+    if (/breath|lung|respirat|cold|cough|flu/.test(q))   return "Respiratory System";
+    if (/eye|vision|sight/.test(q))                       return "Eyes";
+    if (/skin|rash|allerg/.test(q))                       return "Skin";
+    if (/muscle|pain|joint|back/.test(q))                 return "Muscles & Joints";
+    if (/immune|immunit/.test(q))                         return "Immunity";
+    return diagnosis.overallScore >= 65 ? "Energy & Immunity" : "Energy Levels";
+  }
+  if (domain === "career") {
+    if (/promot|apprais/.test(q))                         return "Promotion";
+    if (/salary|increment|raise|pay|hike/.test(q))        return "Salary";
+    if (/job.chang|switch|resign|new.job/.test(q))        return "Job Change";
+    if (/recogni|appreciat/.test(q))                      return "Recognition";
+    if (/leadership|manag|team|direct/.test(q))           return "Leadership";
+    if (/learn|train|skill/.test(q))                      return "Learning & Growth";
+    return diagnosis.overallScore >= 65 ? "Recognition & Growth" : "Career Momentum";
+  }
+  if (domain === "finance") {
+    if (/invest|market|stock|mutual/.test(q))             return "Investments";
+    if (/property|house|real.estate|flat/.test(q))        return "Property";
+    if (/save|saving/.test(q))                            return "Savings";
+    if (/debt|loan|borrow|emi/.test(q))                   return "Debt Management";
+    if (/income|salary|earn/.test(q))                     return "Income";
+    return diagnosis.overallScore >= 65 ? "Income & Stability" : "Cash Flow";
+  }
+  if (domain === "relationship") {
+    if (/communicat|talk|discuss|argument/.test(q))       return "Communication";
+    if (/trust|honest|lie|cheat/.test(q))                 return "Trust";
+    if (/marr|wed|engag/.test(q))                         return "Marriage";
+    if (/family|parent|sibling|mother|father/.test(q))    return "Family Dynamics";
+    if (/distance|apart|long.dist/.test(q))               return "Distance";
+    return diagnosis.overallScore >= 65 ? "Emotional Harmony" : "Communication & Connection";
+  }
+  return null;
+}
+
 // ── Answer Plan (the LLM contract) ────────────────────────────────────────────
 
 export function buildAnswerPlan(
@@ -199,6 +270,8 @@ export function buildAnswerPlan(
     confidencePercent:     confidenceMap[diagnosis.confidence] ?? 65,
     probabilities:         buildDomainProbabilities(intent.domain, diagnosis),
     timeline:              diagnosis.timeline,
+    severity:              buildSeverity(intent.domain, diagnosis),
+    affectedArea:          buildAffectedArea(intent.domain, diagnosis, intent),
     mainObservation:       buildMainObservation(lifeStory, diagnosis, intent.domain),
     unexpectedObservation: observations.crossDomainInsight ?? observations.proactiveNotes[0] ?? null,
     recommendation:        buildRecommendation(intent.domain, diagnosis, reasoning),
@@ -206,18 +279,20 @@ export function buildAnswerPlan(
 }
 
 // ── Summary card (pre-rendered server-side — LLM never touches this) ──────────
+// Plain text only — the mobile app renders this in a special card widget that
+// does not parse markdown. The first \n\n-separated paragraph (the header)
+// gets a left amber border; the stats paragraph renders as plain middle text.
 
 export function renderSummaryCard(card: SummaryCard): string {
   const filled = "★".repeat(card.ratingOf5);
   const empty  = "☆".repeat(5 - card.ratingOf5);
-  const statsLine = card.stats.map(s => `${s.label}: **${s.value}**`).join(" · ");
 
-  return (
-    `**${card.title}** ${filled}${empty}  \n` +
-    `*${card.phase}*\n\n` +
-    (statsLine ? `${statsLine}` : "") +
-    `\n\n---`
-  );
+  const header = `${card.title}  ${filled}${empty}\n${card.phase}`;
+  const stats  = card.stats.length
+    ? card.stats.map(s => `${s.label}: ${s.value}`).join("  ·  ")
+    : "";
+
+  return stats ? `${header}\n\n${stats}` : header;
 }
 
 // ── Summary card builder ──────────────────────────────────────────────────────

@@ -209,6 +209,8 @@ export interface AnswerPlan {
   confidencePercent:     number;          // 45 | 65 | 88
   probabilities:         ProbabilityItem[];
   timeline:              string | null;
+  severity:              "Minor" | "Moderate" | "Significant" | "Life-changing" | null;
+  affectedArea:          string | null;   // "Sleep & Energy" | "Promotion" | "Cash Flow" etc.
   mainObservation:       string;          // plain-English summary of what's happening
   unexpectedObservation: string | null;   // astrologer's intuition: "what actually stands out"
   recommendation:        string;          // what to do — practical, direct
