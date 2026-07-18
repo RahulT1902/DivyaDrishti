@@ -14,7 +14,7 @@
 
 import type {
   AstrologicalDiagnosis, IntentAnalysis,
-  ConsultationBrief, HealthBrief, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, RelationshipBrief,
+  ConsultationBrief, HealthBrief, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, RelationshipBrief, SpiritualityBrief,
 } from "./types";
 import type { BodyRiskProfile } from "../../intelligence/health/bodyRiskProfile";
 import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
@@ -104,7 +104,107 @@ const RELATIONSHIP_REMEDIES: Record<string, [string, string]> = {
   "High":             ["Avoid confrontational conversations on no-moon days. Give this time to settle", "Chant Om Shukraya Namah 108 times on Friday and offer white sweets to a cow — it calms Venus-Mars tension"],
 };
 
+// ── Planet worship data ───────────────────────────────────────────────────────
+// Each entry contains everything needed for a complete spirituality consultation.
+
+interface PlanetWorship {
+  day:              string;
+  mantra:           string;
+  charity:          string;
+  behaviour:        string;
+  avoid:            string;
+  governs:          string[];
+  expectedBenefit:  string;
+}
+
+const PLANET_WORSHIP: Record<string, PlanetWorship> = {
+  Sun: {
+    day:             "Sunday",
+    mantra:          "Om Hreem Suryaya Namah — chant 11 times at sunrise, facing east",
+    charity:         "Donate wheat, jaggery, or copper items to someone in need on Sunday morning",
+    behaviour:       "Wake before sunrise and observe the rising sun for 2 minutes. Begin important tasks on Sunday.",
+    avoid:           "Avoid ego conflicts, arguments with authority figures, and disrespecting elders this week",
+    governs:         ["career recognition", "authority", "vitality", "confidence", "government matters", "father"],
+    expectedBenefit: "Increased confidence, better relationship with authority figures, clarity on career direction",
+  },
+  Moon: {
+    day:             "Monday",
+    mantra:          "Om Chandraya Namah — chant 11 times on Monday evening, ideally near water",
+    charity:         "Offer white rice, milk, or silver items to a temple or someone elderly on Monday",
+    behaviour:       "Drink water from a silver glass this week. Spend time near a water body if possible.",
+    avoid:           "Avoid emotional decisions late at night, excessive worry, and skipping sleep",
+    governs:         ["mind", "emotions", "relationships", "cold sensitivity", "sleep quality", "mother"],
+    expectedBenefit: "Improved emotional stability, better sleep, calmer relationships, relief from mental fatigue",
+  },
+  Mars: {
+    day:             "Tuesday",
+    mantra:          "Om Angarakaya Namah — chant 11 times on Tuesday morning",
+    charity:         "Donate red lentils, red cloth, or blood (donate blood) on Tuesday",
+    behaviour:       "Begin important initiatives on Tuesday morning. Physical exercise helps channel Mars energy productively.",
+    avoid:           "Avoid impulsive decisions, arguments with siblings, and excessive spicy food this week",
+    governs:         ["courage", "physical energy", "property", "siblings", "legal matters", "initiative"],
+    expectedBenefit: "Increased drive and confidence, faster resolution of property or legal matters, physical vitality",
+  },
+  Mercury: {
+    day:             "Wednesday",
+    mantra:          "Om Budhaya Namah — chant 11 times on Wednesday morning",
+    charity:         "Feed green grass to a cow, or donate green vegetables on Wednesday",
+    behaviour:       "Write down your key communications and plans clearly this week. Mercury rewards precision.",
+    avoid:           "Avoid signing important documents hastily, miscommunication, and scattered attention",
+    governs:         ["communication", "intellect", "business", "career negotiations", "skill development"],
+    expectedBenefit: "Sharper communication, better negotiation outcomes, clearer thinking, improved business decisions",
+  },
+  Jupiter: {
+    day:             "Thursday",
+    mantra:          "Om Gurave Namah — chant 21 times on Thursday morning",
+    charity:         "Donate yellow items — turmeric, gram dal, yellow cloth — to a temple on Thursday",
+    behaviour:       "Wear yellow or touch a banana leaf on Thursday. Seek the guidance of a mentor or elder.",
+    avoid:           "Avoid arrogance, overpromising, and excessive indulgence this week",
+    governs:         ["wisdom", "wealth growth", "children", "teaching", "long-term blessings", "expansion"],
+    expectedBenefit: "Long-term financial improvement, blessings in family and relationships, wisdom in decisions",
+  },
+  Venus: {
+    day:             "Friday",
+    mantra:          "Om Shukraya Namah — chant 11 times on Friday evening",
+    charity:         "Offer white flowers or white sweets at a Lakshmi or Durga temple on Friday",
+    behaviour:       "Light a ghee lamp Friday evening near a Lakshmi image. Dress well and bring beauty into your environment.",
+    avoid:           "Avoid crude speech, conflicts in relationships, and neglecting your appearance this week",
+    governs:         ["relationships", "communication", "emotional harmony", "creativity", "partnerships", "luxury"],
+    expectedBenefit: "Improved relationships, better reception from others, creative breakthroughs, emotional balance",
+  },
+  Saturn: {
+    day:             "Saturday",
+    mantra:          "Om Shanaischaraya Namah — chant 11 times on Saturday evening",
+    charity:         "Feed crows, dogs, or homeless individuals on Saturday morning. Donate black sesame seeds.",
+    behaviour:       "Donate mustard oil to a Shani temple or give it to a worker. Consistency and service this week.",
+    avoid:           "Avoid shortcuts, laziness, dishonesty, and disrespecting workers or labourers",
+    governs:         ["discipline", "career stability", "patience", "long-term karma", "structure", "responsibility"],
+    expectedBenefit: "Karma resolution, stronger career foundation, improved discipline, relief from long-standing delays",
+  },
+  Rahu: {
+    day:             "Saturday",
+    mantra:          "Om Rahave Namah — chant 18 times on Saturday",
+    charity:         "Donate a dark blanket, coconut, or coal to someone in need on Saturday",
+    behaviour:       "Simplify your choices this week. Rahu amplifies what you focus on — choose carefully.",
+    avoid:           "Avoid illusions, speculation, substances, and people who mislead or flatter excessively",
+    governs:         ["ambition", "sudden changes", "foreign connections", "technology", "unconventional paths"],
+    expectedBenefit: "Clarity on ambitions, protection from deception, better navigation of unexpected changes",
+  },
+  Ketu: {
+    day:             "Tuesday",
+    mantra:          "Om Ketave Namah — chant 7 times in the morning, ideally during meditation",
+    charity:         "Donate sesame seeds, a blanket, or support a spiritual institution on Tuesday",
+    behaviour:       "Spend time in quiet meditation or visit a temple. Ketu responds to inner stillness.",
+    avoid:           "Avoid attachment to outcomes, excessive worldly planning, and arguments about beliefs",
+    governs:         ["spiritual growth", "detachment", "research", "past-life karma", "liberation"],
+    expectedBenefit: "Deeper spiritual insight, detachment from draining situations, clarity on purpose",
+  },
+};
+
 function computeRemedies(domain: string, brief: ConsultationBrief["domainBrief"]): string[] {
+  if (brief.type === "spirituality") {
+    return [brief.mantra, brief.charity];
+  }
   if (brief.type === "health") {
     const entry = HEALTH_REMEDIES[brief.primarySystemKey];
     return entry ?? ["Drink warm water throughout the day", "Chant Mahamrityunjaya mantra 11 times for overall health protection"];
@@ -163,6 +263,9 @@ function interpretHealth(
       bodyParts:          [],
       symptoms:           [],
       strongAreas:        [],
+      goodNews:           ["Overall constitution looks steady"],
+      redFlags:           [],
+      recovery:           null,
       illnessProbability: Math.max(5, Math.min(45, 100 - diagnosis.overallScore)),
       severity:
         s === "Difficult"   ? "Significant"
@@ -173,6 +276,7 @@ function interpretHealth(
       timeline:    diagnosis.timeline,
       energyNote:  "Energy looks moderate for the day.",
       mentalNote:  null,
+      surpriseObservation: null,
     };
   }
 
@@ -233,6 +337,32 @@ function interpretHealth(
     ? "Mental fatigue and stress are a greater risk today than physical illness."
     : null;
 
+  // Good news — strong areas phrased positively
+  const goodNews = strongAreas.map(a => `${a} looks strong this week`);
+
+  // Red flags — warning signs that indicate worsening
+  const redFlags: string[] = primaryScore >= 65
+    ? ["If symptoms worsen after day 3, consider medical attention",
+       "Fever or significant pain is a signal to rest completely"]
+    : primaryScore >= 52
+    ? ["Watch for symptoms that appear in the evening — they tend to linger longer"]
+    : [];
+
+  // Recovery expectation
+  const recovery: string | null =
+    primaryScore < 52 ? null
+    : primaryScore < 65 ? "Fast — most symptoms, if they develop, resolve within 3–5 days with rest"
+    : primaryScore < 78 ? "Moderate — may take 5–7 days; don't push through fatigue"
+    : "Slow — rest is essential; don't underestimate this";
+
+  // Surprise observation — what the chart shows that the user didn't ask about
+  const surpriseObservation: string | null =
+    mentalNote
+      ? "What actually catches my attention more than physical health is mental load — stress is the real risk today"
+      : strongAreas.length >= 2
+      ? `What's worth noting is how strong your ${strongAreas[0]?.toLowerCase()} and ${strongAreas[1]?.toLowerCase()} are — most people in this dasha phase show weakness there`
+      : null;
+
   return {
     type: "health",
     overallStatus,
@@ -241,12 +371,16 @@ function interpretHealth(
     bodyParts,
     symptoms:         findings.symptoms,
     strongAreas,
+    goodNews,
+    redFlags,
+    recovery,
     illnessProbability,
     severity,
     seriousRisk,
     timeline,
     energyNote: findings.energyArc,
     mentalNote,
+    surpriseObservation,
   };
 }
 
@@ -318,6 +452,20 @@ function interpretCareer(
 
   const timing = diagnosis.timeline ?? (activationScore >= 70 ? "next 2–4 weeks" : null);
 
+  const strategyNote =
+    overallProbability >= 70
+      ? "Be visible and take ownership of results — this is the window for it"
+      : overallProbability >= 50
+      ? "Consistent, quiet execution matters more than visibility right now"
+      : "Focus on completing commitments before starting anything new";
+
+  const surpriseObservation =
+    activationScore >= 70 && frictionNote
+      ? "What surprised me is how strong the chart looks despite the friction — the underlying support is genuine, just moving slower than expected"
+      : activationScore < 50 && promiseScore >= 70
+      ? "Your natal chart has strong career promise — what's suppressing it right now is the current period, not permanent"
+      : null;
+
   return {
     type: "career",
     primaryAspect,
@@ -326,6 +474,8 @@ function interpretCareer(
     frictionNote,
     timing,
     overallProbability,
+    strategyNote,
+    surpriseObservation,
   };
 }
 
@@ -380,6 +530,19 @@ function interpretFinance(
     : s === "Challenging" ? "Conservative approach recommended — hold major investments"
     : null;
 
+  const timeline: string | null =
+    s === "Highly Favorable" || s === "Favorable" ? "Conditions should remain favorable for 3–4 weeks"
+    : s === "Moderate" ? "No major shift expected in the next 2 weeks"
+    : s === "Challenging" ? "Pressure may ease in 2–3 weeks as transit positions shift"
+    : null;
+
+  const surpriseObservation =
+    s === "Challenging" && score >= 60
+      ? "What's interesting is that despite the pressure, the natal chart shows strong financial potential — this is a timing issue, not a structural one"
+      : s === "Highly Favorable" && score < 70
+      ? "The overall flow is positive, but the activation is lower than the promise suggests — don't overcommit"
+      : null;
+
   return {
     type: "finance",
     areas,
@@ -387,6 +550,8 @@ function interpretFinance(
     primarySource: "Career income and professional stability",
     opportunity,
     risk,
+    timeline,
+    surpriseObservation,
   };
 }
 
@@ -424,13 +589,172 @@ function interpretRelationship(diagnosis: AstrologicalDiagnosis): RelationshipBr
     "Difficult":        "High",
   };
 
+  const surpriseObservation =
+    CONFLICT[s] === "Low" && ATTENTION[s]?.length > 0
+      ? "What's worth noting despite the overall stability is that small communication gaps tend to widen if ignored — not urgent, but worth addressing"
+      : CONFLICT[s] === "High" && STRONG[s]?.length > 0
+      ? "Interestingly, even with the tension, the long-term foundation between you is intact — this is a period issue, not a relationship issue"
+      : null;
+
   return {
     type:           "relationship",
     strongAreas:    STRONG[s]   ?? [],
     attentionAreas: ATTENTION[s] ?? [],
     conflictRisk:   CONFLICT[s] ?? "Mild",
     primaryDynamic: DYNAMICS[s] ?? "Stable relationship phase",
+    surpriseObservation,
   };
+}
+
+// ── Spirituality interpreter ──────────────────────────────────────────────────
+
+function interpretSpirituality(
+  diagnosis: AstrologicalDiagnosis,
+  chartData: ChartData,
+): SpiritualityBrief {
+  const PLANET_ORDER = ["Jupiter", "Venus", "Mercury", "Moon", "Sun", "Saturn", "Mars", "Rahu", "Ketu"];
+
+  // Pick keyPlanet: prefer diagnosis.keyPlanet, then first supporting factor planet, then Jupiter
+  let keyPlanet = diagnosis.keyPlanet ?? "";
+  if (!keyPlanet || !PLANET_WORSHIP[keyPlanet]) {
+    for (const p of PLANET_ORDER) {
+      const found = diagnosis.supportingFactors.some(f => f.includes(p));
+      if (found) { keyPlanet = p; break; }
+    }
+  }
+  if (!keyPlanet || !PLANET_WORSHIP[keyPlanet]) keyPlanet = "Jupiter";
+
+  const worship = PLANET_WORSHIP[keyPlanet];
+
+  // Confidence: blend dasha + transit alignment
+  const dashaBonus    = diagnosis.dashaAlignment   === "supportive"  ? 15 : diagnosis.dashaAlignment   === "neutral" ? 5 : -5;
+  const transitBonus  = diagnosis.transitAlignment === "favorable"   ? 12 : diagnosis.transitAlignment === "neutral" ? 4 : -3;
+  const baseScore     = diagnosis.overallScore;
+  const confidence    = Math.min(98, Math.max(50, Math.round(baseScore * 0.73 + dashaBonus + transitBonus)));
+
+  // whyNow — why THIS planet at THIS time
+  const supportLine = chartData.natalPromise?.supporting
+    .find(s => s.toLowerCase().includes(keyPlanet.toLowerCase()))
+    ?? diagnosis.supportingFactors[0]
+    ?? `${keyPlanet} is currently active through the ongoing dasha period`;
+
+  const whyNow = `${supportLine}. ${
+    diagnosis.dashaAlignment === "supportive"
+      ? "The dasha period strongly amplifies this planet's influence right now."
+      : diagnosis.transitAlignment === "favorable"
+      ? "Current transits are reinforcing this planet's positive effect."
+      : "This planet holds the strongest positive charge in your chart at this time."
+  }`;
+
+  // confidenceReason
+  const dashaDesc   = diagnosis.dashaAlignment   === "supportive" ? "aligns" : "is active";
+  const transitDesc = diagnosis.transitAlignment === "favorable"  ? "favorable transit supports" : "transit active for";
+  const confidenceReason = `${diagnosis.dashaAlignment.charAt(0).toUpperCase() + diagnosis.dashaAlignment.slice(1)} dasha ${dashaDesc} with ${keyPlanet}; ${transitDesc} ${keyPlanet} in natal chart this week`;
+
+  // duration
+  const duration = diagnosis.timeline
+    ? `Strongest over the next ${diagnosis.timeline}`
+    : diagnosis.dashaAlignment === "supportive"
+    ? "Active for the next 2–3 weeks while this dasha phase continues"
+    : "Most responsive over the next 7–10 days";
+
+  // Secondary planet
+  const secondaryPlanet = (() => {
+    for (const p of PLANET_ORDER) {
+      if (p === keyPlanet) continue;
+      if (diagnosis.supportingFactors.some(f => f.includes(p))) return p;
+    }
+    return null;
+  })();
+
+  return {
+    type:               "spirituality",
+    keyPlanet,
+    confidence,
+    whyNow,
+    lifeAreasSupported: worship.governs,
+    bestDay:            worship.day,
+    mantra:             worship.mantra,
+    duration,
+    charity:            worship.charity,
+    behaviour:          worship.behaviour,
+    avoid:              worship.avoid,
+    expectedBenefit:    worship.expectedBenefit,
+    confidenceReason,
+    secondaryPlanet,
+  };
+}
+
+// ── Consultation Priority Engine ──────────────────────────────────────────────
+// Scores all available observations by severity × confidence × novelty.
+// Returns the top 3 to prevent information overload.
+
+function computeTopPriorities(
+  domain:    string,
+  brief:     ConsultationBrief["domainBrief"],
+  diagnosis: AstrologicalDiagnosis,
+  history:   string[],   // recent assistant response texts for novelty scoring
+): string[] {
+  const candidates: Array<{ text: string; score: number }> = [];
+
+  const noveltyFactor = (text: string) => {
+    const mentions = history.filter(h => h.toLowerCase().includes(text.toLowerCase().slice(0, 15))).length;
+    return mentions === 0 ? 1.0 : mentions === 1 ? 0.6 : 0.2;
+  };
+
+  const severity = diagnosis.overallScore >= 75 ? 3 : diagnosis.overallScore >= 55 ? 2 : 1;
+  const conf     = diagnosis.confidence === "high" ? 3 : diagnosis.confidence === "medium" ? 2 : 1;
+
+  if (brief.type === "health") {
+    if (brief.primarySystem)
+      candidates.push({ text: `${brief.primarySystem} is the primary area of sensitivity (${brief.illnessProbability}% illness probability)`, score: severity * conf * noveltyFactor(brief.primarySystem) });
+    if (brief.energyNote)
+      candidates.push({ text: brief.energyNote, score: 1.5 * conf * noveltyFactor("energy") });
+    if (brief.mentalNote)
+      candidates.push({ text: brief.mentalNote, score: 2 * conf * noveltyFactor("mental fatigue") });
+    brief.goodNews.forEach(g =>
+      candidates.push({ text: `Positive: ${g}`, score: 1 * conf * noveltyFactor(g) }));
+  }
+
+  if (brief.type === "career") {
+    const top = brief.aspects[0];
+    if (top)
+      candidates.push({ text: `${top.name}: ${top.direction} (${top.probability}%)`, score: severity * conf * noveltyFactor(top.name) });
+    if (brief.opportunityNote)
+      candidates.push({ text: brief.opportunityNote, score: 2 * conf * noveltyFactor(brief.opportunityNote.slice(0, 20)) });
+    if (brief.frictionNote)
+      candidates.push({ text: brief.frictionNote, score: 1.5 * conf * noveltyFactor("delay") });
+    if (brief.strategyNote)
+      candidates.push({ text: `Strategy: ${brief.strategyNote}`, score: 1.8 * conf * 1.0 });
+  }
+
+  if (brief.type === "finance") {
+    const topArea = brief.areas.find(a => a.status === "Risky" || a.status === "Cautious");
+    if (topArea)
+      candidates.push({ text: `${topArea.name}: ${topArea.status}`, score: severity * conf * noveltyFactor(topArea.name) });
+    if (brief.risk)
+      candidates.push({ text: brief.risk, score: severity * conf * noveltyFactor("risk") });
+    if (brief.opportunity)
+      candidates.push({ text: brief.opportunity, score: 1.5 * conf * noveltyFactor("opportunity") });
+  }
+
+  if (brief.type === "relationship") {
+    if (brief.primaryDynamic)
+      candidates.push({ text: brief.primaryDynamic, score: severity * conf * noveltyFactor("relationship") });
+    brief.attentionAreas.forEach(a =>
+      candidates.push({ text: `${a} needs attention`, score: 1.5 * conf * noveltyFactor(a) }));
+  }
+
+  if (brief.type === "spirituality") {
+    candidates.push({ text: `Focus on ${brief.keyPlanet} (${brief.confidence}% confidence)`, score: 3 * conf * 1.0 });
+    candidates.push({ text: brief.whyNow, score: 2 * conf * 1.0 });
+    candidates.push({ text: `Expected: ${brief.expectedBenefit}`, score: 1.5 * conf * 1.0 });
+  }
+
+  return candidates
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(c => c.text);
 }
 
 // ── Main builder ──────────────────────────────────────────────────────────────
@@ -538,6 +862,18 @@ export function buildConsultationBrief(
       break;
     }
 
+    case "spirituality": {
+      const sp = interpretSpirituality(diagnosis, chartData);
+      domainBrief    = sp;
+      overallVerdict = `${sp.keyPlanet} is your strongest active planet this week`;
+      mainConclusion = `This week, ${sp.keyPlanet} is the planet most worth strengthening — it's currently the most responsive to worship and devotional practice.`;
+      unexpectedObservation = sp.secondaryPlanet
+        ? `${sp.secondaryPlanet} is also quietly active in the background — you don't need to focus on it, but it's worth being aware of.`
+        : null;
+      recommendation = `Focus exclusively on ${sp.keyPlanet} for the next two weeks rather than trying to strengthen multiple planets. ${sp.behaviour}`;
+      break;
+    }
+
     default: {
       const r = interpretRelationship(diagnosis);
       domainBrief            = r;
@@ -548,7 +884,16 @@ export function buildConsultationBrief(
     }
   }
 
+  // Planet context — WHY the key planet matters for this specific chart
+  const planetContext = chartData.natalPromise?.supporting
+    .find(s => diagnosis.keyPlanet && s.toLowerCase().includes(diagnosis.keyPlanet.toLowerCase()))
+    ?? chartData.natalPromise?.supporting[0]
+    ?? null;
+
   const remedies = computeRemedies(domain, domainBrief);
+
+  // Priority Engine — top 3 observations, deduplicated by novelty (no history available here; route.ts will pass it later)
+  const topPriorities = computeTopPriorities(domain, domainBrief, diagnosis, []);
 
   return {
     domain,
@@ -557,6 +902,8 @@ export function buildConsultationBrief(
     unexpectedObservation,
     recommendation,
     remedies,
+    planetContext,
+    topPriorities,
     domainBrief,
   };
 }
@@ -581,13 +928,20 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
       lines.push(`IF ANYTHING DEVELOPS, EXPECT:`);
       db.symptoms.forEach(s => lines.push(`  • ${s}`));
     }
+    if (db.goodNews.length > 0)
+      lines.push(`GOOD NEWS: ${db.goodNews.join("  ·  ")}`);
     if (db.strongAreas.length > 0)
       lines.push(`STABLE TODAY: ${db.strongAreas.join("  ·  ")}`);
+    if (db.redFlags.length > 0) {
+      lines.push(`RED FLAGS (only mention if relevant):`);
+      db.redFlags.forEach(r => lines.push(`  • ${r}`));
+    }
     lines.push(`ILLNESS PROBABILITY: ${db.illnessProbability}%  ← USE THIS EXACT NUMBER, NO OTHERS`);
     if (db.severity)
       lines.push(`SEVERITY: ${db.severity} — temporary if anything develops`);
     lines.push(`SERIOUS ILLNESS RISK: ${db.seriousRisk}  ← DO NOT CONTRADICT THIS`);
     lines.push(`TIMELINE: ${db.timeline ?? "No illness expected — nothing to time"}  ← DO NOT INVENT A DIFFERENT TIMELINE`);
+    if (db.recovery) lines.push(`RECOVERY: ${db.recovery}`);
     lines.push(`ENERGY: ${db.energyNote}`);
     if (db.mentalNote) lines.push(`MENTAL NOTE: ${db.mentalNote}`);
   }
@@ -630,23 +984,65 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     lines.push(`PRIMARY DYNAMIC: ${db.primaryDynamic}`);
   }
 
+  if (db.type === "spirituality") {
+    lines.push(`KEY PLANET: ${db.keyPlanet}  (confidence: ${db.confidence}%)`);
+    lines.push(`WHY NOW: ${db.whyNow}`);
+    lines.push(`LIFE AREAS SUPPORTED: ${db.lifeAreasSupported.join(", ")}`);
+    lines.push(`HOW LONG: ${db.duration}`);
+    lines.push(`CONFIDENCE REASON: ${db.confidenceReason}`);
+    lines.push(`BEST DAY: ${db.bestDay}`);
+    lines.push(`MANTRA: ${db.mantra}`);
+    lines.push(`CHARITY: ${db.charity}`);
+    lines.push(`BEHAVIOUR: ${db.behaviour}`);
+    lines.push(`AVOID: ${db.avoid}`);
+    lines.push(`EXPECTED BENEFIT: ${db.expectedBenefit}`);
+    if (db.secondaryPlanet) lines.push(`SECONDARY PLANET (mention briefly): ${db.secondaryPlanet}`);
+  }
+
+  // Planet context — why the key planet is relevant to THIS chart (chart-specific, not generic)
+  if (brief.planetContext) {
+    lines.push(`\nWHY THIS PLANET MATTERS FOR THIS CHART (use this to explain — it's specific to this person):\n  ${brief.planetContext}`);
+  }
+
+  // Top priorities — the 3 most important observations, scored by severity × confidence × novelty
+  if (brief.topPriorities.length > 0) {
+    lines.push(`\nTOP 3 PRIORITIES (address these, not everything above):`);
+    brief.topPriorities.forEach((p, i) => lines.push(`  ${i + 1}. ${p}`));
+    lines.push(`  Do NOT mention lower-priority findings. Wisdom is knowing what to leave out.`);
+  }
+
+  // Follow-up vs fresh question
   if (isFollowUp) {
     lines.push(
-      `FOLLOW-UP INSTRUCTION: The user already received the full diagnosis above in a prior turn. ` +
-      `Do NOT repeat the same opening or rehash the same content. ` +
-      `Answer ONLY what they are specifically asking now. ` +
-      `If they ask about a body part or area that is NOT in the PRIMARY AREA above, ` +
-      `tell them that area is not flagged by the chart this week — then briefly note what the STABLE TODAY areas are. ` +
-      `If they ask about a body part that IS in the PRIMARY AREA, elaborate specifically on that aspect.`
+      `\nFOLLOW-UP INSTRUCTION: The user already received the full diagnosis in a prior turn. ` +
+      `Do NOT repeat the same content or opening. ` +
+      `Begin with a phrase that continues the conversation naturally — choose one that fits:\n` +
+      `  "Good follow-up — looking specifically at [X]..."\n` +
+      `  "That's actually a different area. Let me separate it out..."\n` +
+      `  "Building on what I said — if we isolate [X]..."\n` +
+      `  "Interestingly, [X] isn't where the chart points..."\n` +
+      `  "Now that you've narrowed it down to [X]..."\n` +
+      `Answer ONLY the specific sub-question. If the area they ask about is NOT in the PRIMARY AREA, ` +
+      `tell them it's not flagged, and mention what the STABLE / GOOD NEWS areas are.`
     );
   } else {
-    lines.push(`YOUR OPENING SENTENCE: "${brief.mainConclusion}"  ← START WITH THIS EXACTLY`);
+    lines.push(`\nYOUR OPENING SENTENCE: "${brief.mainConclusion}"  ← START WITH THIS EXACTLY`);
   }
-  if (brief.unexpectedObservation)
-    lines.push(`UNEXPECTED OBSERVATION: ${brief.unexpectedObservation}`);
-  lines.push(`CLOSING RECOMMENDATION: ${brief.recommendation}`);
+
+  // Mandatory surprise observation
+  const surprise = brief.unexpectedObservation
+    ?? (db.type !== "spirituality" && "surpriseObservation" in db ? db.surpriseObservation : null);
+  if (surprise) {
+    lines.push(
+      `\nMANDATORY SURPRISE — include in paragraph 3, worded as a genuine discovery:\n` +
+      `  "${surprise}"\n` +
+      `  Use: "What actually caught my attention..." / "The part I wouldn't ignore..." / "One thing I didn't expect..."`
+    );
+  }
+
+  lines.push(`\nCLOSING RECOMMENDATION: ${brief.recommendation}`);
   if (brief.remedies.length > 0) {
-    lines.push(`ASTROLOGICAL REMEDIES (weave these naturally into your recommendation paragraph):`);
+    lines.push(`ASTROLOGICAL REMEDIES (weave naturally into recommendation paragraph):`);
     brief.remedies.forEach(r => lines.push(`  • ${r}`));
   }
 

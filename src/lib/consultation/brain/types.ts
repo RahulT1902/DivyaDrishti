@@ -226,12 +226,16 @@ export interface HealthBrief {
   bodyParts:          string[];  // ["Throat", "Nasal passages", "Upper airways"]
   symptoms:           string[];  // ["Throat irritation", "Mild cough", "Nasal congestion"]
   strongAreas:        string[];  // ["Digestion", "Cardiovascular", "Immunity"]
+  goodNews:           string[];  // positives worth mentioning — "Digestion is strong", "Energy looks good"
+  redFlags:           string[];  // warning signs to watch for — if these appear, it's more serious
+  recovery:           string | null;  // "Fast — 3–5 days", "May linger a week if not rested"
   illnessProbability: number;    // 5–75
   severity:           "Minor" | "Moderate" | "Significant" | null;
   seriousRisk:        "Very unlikely" | "Unlikely" | "Possible";
   timeline:           string | null;  // "3–5 days" | "This week"
   energyNote:         string;
   mentalNote:         string | null;  // "Stress is a greater risk than illness today"
+  surpriseObservation: string | null; // the one thing that's unexpected — mandatory if non-null
 }
 
 export interface CareerAspect {
@@ -248,6 +252,8 @@ export interface CareerBrief {
   frictionNote:       string | null;
   timing:             string | null;
   overallProbability: number;
+  strategyNote:       string;         // what the user should actually DO this week/period
+  surpriseObservation: string | null; // the unexpected finding — what they didn't ask about
 }
 
 export interface FinanceArea {
@@ -262,6 +268,8 @@ export interface FinanceBrief {
   primarySource: string;
   opportunity:   string | null;
   risk:          string | null;
+  timeline:      string | null;        // when conditions shift
+  surpriseObservation: string | null;
 }
 
 export interface RelationshipBrief {
@@ -270,9 +278,27 @@ export interface RelationshipBrief {
   attentionAreas: string[];
   conflictRisk:   "Low" | "Mild" | "Moderate" | "High";
   primaryDynamic: string;
+  surpriseObservation: string | null;
 }
 
-export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | RelationshipBrief;
+export interface SpiritualityBrief {
+  type:               "spirituality";
+  keyPlanet:          string;
+  confidence:         number;        // 0–100 — how strongly the chart supports this recommendation
+  whyNow:             string;        // why THIS planet is most active right now (dasha + transit reasoning)
+  lifeAreasSupported: string[];      // ["Relationships", "Communication", "Emotional harmony"]
+  bestDay:            string;        // day of the week for worship
+  mantra:             string;        // specific mantra with count and timing
+  duration:           string;        // "Next 2 weeks", "Until end of this dasha sub-period"
+  charity:            string;        // what to donate, to whom, and when
+  behaviour:          string;        // practical behavioral practice during this period
+  avoid:              string;        // what to avoid — behaviors that weaken this planet
+  expectedBenefit:    string;        // what the user can realistically expect if they follow the guidance
+  confidenceReason:   string;        // why the confidence is at this level: "Transit X supports natal Y"
+  secondaryPlanet:    string | null; // secondary planet worth noting
+}
+
+export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | RelationshipBrief | SpiritualityBrief;
 
 export interface ConsultationBrief {
   domain:                string;
@@ -281,6 +307,8 @@ export interface ConsultationBrief {
   unexpectedObservation: string | null;
   recommendation:        string;
   remedies:              string[];  // 1–2 specific astrological remedies, pre-computed by DIE
+  planetContext:         string | null;  // WHY the key planet matters — from natal promise, chart-specific
+  topPriorities:         string[];  // top 3 observations scored by severity × confidence × novelty
   domainBrief:           DomainBrief;
 }
 
@@ -298,6 +326,7 @@ export interface PunditBrainContext {
   responsePlan:      ResponsePlan;
   answerPlan:        AnswerPlan;        // L8 depth/section decisions
   consultationBrief: ConsultationBrief; // DIE — what the LLM actually narrates
+  sessionNote:       string | null;     // session-level dedup: observations already said twice get suppressed
 }
 
 // ── Brain Output ──────────────────────────────────────────────────────────────

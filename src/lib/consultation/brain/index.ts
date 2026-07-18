@@ -30,7 +30,7 @@ import type { ChartData } from "./DIE_domainInterpreter";
 // The rule: if a sentence could come from a chart report, it doesn't belong here.
 
 function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEntry[]): string {
-  const { realityContext, intent, userState, lifeStory, answerPlan, personality, responsePlan } = ctx;
+  const { realityContext, intent, userState, lifeStory, answerPlan, personality, responsePlan, sessionNote } = ctx;
 
   const sections: string[] = [];
 
@@ -168,39 +168,38 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `• NEVER use emoji in your response. Write in plain connected paragraphs only.\n` +
     `  No section headers, no bullet-pointed sections with headers, no 🌿 🤧 💼 or any other symbol.\n\n` +
 
-    `• PARAGRAPH STRUCTURE — aim for exactly 4 short paragraphs:\n` +
+    `• PARAGRAPH STRUCTURE — exactly 4 short paragraphs:\n` +
     `  Para 1 (2–3 sentences): Direct answer + specific area. Short and clear.\n` +
-    `  Para 2 (2–3 sentences): What to watch for — symptoms, risk level, timeline.\n` +
-    `  Para 3 (2–3 sentences): One astrological citation + one observation they didn't ask for.\n` +
+    `  Para 2 (2–3 sentences): Elaborate on the TOP PRIORITIES from the DIAGNOSIS only.\n` +
+    `  Para 3 (2–3 sentences): MANDATORY SURPRISE + one planet context citation. Must include the surprise.\n` +
     `  Para 4 (2–3 sentences): Practical recommendation — standalone, will be highlighted.\n` +
     `  No paragraph should exceed 3 sentences. Breathing room matters.\n\n` +
 
-    `• PLANET MENTIONS — allowed: exactly ONE brief, natural planet citation (para 3 only).\n` +
-    `  ✓ "The Moon's current position links your system to cold sensitivity today."\n` +
-    `  ✗ Never house numbers, degrees, yoga names, dasha names, or technical terms.\n\n` +
+    `• MANDATORY SURPRISE (para 3): The DIAGNOSIS contains a MANDATORY SURPRISE observation.\n` +
+    `  You MUST include it in paragraph 3, worded as a genuine discovery — not a footnote.\n` +
+    `  Use: "What actually caught my attention..." / "One thing I wouldn't ignore..." / "The part that surprised me..."\n` +
+    `  If there is no MANDATORY SURPRISE listed, add your own based on what's unexpectedly strong or absent.\n\n` +
 
-    `• NEVER mention: house numbers, Sun%, Rahu, yoga names, dasha names, transit scores.\n` +
-    `  One planet name max, used naturally. The diagnosis is yours — the chart stays hidden.\n\n` +
+    `• PLANET CONTEXT (para 3): Use the WHY THIS PLANET MATTERS section from the DIAGNOSIS\n` +
+    `  to explain WHY that planet is relevant — one natural sentence. Never house numbers or degrees.\n\n` +
 
-    `• NEVER invent percentages. The ONLY numbers you may state are the exact ones in the DIAGNOSIS block.\n` +
-    `  ✗ "35% chance of concern, 65% recovery" — if those numbers aren't in the DIAGNOSIS, don't say them.\n` +
-    `  ✓ Use the exact ILLNESS PROBABILITY or OVERALL PROBABILITY from the DIAGNOSIS.\n\n` +
+    `• TOP PRIORITIES: The DIAGNOSIS lists the top 3 observations. Only elaborate on those.\n` +
+    `  Do NOT mention lower-priority findings even if they're in the DIAGNOSIS.\n` +
+    `  Wisdom is knowing what to leave out.\n\n` +
 
-    `• NEVER invent a timeline. If TIMELINE in the DIAGNOSIS says "No illness expected", say nothing about months.\n` +
-    `  ✗ "over the next 3–4 months" — if the DIAGNOSIS doesn't name that window, don't use it.\n` +
-    `  ✓ Use only the TIMELINE from the DIAGNOSIS, or omit timing entirely.\n\n` +
+    (sessionNote ? `• SESSION DEDUP — ${sessionNote}\n\n` : ``) +
 
-    `• NEVER contradict the DIAGNOSIS. If SERIOUS ILLNESS RISK says "Very unlikely", do not suggest otherwise.\n\n` +
+    `• NEVER introduce an astrological fact not present in the DIAGNOSIS block.\n` +
+    `  Every claim you make must be traceable to a line in the DIAGNOSIS.\n` +
+    `  If you find yourself saying something not listed there — stop and delete it.\n\n` +
 
-    `• NEVER hedge. Replace:\n` +
+    `• NEVER invent percentages. Use ONLY numbers from the DIAGNOSIS block.\n` +
+    `• NEVER invent a timeline. Use ONLY the TIMELINE from the DIAGNOSIS, or omit timing.\n` +
+    `• NEVER contradict the DIAGNOSIS. It is the ground truth.\n\n` +
+
+    `• NEVER hedge:\n` +
     `  ✗ "might / could / perhaps / generally / typically / may indicate"\n` +
     `  ✓ "I don't see / I'd expect / the reading shows / I'm not concerned / this suggests"\n\n` +
-
-    `• NEVER dump everything. Mention only the 2–3 most important things.\n` +
-    `  A consultation is wisdom, not data.\n\n` +
-
-    `• ALWAYS add at least one observation the user didn't ask for.\n` +
-    `  This is what makes consultations feel intelligent and personal.\n\n` +
 
     `• ALWAYS end with a recommendation as a standalone paragraph.\n\n` +
 
@@ -211,11 +210,11 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
     `PRE-FLIGHT CHECK (verify silently before writing):\n` +
     `✓ Exactly 4 paragraphs, each 2–3 sentences max\n` +
-    `✓ Para 1: direct answer + specific area, nothing else\n` +
-    `✓ Para 2: what to watch for — symptoms, probability, timeline from DIAGNOSIS\n` +
-    `✓ Para 3: one planet citation (natural, one sentence) + one observation they didn't ask for\n` +
-    `✓ Para 4: standalone practical recommendation, will be highlighted amber in the app\n` +
-    `✓ Zero emoji, zero section headers, zero house numbers\n` +
+    `✓ Para 1: direct answer + specific area from DIAGNOSIS\n` +
+    `✓ Para 2: TOP PRIORITIES only — no extras\n` +
+    `✓ Para 3: MANDATORY SURPRISE + planet context (WHY THIS PLANET MATTERS)\n` +
+    `✓ Para 4: standalone practical recommendation, highlighted amber in the app\n` +
+    `✓ Zero emoji, zero section headers, zero invented facts\n` +
     `✓ No percentages or timelines invented — only what's in the DIAGNOSIS`
   );
 
@@ -270,6 +269,24 @@ export async function assemblePunditBrain(
   // Domain Interpretation Engine — converts chart data to domain-specific conclusions
   const consultationBrief = buildConsultationBrief(domain, diagnosis, intent, chartData);
 
+  // Session dedup — detect observations already delivered twice in this conversation.
+  // The LLM will be instructed to skip these rather than repeating them.
+  const REPEATABLE_PATTERNS: Array<{ label: string; regex: RegExp }> = [
+    { label: "mental fatigue / stress risk",  regex: /mental fatigue|stress.*greater risk|stress.*risk today|emotional load/i },
+    { label: "need for patience / slow period", regex: /patience|slow period|don.t rush|things take time/i },
+    { label: "hydration / rest reminder",      regex: /stay hydrated|prioritis.*rest|drink.*water/i },
+    { label: "career stress / work pressure",  regex: /work pressure|career stress|overwork/i },
+    { label: "communication issues",           regex: /communication gap|miscommunicat/i },
+  ];
+  const assistantTexts = history.filter(m => m.role === "assistant").map(m => m.content);
+  const repeatedObservations = REPEATABLE_PATTERNS
+    .filter(p => assistantTexts.filter(t => p.regex.test(t)).length >= 2)
+    .map(p => p.label);
+  const sessionNote = repeatedObservations.length > 0
+    ? `ALREADY SAID TWICE — DO NOT REPEAT: ${repeatedObservations.join(", ")}. ` +
+      `If it's still relevant, say once: "The [observation] I mentioned earlier still applies — I won't go into it again."`
+    : null;
+
   // Layer 5: Observations
   const observations = buildObservations(domain, diagnosis, memories, symbolicCtx);
 
@@ -298,6 +315,7 @@ export async function assemblePunditBrain(
     responsePlan,
     answerPlan,
     consultationBrief,
+    sessionNote,
   };
 
   // Layer 9: Build LLM brief (conclusions only)
