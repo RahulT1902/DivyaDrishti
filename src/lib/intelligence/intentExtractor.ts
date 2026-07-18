@@ -52,8 +52,8 @@ export function extractIntent(question: string, userSeed?: string): Intent {
   if (/(fitness|diet|mental|energy|fatigue|pain|surgery|recovery|wellbeing|nausea|acidity|gastric|constipat|bloat|migrain|tummy|abdomen)/i.test(q)) scores.health += 0.5;
 
   // Spirituality
-  if (/(spiritual|meditation|karma|dharma|moksha|pooja|prayer|deity|temple|sadhana)/i.test(q)) scores.spirituality += 1;
-  if (/(mantra|ritual|fast|vrat|pilgrimage|astral|soul|consciousness|awakening)/i.test(q)) scores.spirituality += 0.5;
+  if (/(spiritual|meditation|karma|dharma|moksha|pooja|prayer|deity|temple|sadhana|worship|planet.*support|which.*planet|god.*worship|strengthen.*planet|planet.*help)/i.test(q)) scores.spirituality += 1;
+  if (/(mantra|ritual|fast|vrat|pilgrimage|astral|soul|consciousness|awakening|gemstone|remedy|puja|planet.*favor|favorable.*planet)/i.test(q)) scores.spirituality += 0.5;
 
   // Family
   if (/(family|parent|father|mother|child|son|daughter|sibling|brother|sister)/i.test(q)) scores.family += 1;

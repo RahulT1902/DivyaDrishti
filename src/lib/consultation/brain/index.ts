@@ -37,12 +37,25 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
   // ── FORMAT OVERRIDE — must be first; overrides any model training ─────────
   sections.push(
     `RESPONSE FORMAT — READ THIS FIRST, IT OVERRIDES EVERYTHING ELSE:\n` +
-    `• Write EXACTLY 4 short paragraphs. Each paragraph: 2–3 sentences only.\n` +
+    `• Write EXACTLY 4 short paragraphs. Each paragraph: 2–3 sentences only. Total: ~80–100 words max.\n` +
     `• NO emoji anywhere. Not even one. 🌿 💼 🤧 or any symbol = automatic failure.\n` +
     `• NO section headers, NO bullet-point lists, NO "Primary area to watch", NO "Outlook" headers.\n` +
     `• NO bold/italic markdown formatting. Plain sentences only.\n` +
     `• If your output contains any emoji or section header, it is wrong. Rewrite it.\n` +
-    `• The 4th paragraph is the recommendation — it will be visually highlighted, so make it count.`
+    `• The 4th paragraph is the recommendation — it will be visually highlighted, so make it count.\n\n` +
+    `ANSWER-FIRST RULE (non-negotiable):\n` +
+    `Your first sentence IS the complete answer. No setup. No "The chart shows..." No "Based on...".\n` +
+    `  ✓ "This week, Venus is your strongest supporting planet."\n` +
+    `  ✓ "Your health looks stable this week."\n` +
+    `  ✓ "Jupiter is the planet working most in your favour right now."\n` +
+    `  ✗ "The general picture looks moderate..." — this is not an answer, it is a hedge.\n` +
+    `  ✗ "Based on your chart..." — never. The diagnosis is already done. Just say the answer.\n` +
+    `If someone could walk away after your first two sentences and feel answered — you succeeded.\n` +
+    `Everything after that deepens, justifies, or personalises. Never replaces.\n\n` +
+    `WORD REPETITION RULE:\n` +
+    `Once you name a theme (e.g. "communication"), do not use that word again.\n` +
+    `Deepen it: "well-timed conversations" / "how you express yourself" / "your ability to persuade."\n` +
+    `This applies to every repeated word: career, relationships, energy, stress, planet names.`
   );
 
   // ── PERMANENT CONSTITUTION — identity, purpose, philosophy ────────────────

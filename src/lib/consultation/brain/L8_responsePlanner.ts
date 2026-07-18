@@ -305,7 +305,13 @@ function buildSummaryCard(
 ): SummaryCard {
   const { overallScore, probability, timeline, challengingFactors } = diagnosis;
   const stars  = overallScore >= 80 ? 5 : overallScore >= 65 ? 4 : overallScore >= 50 ? 3 : overallScore >= 35 ? 2 : 1;
-  const phase  = lifeStory?.currentStage ?? diagnosis.overallState;
+  const rawPhase = lifeStory?.currentStage ?? diagnosis.overallState;
+  const FRIENDLY_PHASE: Record<string, string> = {
+    "Unknown":          diagnosis.overallState,
+    "spirituality":     "Planetary Guidance",
+    "general":          "Weekly Outlook",
+  };
+  const phase = FRIENDLY_PHASE[rawPhase] ?? rawPhase;
 
   const statsMap: Record<string, Array<{ label: string; value: string }>> = {
     health: [
@@ -336,7 +342,15 @@ function buildSummaryCard(
 
   const timeLabel = intent.timeframe === "today" ? " Today"
     : /week/i.test(intent.timeframe ?? "") ? " This Week" : "";
-  const title = `${domain.charAt(0).toUpperCase() + domain.slice(1)}${timeLabel}`;
+  const DOMAIN_TITLE: Record<string, string> = {
+    spirituality: "Planetary Support",
+    general:      "Weekly Guidance",
+    education:    "Education",
+    business:     "Business",
+    family:       "Family",
+  };
+  const titleBase = DOMAIN_TITLE[domain] ?? (domain.charAt(0).toUpperCase() + domain.slice(1));
+  const title = `${titleBase}${timeLabel}`;
 
   return { title, ratingOf5: stars, phase, stats: statsMap[domain] ?? [] };
 }
