@@ -786,10 +786,12 @@ export function buildConsultationBrief(
 
       mainConclusion =
         h.overallStatus === "Healthy"
-          ? "Your health looks stable today — I don't see any indication of serious illness developing."
+          ? "Your health looks stable today — nothing developing."
           : h.overallStatus === "Mild Sensitivity"
-          ? `Your health is generally good, but the ${h.primarySystem.toLowerCase()} shows some mild sensitivity worth noting.`
-          : `There is ${h.overallStatus === "Moderate Concern" ? "a moderate concern" : "a significant concern"} in the ${h.primarySystem.toLowerCase()} right now.`;
+          ? `${h.primarySystem} is today's most active area — mild sensitivity, about ${h.illnessProbability}% chance of anything developing.`
+          : h.overallStatus === "Moderate Concern"
+          ? `Your ${h.primarySystem.toLowerCase()} needs attention today — moderate sensitivity with ${h.illnessProbability}% illness probability.`
+          : `${h.primarySystem} is significantly activated today — ${h.illnessProbability}% illness probability. Take this seriously.`;
 
       unexpectedObservation = h.mentalNote;
 
@@ -930,7 +932,8 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   if (db.type === "health") {
     // Multi-system ranked list — the key architectural upgrade
     if (db.rankedSystems && db.rankedSystems.length > 0) {
-      lines.push(`ALL ACTIVE BODY SYSTEMS (ranked by astrological sensitivity, highest first):`);
+      lines.push(`ALL ACTIVE BODY SYSTEMS — FOR CALIBRATION ONLY. DO NOT QUOTE THESE SCORES IN YOUR RESPONSE.`);
+      lines.push(`Use them to decide what to emphasise. Never say "ranking of X" or "score of Y".`);
       for (const sys of db.rankedSystems) {
         const bar = "█".repeat(Math.round(sys.score / 10));
         const pad = " ".repeat(Math.max(1, 28 - sys.name.length));
