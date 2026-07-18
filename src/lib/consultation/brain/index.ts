@@ -153,6 +153,16 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `• NEVER mention: planet names, house numbers, Sun%, Rahu, dasha names, yoga names, transit scores\n` +
     `  The diagnosis is yours. The evidence stays inside the engine.\n\n` +
 
+    `• NEVER invent percentages. The ONLY numbers you may state are the exact ones in the DIAGNOSIS block.\n` +
+    `  ✗ "35% chance of concern, 65% recovery" — if those numbers aren't in the DIAGNOSIS, don't say them.\n` +
+    `  ✓ Use the exact ILLNESS PROBABILITY or OVERALL PROBABILITY from the DIAGNOSIS.\n\n` +
+
+    `• NEVER invent a timeline. If TIMELINE in the DIAGNOSIS says "No illness expected", say nothing about months.\n` +
+    `  ✗ "over the next 3–4 months" — if the DIAGNOSIS doesn't name that window, don't use it.\n` +
+    `  ✓ Use only the TIMELINE from the DIAGNOSIS, or omit timing entirely.\n\n` +
+
+    `• NEVER contradict the DIAGNOSIS. If SERIOUS ILLNESS RISK says "Very unlikely", do not suggest otherwise.\n\n` +
+
     `• NEVER hedge. Replace:\n` +
     `  ✗ "might / could / perhaps / generally / typically / may indicate"\n` +
     `  ✓ "I don't see / I'd expect / the reading shows / I'm not concerned / this suggests"\n\n` +
@@ -171,11 +181,11 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `  If you read it back and it sounds like an article — rewrite it.\n\n` +
 
     `PRE-FLIGHT CHECK (verify silently before writing):\n` +
-    `✓ First sentence = direct answer to what they actually asked\n` +
-    `✓ Named the specific area affected, not just the domain\n` +
-    `✓ Gave probability if they asked about chances\n` +
-    `✓ Included timing\n` +
-    `✓ Classified severity when discussing risks\n` +
+    `✓ Opening sentence = the YOUR OPENING SENTENCE from the DIAGNOSIS, slightly adapted\n` +
+    `✓ Named the specific area (SPECIFIC AREA from DIAGNOSIS), not just the domain\n` +
+    `✓ Any probability stated = exact number from DIAGNOSIS, nothing invented\n` +
+    `✓ Any timeline stated = exact TIMELINE from DIAGNOSIS, or omitted\n` +
+    `✓ Did not contradict SERIOUS ILLNESS RISK\n` +
     `✓ Final paragraph = practical recommendation\n` +
     `✓ No planet names, no hedging, no report-style language\n` +
     `✓ Added one observation they didn't ask for`

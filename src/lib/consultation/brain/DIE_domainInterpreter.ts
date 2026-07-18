@@ -49,6 +49,12 @@ const BODY_PARTS: Record<string, string[]> = {
   liver:                   ["liver", "right abdomen"],
   allergySensitivity:      ["nasal passages", "skin", "eyes"],
   inflammation:            ["muscles", "joints", "affected tissues"],
+  // Functional systems — affects stamina/immunity/mental state, not specific organs
+  energyStamina:           ["overall stamina", "physical endurance", "adrenal response"],
+  immuneSystem:            ["immune response", "lymphatic system", "resistance to illness"],
+  mentalWellness:          ["mental clarity", "emotional regulation", "stress response"],
+  sleep:                   ["sleep cycle", "rest quality", "overnight recovery"],
+  recovery:                ["physical recovery", "cellular repair", "post-exertion bounce-back"],
 };
 
 // Display names for the "stable today" column
@@ -486,7 +492,7 @@ export function buildConsultationBrief(
 export function renderConsultationBrief(brief: ConsultationBrief, question: string): string {
   const { domainBrief: db } = brief;
   const lines: string[] = [
-    `━━━ YOUR PRE-COMPUTED DIAGNOSIS — narrate this as an experienced astrologer ━━━`,
+    `━━━ DIAGNOSIS (engine-computed — DO NOT invent numbers beyond what is listed here) ━━━`,
     `QUESTION: "${question}"`,
     `OVERALL: ${brief.overallVerdict}`,
   ];
@@ -494,37 +500,37 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   if (db.type === "health") {
     lines.push(`PRIMARY AREA: ${db.primarySystem}`);
     if (db.bodyParts.length > 0)
-      lines.push(`BODY PARTS: ${db.bodyParts.join("  ·  ")}`);
+      lines.push(`SPECIFIC AREA: ${db.bodyParts.join("  ·  ")}`);
     if (db.symptoms.length > 0) {
-      lines.push(`IF SYMPTOMS DEVELOP:`);
+      lines.push(`IF ANYTHING DEVELOPS, EXPECT:`);
       db.symptoms.forEach(s => lines.push(`  • ${s}`));
     }
     if (db.strongAreas.length > 0)
       lines.push(`STABLE TODAY: ${db.strongAreas.join("  ·  ")}`);
-    lines.push(`ILLNESS PROBABILITY: ${db.illnessProbability}%`);
+    lines.push(`ILLNESS PROBABILITY: ${db.illnessProbability}%  ← USE THIS EXACT NUMBER, NO OTHERS`);
     if (db.severity)
       lines.push(`SEVERITY: ${db.severity} — temporary if anything develops`);
-    lines.push(`SERIOUS ILLNESS: ${db.seriousRisk}`);
-    if (db.timeline) lines.push(`TIMELINE: ${db.timeline}`);
+    lines.push(`SERIOUS ILLNESS RISK: ${db.seriousRisk}  ← DO NOT CONTRADICT THIS`);
+    lines.push(`TIMELINE: ${db.timeline ?? "No illness expected — nothing to time"}  ← DO NOT INVENT A DIFFERENT TIMELINE`);
     lines.push(`ENERGY: ${db.energyNote}`);
     if (db.mentalNote) lines.push(`MENTAL NOTE: ${db.mentalNote}`);
   }
 
   if (db.type === "career") {
     lines.push(`PRIMARY FOCUS: ${db.primaryAspect}`);
-    lines.push(`CAREER BREAKDOWN:`);
+    lines.push(`CAREER BREAKDOWN (use these exact probabilities — do not invent others):`);
     db.aspects.forEach(a => {
       const pad = " ".repeat(Math.max(1, 18 - a.name.length));
       lines.push(`  ${a.name}:${pad}${a.direction} (${a.probability}%)`);
     });
     lines.push(`OPPORTUNITY: ${db.opportunityNote}`);
     if (db.frictionNote) lines.push(`FRICTION: ${db.frictionNote}`);
-    if (db.timing) lines.push(`TIMING: ${db.timing}`);
-    lines.push(`OVERALL PROBABILITY: ${db.overallProbability}%`);
+    lines.push(`TIMING: ${db.timing ?? "No specific window yet"}  ← DO NOT INVENT A DIFFERENT TIMELINE`);
+    lines.push(`OVERALL PROBABILITY: ${db.overallProbability}%  ← USE THIS EXACT NUMBER`);
   }
 
   if (db.type === "finance") {
-    lines.push(`FINANCIAL AREAS:`);
+    lines.push(`FINANCIAL AREAS (use these status labels — do not invent percentages):`);
     db.areas.forEach(a => {
       const pad = " ".repeat(Math.max(1, 22 - a.name.length));
       lines.push(`  ${a.name}:${pad}${a.status}`);
@@ -544,14 +550,14 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
       lines.push(`NEEDS ATTENTION:`);
       db.attentionAreas.forEach(a => lines.push(`  • ${a}`));
     }
-    lines.push(`CONFLICT RISK: ${db.conflictRisk}`);
+    lines.push(`CONFLICT RISK: ${db.conflictRisk}  ← DO NOT CONTRADICT THIS`);
     lines.push(`PRIMARY DYNAMIC: ${db.primaryDynamic}`);
   }
 
-  lines.push(`DIRECT ANSWER: ${brief.mainConclusion}`);
+  lines.push(`YOUR OPENING SENTENCE: "${brief.mainConclusion}"  ← START WITH THIS EXACTLY`);
   if (brief.unexpectedObservation)
-    lines.push(`UNEXPECTED: ${brief.unexpectedObservation}`);
-  lines.push(`RECOMMENDATION: ${brief.recommendation}`);
+    lines.push(`UNEXPECTED OBSERVATION: ${brief.unexpectedObservation}`);
+  lines.push(`CLOSING RECOMMENDATION: ${brief.recommendation}`);
 
   return lines.join("\n");
 }
