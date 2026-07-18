@@ -565,7 +565,7 @@ export function buildConsultationBrief(
 // Converts ConsultationBrief into the diagnosis block the LLM narrates from.
 // Every fact here was computed by the engine — the LLM cannot invent beyond it.
 
-export function renderConsultationBrief(brief: ConsultationBrief, question: string): string {
+export function renderConsultationBrief(brief: ConsultationBrief, question: string, isFollowUp = false): string {
   const { domainBrief: db } = brief;
   const lines: string[] = [
     `━━━ DIAGNOSIS (engine-computed — DO NOT invent numbers beyond what is listed here) ━━━`,
@@ -630,7 +630,18 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     lines.push(`PRIMARY DYNAMIC: ${db.primaryDynamic}`);
   }
 
-  lines.push(`YOUR OPENING SENTENCE: "${brief.mainConclusion}"  ← START WITH THIS EXACTLY`);
+  if (isFollowUp) {
+    lines.push(
+      `FOLLOW-UP INSTRUCTION: The user already received the full diagnosis above in a prior turn. ` +
+      `Do NOT repeat the same opening or rehash the same content. ` +
+      `Answer ONLY what they are specifically asking now. ` +
+      `If they ask about a body part or area that is NOT in the PRIMARY AREA above, ` +
+      `tell them that area is not flagged by the chart this week — then briefly note what the STABLE TODAY areas are. ` +
+      `If they ask about a body part that IS in the PRIMARY AREA, elaborate specifically on that aspect.`
+    );
+  } else {
+    lines.push(`YOUR OPENING SENTENCE: "${brief.mainConclusion}"  ← START WITH THIS EXACTLY`);
+  }
   if (brief.unexpectedObservation)
     lines.push(`UNEXPECTED OBSERVATION: ${brief.unexpectedObservation}`);
   lines.push(`CLOSING RECOMMENDATION: ${brief.recommendation}`);

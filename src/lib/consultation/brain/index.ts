@@ -70,7 +70,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
   // ── CONSULTATION BRIEF — Domain Interpretation Engine output (LLM narrates from this) ─
   // The DIE has already concluded. The LLM's only job is to speak these findings
   // as a warm, experienced astrologer would — never to compute or invent them.
-  sections.push(renderConsultationBrief(ctx.consultationBrief, ctx.intent.stated));
+  sections.push(renderConsultationBrief(ctx.consultationBrief, ctx.intent.stated, ctx.intent.isFollowUp));
 
   // ── CONTEXT — story, events, corrections, prior readings ──────────────────
   const ctx_parts: string[] = [];

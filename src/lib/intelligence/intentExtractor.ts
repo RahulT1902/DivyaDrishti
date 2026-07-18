@@ -48,8 +48,8 @@ export function extractIntent(question: string, userSeed?: string): Intent {
   if (/(breakup|divorce|dating|romance|couple|compatibility|rishta|vivah)/i.test(q)) scores.relationship += 0.5;
 
   // Health
-  if (/(health|sick|stress|sleep|body|medical|doctor|illness|disease)/i.test(q)) scores.health += 1;
-  if (/(fitness|diet|mental|energy|fatigue|pain|surgery|recovery|wellbeing)/i.test(q)) scores.health += 0.5;
+  if (/(health|sick|stress|sleep|body|medical|doctor|illness|disease|stomach|gut|digestion|liver|kidney|chest|lung|joint|back|skin|head|throat|allerg|fever|cold|cough)/i.test(q)) scores.health += 1;
+  if (/(fitness|diet|mental|energy|fatigue|pain|surgery|recovery|wellbeing|nausea|acidity|gastric|constipat|bloat|migrain|tummy|abdomen)/i.test(q)) scores.health += 0.5;
 
   // Spirituality
   if (/(spiritual|meditation|karma|dharma|moksha|pooja|prayer|deity|temple|sadhana)/i.test(q)) scores.spirituality += 1;
