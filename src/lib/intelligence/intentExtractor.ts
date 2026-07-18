@@ -36,8 +36,8 @@ export function extractIntent(question: string, userSeed?: string): Intent {
   };
 
   // Career
-  if (/(job|career|switch|promotion|work|boss|profession|office)/i.test(q)) scores.career += 1;
-  if (/(salary|hike|interview|colleague|manager|resign|fired|workplace)/i.test(q)) scores.career += 0.5;
+  if (/(job|career|switch|promotion|work|boss|profession|office|appraisal|management|appreciation)/i.test(q)) scores.career += 1;
+  if (/(salary|hike|interview|colleague|manager|resign|fired|workplace|recognition|raise|increment|supervisor|performance|annual review|higher management|senior management)/i.test(q)) scores.career += 0.5;
 
   // Finance
   if (/(money|invest|loan|debt|wealth|saving|income|cash|finance|financial)/i.test(q)) scores.finance += 1;

@@ -403,10 +403,20 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         if (brain.clarification) {
           rawText = brain.clarification.question;
         } else {
+          // Pass conversation history as messages so follow-up questions have context.
+          // When messages is set, the AI SDK uses it over prompt.
+          const chatMessages = history.length > 0
+            ? [
+                ...history.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+                { role: "user" as const, content: brain.userPrompt },
+              ]
+            : undefined;
+
           const { text } = await callAI({
             system:      brain.systemPrompt,
             prompt:      brain.userPrompt,
             temperature: brain.temperature,
+            ...(chatMessages ? { messages: chatMessages } : {}),
           });
           // Prepend the pre-rendered summary card above the LLM narrative
           rawText = brain.renderedSummaryCard

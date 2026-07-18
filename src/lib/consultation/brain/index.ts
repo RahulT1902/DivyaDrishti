@@ -150,6 +150,9 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
   sections.push(
     `━━━ HARD RULES — NON-NEGOTIABLE ━━━\n\n` +
 
+    `• NEVER use emoji in your response. Write in plain connected paragraphs only.\n` +
+    `  No section headers, no bullet-pointed sections with headers, no 🌿 🤧 💼 or any other symbol.\n\n` +
+
     `• NEVER mention: planet names, house numbers, Sun%, Rahu, dasha names, yoga names, transit scores\n` +
     `  The diagnosis is yours. The evidence stays inside the engine.\n\n` +
 
