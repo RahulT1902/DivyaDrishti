@@ -114,19 +114,29 @@ export interface PunditPersonality {
 
 export type ResponseDepth = "quick" | "detailed" | "very_detailed";
 
+export interface SummaryCard {
+  title:     string;    // "Health Today" | "Career" | "Finance This Week"
+  ratingOf5: number;    // 1–5 (derived from overallScore)
+  phase:     string;    // "Recovery Phase" | "Promotion Window" | "Favorable"
+  stats:     Array<{ label: string; value: string }>;
+}
+
 export interface ResponsePlan {
   depth:         ResponseDepth;
-  targetLength:  string;          // "2–3 sentences" | "150–250 words"
+  targetLength:  string;
+  directAnswer:  string;        // ONE sentence — the answer to what they asked
+  summaryCard:   SummaryCard;   // visual snapshot, always present
   includeSections: {
-    timeline:            boolean;
-    probability:         boolean;
-    practicalAdvice:     boolean;
+    timeline:             boolean;
+    probability:          boolean;
+    practicalAdvice:      boolean;
     planetaryExplanation: boolean;
-    spiritualRemedy:     boolean;
-    questionBackToUser:  boolean;
+    spiritualRemedy:      boolean;
+    questionBackToUser:   boolean;
+    watchingList:         boolean;   // "What I'm watching" bullets
   };
-  referenceHistory: string | null;  // "Yesterday you mentioned the cold had started..."
-  openWithObservation: boolean;     // true if cross-domain insight should open the answer
+  referenceHistory:    string | null;
+  openWithObservation: boolean;
 }
 
 // ── Layer 0: Reality Assimilation ────────────────────────────────────────────

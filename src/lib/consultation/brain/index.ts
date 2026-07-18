@@ -167,36 +167,57 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `6. What advice would you naturally give? → ${sq6 ?? "Stay consistent with current energy"}`
   );
 
-  // ── Layer 7: Response plan ────────────────────────────────────────────────
-  const plan = responsePlan;
-  const includeList = Object.entries(plan.includeSections)
-    .filter(([, v]) => v)
-    .map(([k]) => k.replace(/([A-Z])/g, " $1").toLowerCase().trim())
-    .join(", ");
-
-  sections.push(
-    `═══ RESPONSE PLAN ═══\n` +
-    `Length: ${plan.targetLength}\n` +
-    (includeList ? `Include: ${includeList}` : "Include: core reading only") +
-    (plan.referenceHistory ? `\nOpen by referencing: "${plan.referenceHistory}"` : "") +
-    (plan.openWithObservation ? "\nOpen with the cross-domain observation first" : "")
-  );
-
   // ── Layer 8: Pundit DNA ───────────────────────────────────────────────────
   sections.push(
     `═══ YOUR VOICE (Pundit DNA) ═══\n` +
-    `Opening: "${personality.openingLine}"\n` +
     `Tone: ${personality.tone}\n` +
-    `Guidelines:\n${personality.voiceGuidelines.slice(0, 5).map(g => `  • ${g}`).join("\n")}\n` +
-    `Avoid:\n${personality.avoidPatterns.map(a => `  ✗ ${a}`).join("\n")}`
+    `Guidelines:\n${personality.voiceGuidelines.map(g => `  • ${g}`).join("\n")}\n` +
+    `Avoid (every single one of these is forbidden):\n${personality.avoidPatterns.map(a => `  ${a}`).join("\n")}`
   );
 
-  // ── Final instruction ─────────────────────────────────────────────────────
+  // ── MANDATORY RESPONSE STRUCTURE (this overrides everything else) ─────────
+  // Build the summary card as a markdown template the LLM must render.
+  const card = responsePlan.summaryCard;
+  const stars = "★".repeat(card.ratingOf5) + "☆".repeat(5 - card.ratingOf5);
+  const statsLine = card.stats.map(s => `${s.label}: ${s.value}`).join(" · ");
+  const cardTemplate =
+    `**${card.title}** ${stars}\n` +
+    `*${card.phase}*\n\n` +
+    (statsLine ? `${statsLine}\n\n---` : "---");
+
+  const hasSections = responsePlan.includeSections;
+  const watchingInstruction = hasSections.watchingList
+    ? `\n\n**What I'm watching**\n(1–3 short bullet points about what could shift — only if genuinely relevant)`
+    : "";
+  const adviceInstruction = hasSections.practicalAdvice
+    ? `\n\n**My advice**\n(1–2 sentences — direct, practical, actionable — tell them what to do, not what the chart says)`
+    : "\n\n(End with 1 sentence of practical guidance)";
+  const timelineInstruction = hasSections.timeline && responsePlan.targetLength.includes("3 paragraphs")
+    ? `\n\nTimeline: weave in "${diagnosis.timeline ?? "unclear"}" naturally.`
+    : "";
+  const referenceInstruction = responsePlan.referenceHistory
+    ? `\n\nOpen the "Why" section by referencing: "${responsePlan.referenceHistory}"`
+    : "";
+
   sections.push(
-    `Now write your response. Start with the opening line above (or adapt it naturally). ` +
-    `Weave the astrological diagnosis into the conversation — never list it. ` +
-    `Continue their life story. Answer what they actually asked, not just what they literally said. ` +
-    `Do not use bullet points or section headers. Write as one fluid consultation.`
+    `═══ HOW TO WRITE YOUR RESPONSE — MANDATORY FORMAT ═══\n\n` +
+
+    `STEP 1 — SUMMARY CARD (render this exact markdown at the very top):\n` +
+    cardTemplate + "\n\n" +
+
+    `STEP 2 — DIRECT ANSWER (first sentence after the card — this is non-negotiable):\n` +
+    `"${responsePlan.directAnswer}"\n` +
+    `Use this exactly, or adapt it naturally. Never start with chart mechanics.\n\n` +
+
+    `STEP 3 — WHY (2–4 sentences, plain English):\n` +
+    `Translate the diagnosis into consequences for their life — not what the planet is doing.\n` +
+    `No hedging words: no "might", "could", "perhaps", "generally", "typically".\n` +
+    `Say "I don't see", "I'd expect", "the chart shows" instead.` +
+    referenceInstruction + timelineInstruction + watchingInstruction + adviceInstruction + "\n\n" +
+
+    `CEO RULE: Answer first. Explain second. Teach only when asked.\n` +
+    `TARGET LENGTH: ${responsePlan.targetLength}\n` +
+    `If you exceed the length — you are over-explaining. Cut the explanation, not the answer.`
   );
 
   return sections.join("\n\n");
