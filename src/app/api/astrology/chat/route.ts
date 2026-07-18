@@ -15,7 +15,7 @@ import { buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
 import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
 import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
 import { buildV5Prompt } from "@/lib/intelligence/v5/promptBuilder";
-import { NatalPromiseAnalyzer, LifeDomainActivationEngine } from "@/lib/intelligence/lifeInsights/services";
+import { NatalPromiseAnalyzer, LifeDomainActivationEngine, ManifestationRankingEngine } from "@/lib/intelligence/lifeInsights/services";
 import { adaptEngineOutput, buildChartSuite } from "@/lib/core/chart-engine";
 import { AstrologyContextBuilder } from "@/lib/core/context-builder/astroContextBuilder";
 import { TransitAnalyzer, evaluateTransitRules, HEALTH_TRANSIT_RULES } from "@/lib/core/transit-engine";
@@ -27,6 +27,7 @@ import { MarriageEngine } from "@/lib/domains/marriage";
 import { FinanceEngine } from "@/lib/domains/finance";
 import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } from "@/lib/consultation/sessionMemory";
 import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
+import type { ChartData } from "@/lib/consultation/brain";
 
 export async function POST(req: NextRequest) {
   try {
@@ -293,6 +294,11 @@ export async function POST(req: NextRequest) {
       const activations = LifeDomainActivationEngine.evaluate(mdLordVedic, adLordVedic, chart as any, promiseMapVedic);
       const domainActivation = activations.find(a => a.domain === vedaDomainKey) || activations.sort((a, b) => b.score - a.score)[0];
 
+      // Manifestation probabilities for career/finance/relationship (health doesn't use these)
+      const manifestations = targetDomain !== "health"
+        ? ManifestationRankingEngine.getRanked(vedaDomainKey, mdLordVedic, adLordVedic, chart as any, domainPromise?.potential ?? 60)
+        : null;
+
       // Build a concise kundali context string the LLM will narrate from
       let kundaliContext = "";
       if (domainPromise) {
@@ -371,6 +377,13 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         // Layers 1–9 run here; Layer 10 (LLM) is the callAI below.
         // The symbolic pipeline output (symbolicCtx) feeds Layer 4 (Diagnostic Engine).
         // The brain returns a fully structured systemPrompt so the LLM only narrates.
+        const chartData: ChartData = {
+          bodyRiskProfile:  targetDomain === "health" ? bodyRiskProfile : null,
+          healthFindings:   targetDomain === "health" ? healthFindings  : null,
+          natalPromise:     domainPromise ?? null,
+          domainActivation: domainActivation ?? null,
+          manifestations:   targetDomain !== "health" ? manifestations  : null,
+        };
         const brain = await assemblePunditBrain(
           question,
           history,
@@ -379,6 +392,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
           symbolicCtx,
           dashaInfo,
           targetDomain,
+          chartData,
         );
 
         // ── Layer 10: LLM narrates from pre-computed conclusions ─────────────

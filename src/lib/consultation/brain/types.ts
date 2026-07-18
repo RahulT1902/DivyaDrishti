@@ -194,41 +194,108 @@ export interface RealityContext {
   realitySummary:        string;
 }
 
-// ── Answer Plan (L8 output — pure conclusions, no chart data) ─────────────────
-// This is what the LLM receives. No planets, no houses, no percentages from the
-// chart engine. The LLM's job is to narrate conclusions, not justify them.
+// ── Answer Plan (L8 — kept for response-depth decisions, not used in prompt) ──
 
 export interface ProbabilityItem {
-  label: string;   // "Serious concern" | "Promotion" | "Cold risk"
-  value: number;   // 5–95
+  label: string;
+  value: number;
 }
 
 export interface AnswerPlan {
-  directAnswer:          string;          // one sentence — the answer to the question
+  directAnswer:          string;
   confidence:            "High" | "Medium" | "Low";
-  confidencePercent:     number;          // 45 | 65 | 88
+  confidencePercent:     number;
   probabilities:         ProbabilityItem[];
   timeline:              string | null;
   severity:              "Minor" | "Moderate" | "Significant" | "Life-changing" | null;
-  affectedArea:          string | null;   // "Sleep & Energy" | "Promotion" | "Cash Flow" etc.
-  mainObservation:       string;          // plain-English summary of what's happening
-  unexpectedObservation: string | null;   // astrologer's intuition: "what actually stands out"
-  recommendation:        string;          // what to do — practical, direct
+  affectedArea:          string | null;
+  mainObservation:       string;
+  unexpectedObservation: string | null;
+  recommendation:        string;
+}
+
+// ── Domain Interpretation Engine (DIE) output types ──────────────────────────
+// These are domain-specific structured diagnoses produced BEFORE the LLM runs.
+// The engine concludes; the LLM only speaks.
+
+export interface HealthBrief {
+  type:               "health";
+  overallStatus:      "Healthy" | "Mild Sensitivity" | "Moderate Concern" | "Significant Concern";
+  primarySystem:      string;    // "Respiratory System" | "ENT — Ear, Nose & Throat"
+  bodyParts:          string[];  // ["Throat", "Nasal passages", "Upper airways"]
+  symptoms:           string[];  // ["Throat irritation", "Mild cough", "Nasal congestion"]
+  strongAreas:        string[];  // ["Digestion", "Cardiovascular", "Immunity"]
+  illnessProbability: number;    // 5–75
+  severity:           "Minor" | "Moderate" | "Significant" | null;
+  seriousRisk:        "Very unlikely" | "Unlikely" | "Possible";
+  timeline:           string | null;  // "3–5 days" | "This week"
+  energyNote:         string;
+  mentalNote:         string | null;  // "Stress is a greater risk than illness today"
+}
+
+export interface CareerAspect {
+  name:        string;
+  direction:   "Strong" | "Building" | "Stable" | "Weak" | "Blocked";
+  probability: number;
+}
+
+export interface CareerBrief {
+  type:               "career";
+  primaryAspect:      string;         // "Promotion" | "Recognition" | "Job Change"
+  aspects:            CareerAspect[];
+  opportunityNote:    string;
+  frictionNote:       string | null;
+  timing:             string | null;
+  overallProbability: number;
+}
+
+export interface FinanceArea {
+  name:   string;
+  status: "Strong" | "Stable" | "Cautious" | "Risky";
+}
+
+export interface FinanceBrief {
+  type:          "finance";
+  areas:         FinanceArea[];
+  primaryFlow:   "Growing" | "Stable" | "Under Pressure" | "Volatile";
+  primarySource: string;
+  opportunity:   string | null;
+  risk:          string | null;
+}
+
+export interface RelationshipBrief {
+  type:           "relationship";
+  strongAreas:    string[];
+  attentionAreas: string[];
+  conflictRisk:   "Low" | "Mild" | "Moderate" | "High";
+  primaryDynamic: string;
+}
+
+export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | RelationshipBrief;
+
+export interface ConsultationBrief {
+  domain:                string;
+  overallVerdict:        string;
+  mainConclusion:        string;    // THE direct answer in one sentence
+  unexpectedObservation: string | null;
+  recommendation:        string;
+  domainBrief:           DomainBrief;
 }
 
 // ── Full Brain Context ────────────────────────────────────────────────────────
 
 export interface PunditBrainContext {
-  realityContext: RealityContext;   // Layer 0 — must run first
-  intent:         IntentAnalysis;
-  userState:      UserState;
-  lifeStory:      DomainStoryArc | null;
-  diagnosis:      AstrologicalDiagnosis;
-  observations:   ObservationSet;
-  reasoning:      ReasoningChain;
-  personality:    PunditPersonality;
-  responsePlan:   ResponsePlan;
-  answerPlan:     AnswerPlan;       // pre-computed conclusion — what the LLM narrates from
+  realityContext:    RealityContext;    // Layer 0 — must run first
+  intent:            IntentAnalysis;
+  userState:         UserState;
+  lifeStory:         DomainStoryArc | null;
+  diagnosis:         AstrologicalDiagnosis;
+  observations:      ObservationSet;
+  reasoning:         ReasoningChain;
+  personality:       PunditPersonality;
+  responsePlan:      ResponsePlan;
+  answerPlan:        AnswerPlan;        // L8 depth/section decisions
+  consultationBrief: ConsultationBrief; // DIE — what the LLM actually narrates
 }
 
 // ── Brain Output ──────────────────────────────────────────────────────────────

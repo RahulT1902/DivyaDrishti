@@ -22,6 +22,8 @@ import { buildObservations }               from "./L5_observationEngine";
 import { buildReasoningChain }             from "./L6_reasoningEngine";
 import { buildPersonality }                from "./L7_personalityEngine";
 import { planResponse, buildAnswerPlan, renderSummaryCard } from "./L8_responsePlanner";
+import { buildConsultationBrief, renderConsultationBrief } from "./DIE_domainInterpreter";
+import type { ChartData } from "./DIE_domainInterpreter";
 
 // ── System prompt builder ─────────────────────────────────────────────────────
 // This is the LLM's entire world. It contains conclusions only — never chart data.
@@ -54,27 +56,10 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `Only then begin writing.`
   );
 
-  // ── CONSULTATION BRIEF — pre-computed conclusions (LLM narrates from these) ─
-  // The engine has already done the analysis. The LLM's only job is to speak
-  // these conclusions as a warm, experienced astrologer would.
-  const probLines = answerPlan.probabilities.length
-    ? answerPlan.probabilities.map(p => `  ${p.label}: ${p.value}%`).join("\n")
-    : "";
-
-  sections.push(
-    `━━━ YOUR CONSULTATION BRIEF — narrate from these conclusions ━━━\n` +
-    `THE ANSWER:      ${answerPlan.directAnswer}\n` +
-    `CONFIDENCE:      ${answerPlan.confidence} (${answerPlan.confidencePercent}%)\n` +
-    (answerPlan.affectedArea ? `SPECIFIC AREA:   ${answerPlan.affectedArea}\n` : "") +
-    (probLines ? `PROBABILITY:\n${probLines}\n` : "") +
-    (answerPlan.timeline ? `TIMELINE:        ${answerPlan.timeline}\n` : "") +
-    (answerPlan.severity  ? `SEVERITY:        ${answerPlan.severity}\n` : "") +
-    `OBSERVATION:     ${answerPlan.mainObservation}\n` +
-    (answerPlan.unexpectedObservation
-      ? `CROSS-DOMAIN:    ${answerPlan.unexpectedObservation}\n`
-      : "") +
-    `RECOMMENDATION:  ${answerPlan.recommendation}`
-  );
+  // ── CONSULTATION BRIEF — Domain Interpretation Engine output (LLM narrates from this) ─
+  // The DIE has already concluded. The LLM's only job is to speak these findings
+  // as a warm, experienced astrologer would — never to compute or invent them.
+  sections.push(renderConsultationBrief(ctx.consultationBrief, ctx.intent.stated));
 
   // ── CONTEXT — story, events, corrections, prior readings ──────────────────
   const ctx_parts: string[] = [];
@@ -209,6 +194,7 @@ export async function assemblePunditBrain(
   symbolicCtx: AstrologyContext,
   dashaInfo:   DashaInfo | undefined,
   domain:      string,
+  chartData:   ChartData = {},
 ): Promise<PunditBrainOutput> {
 
   // Layer 0: Reality Assimilation — must run first
@@ -243,6 +229,9 @@ export async function assemblePunditBrain(
   // Layer 4: Diagnosis
   const diagnosis = runDiagnosticEngine(symbolicCtx, dashaInfo, domain);
 
+  // Domain Interpretation Engine — converts chart data to domain-specific conclusions
+  const consultationBrief = buildConsultationBrief(domain, diagnosis, intent, chartData);
+
   // Layer 5: Observations
   const observations = buildObservations(domain, diagnosis, memories, symbolicCtx);
 
@@ -270,6 +259,7 @@ export async function assemblePunditBrain(
     personality,
     responsePlan,
     answerPlan,
+    consultationBrief,
   };
 
   // Layer 9: Build LLM brief (conclusions only)
@@ -305,4 +295,5 @@ export async function assemblePunditBrain(
 }
 
 export { saveStoryArc }       from "./L3_lifeStoryEngine";
+export type { ChartData }     from "./DIE_domainInterpreter";
 export type { PunditBrainOutput, PunditBrainContext } from "./types";
