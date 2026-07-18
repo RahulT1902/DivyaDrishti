@@ -7,7 +7,24 @@ import CitySearch from "@/components/CitySearch";
 import { registerUser } from "@/app/actions";
 import { ArrowRight, Sparkles, Calendar, Clock, MapPin, User, Loader2 } from "lucide-react";
 
-type OnboardingData = { name: string; date: string; time: string; city: any };
+// ─── Date/Time picker helpers ─────────────────────────────────────────────────
+
+const MONTHS = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+const currentYear = new Date().getFullYear();
+const YEARS   = Array.from({ length: 100 }, (_, i) => currentYear - i);
+const HOURS   = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+
+function daysInMonth(month: number, year: number) {
+  return new Date(year, month, 0).getDate();
+}
+
+type OnboardingData = { name: string; city: any };
+type DateParts = { day: string; month: string; year: string };
+type TimeParts = { hour: string; minute: string };
 
 const STEPS = [
   { num: 1, icon: User,     label: "Who you are" },
@@ -18,12 +35,26 @@ const STEPS = [
 
 export default function OnboardingRitual() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep]     = useState(1);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<OnboardingData>({ name: "", date: "", time: "", city: null });
+  const [data, setData]     = useState<OnboardingData>({ name: "", city: null });
+  const [dateParts, setDateParts] = useState<DateParts>({ day: "", month: "", year: "" });
+  const [timeParts, setTimeParts] = useState<TimeParts>({ hour: "", minute: "0" });
 
   const nextStep = () => setStep(s => s + 1);
   const prevStep = () => setStep(s => s - 1);
+
+  const maxDays = dateParts.month && dateParts.year
+    ? daysInMonth(Number(dateParts.month), Number(dateParts.year))
+    : 31;
+  const days = Array.from({ length: maxDays }, (_, i) => i + 1);
+
+  const dateValue = dateParts.day && dateParts.month && dateParts.year
+    ? `${dateParts.year}-${dateParts.month.padStart(2,"0")}-${dateParts.day.padStart(2,"0")}`
+    : "";
+  const timeValue = timeParts.hour !== ""
+    ? `${timeParts.hour.padStart(2,"0")}:${timeParts.minute.padStart(2,"0")}`
+    : "";
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -31,11 +62,11 @@ export default function OnboardingRitual() {
     const email = typeof window !== "undefined" ? window.localStorage.getItem("divya:userEmail") : null;
     formData.append("name", data.name);
     if (email) formData.append("email", email);
-    formData.append("date", data.date);
-    formData.append("time", data.time);
-    formData.append("latitude", data.city.lat.toString());
+    formData.append("date", dateValue);
+    formData.append("time", timeValue);
+    formData.append("latitude",  data.city.lat.toString());
     formData.append("longitude", data.city.lng.toString());
-    formData.append("timezone", data.city.timezone);
+    formData.append("timezone",  data.city.timezone);
     const res = await registerUser(formData);
     if (res.success) {
       window.localStorage.setItem("divya:loggedIn", "true");
@@ -46,6 +77,8 @@ export default function OnboardingRitual() {
     }
   };
 
+  const selectCls = "w-full text-xl font-serif font-light text-amber-900 bg-transparent border-b-2 border-amber-200 focus:border-amber-500 outline-none pb-2 appearance-none cursor-pointer transition-colors";
+
   const variants = {
     initial: { opacity: 0, x: 24 },
     animate: { opacity: 1, x: 0 },
@@ -54,7 +87,6 @@ export default function OnboardingRitual() {
 
   return (
     <div className="min-h-screen bg-[#F8F5EF] flex flex-col items-center justify-center px-6 py-12">
-      {/* Soft background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-amber-200/20 rounded-full blur-[100px]" />
       </div>
@@ -76,7 +108,11 @@ export default function OnboardingRitual() {
             return (
               <React.Fragment key={s.num}>
                 <div className={`flex flex-col items-center gap-1 ${step >= s.num ? "opacity-100" : "opacity-30"}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${step === s.num ? "bg-amber-600 text-white" : step > s.num ? "bg-emerald-500 text-white" : "bg-amber-100 text-amber-400"}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    step === s.num ? "bg-amber-600 text-white" :
+                    step > s.num  ? "bg-emerald-500 text-white" :
+                    "bg-amber-100 text-amber-400"
+                  }`}>
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                 </div>
@@ -88,8 +124,10 @@ export default function OnboardingRitual() {
           })}
         </div>
 
-        {/* Step Content */}
+        {/* Steps */}
         <AnimatePresence mode="wait">
+
+          {/* Step 1 — Name */}
           {step === 1 && (
             <motion.div key="s1" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
               <div>
@@ -114,6 +152,7 @@ export default function OnboardingRitual() {
             </motion.div>
           )}
 
+          {/* Step 2 — Date (dropdown pickers) */}
           {step === 2 && (
             <motion.div key="s2" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
               <div>
@@ -122,17 +161,44 @@ export default function OnboardingRitual() {
                   When were you <br /><span className="font-semibold text-amber-600 italic">born into this world?</span>
                 </h1>
               </div>
-              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm">
-                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest mb-3">Date of Birth</label>
-                <input
-                  type="date" value={data.date} onChange={e => setData({ ...data, date: e.target.value })}
-                  className="w-full text-2xl font-serif font-light text-amber-900 bg-transparent border-b-2 border-amber-200 focus:border-amber-500 outline-none pb-2 [color-scheme:light] transition-colors"
-                  autoFocus
-                />
+              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm space-y-5">
+                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest">Date of Birth</label>
+                <select
+                  value={dateParts.month}
+                  onChange={e => setDateParts(p => ({ ...p, month: e.target.value, day: "" }))}
+                  className={selectCls}
+                >
+                  <option value="" disabled>Select month</option>
+                  {MONTHS.map((m, i) => <option key={i} value={String(i+1)}>{m}</option>)}
+                </select>
+                <div className="flex gap-4">
+                  <select
+                    value={dateParts.day}
+                    onChange={e => setDateParts(p => ({ ...p, day: e.target.value }))}
+                    className={selectCls}
+                    disabled={!dateParts.month}
+                  >
+                    <option value="" disabled>Day</option>
+                    {days.map(d => <option key={d} value={String(d)}>{d}</option>)}
+                  </select>
+                  <select
+                    value={dateParts.year}
+                    onChange={e => setDateParts(p => ({ ...p, year: e.target.value, day: "" }))}
+                    className={selectCls}
+                  >
+                    <option value="" disabled>Year</option>
+                    {YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                  </select>
+                </div>
+                {dateValue && (
+                  <p className="text-xs text-emerald-600 font-bold">
+                    ✓ {MONTHS[Number(dateParts.month)-1]} {dateParts.day}, {dateParts.year}
+                  </p>
+                )}
               </div>
               <div className="flex gap-6">
                 <button onClick={prevStep} className="text-sm text-amber-600/50 hover:text-amber-800 uppercase tracking-widest transition-colors">← Back</button>
-                <button disabled={!data.date} onClick={nextStep}
+                <button disabled={!dateValue} onClick={nextStep}
                   className="flex items-center gap-3 text-amber-700 font-medium hover:text-amber-900 disabled:opacity-30 transition-all group">
                   Next <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -140,6 +206,7 @@ export default function OnboardingRitual() {
             </motion.div>
           )}
 
+          {/* Step 3 — Time (dropdown pickers) */}
           {step === 3 && (
             <motion.div key="s3" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
               <div>
@@ -147,19 +214,49 @@ export default function OnboardingRitual() {
                 <h1 className="text-3xl md:text-4xl font-serif font-light text-amber-900 leading-snug">
                   The exact moment <br /><span className="font-semibold text-amber-600 italic">of your alignment.</span>
                 </h1>
-                <p className="text-xs text-amber-700/40 mt-2">As accurate as possible — even approximate helps your Lagna calculation.</p>
+                <p className="text-xs text-amber-700/40 mt-2">Approximate is fine — even the hour helps your Lagna calculation.</p>
               </div>
-              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm">
-                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest mb-3">Birth Time</label>
-                <input
-                  type="time" step="60" value={data.time} onChange={e => setData({ ...data, time: e.target.value })}
-                  className="w-full text-3xl font-serif font-light text-amber-900 bg-transparent border-b-2 border-amber-200 focus:border-amber-500 outline-none pb-2 [color-scheme:light] transition-colors"
-                  autoFocus
-                />
+              <div className="bg-white border border-[#F1E7D0] rounded-2xl p-6 shadow-sm space-y-5">
+                <label className="block text-xs font-bold text-amber-700/50 uppercase tracking-widest">Birth Time</label>
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1 space-y-1">
+                    <p className="text-[10px] text-amber-700/40 uppercase tracking-widest">Hour</p>
+                    <select
+                      value={timeParts.hour}
+                      onChange={e => setTimeParts(p => ({ ...p, hour: e.target.value }))}
+                      className={selectCls}
+                    >
+                      <option value="" disabled>Select hour</option>
+                      {HOURS.map(h => (
+                        <option key={h} value={String(h)}>
+                          {String(h).padStart(2,"0")}:00 — {h === 0 ? "Midnight" : h < 12 ? `${h} AM` : h === 12 ? "Noon" : `${h-12} PM`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <span className="text-2xl font-serif text-amber-300 pb-2 flex-shrink-0">:</span>
+                  <div className="w-28 space-y-1">
+                    <p className="text-[10px] text-amber-700/40 uppercase tracking-widest">Minute</p>
+                    <select
+                      value={timeParts.minute}
+                      onChange={e => setTimeParts(p => ({ ...p, minute: e.target.value }))}
+                      className={selectCls}
+                    >
+                      {MINUTES.map(m => (
+                        <option key={m} value={String(m)}>{String(m).padStart(2,"0")}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {timeValue && (
+                  <p className="text-xs text-emerald-600 font-bold">
+                    ✓ {timeValue} ({Number(timeParts.hour) < 12 ? "Morning" : Number(timeParts.hour) < 17 ? "Afternoon" : Number(timeParts.hour) < 20 ? "Evening" : "Night"})
+                  </p>
+                )}
               </div>
               <div className="flex gap-6">
                 <button onClick={prevStep} className="text-sm text-amber-600/50 hover:text-amber-800 uppercase tracking-widest transition-colors">← Back</button>
-                <button disabled={!data.time} onClick={nextStep}
+                <button disabled={!timeValue} onClick={nextStep}
                   className="flex items-center gap-3 text-amber-700 font-medium hover:text-amber-900 disabled:opacity-30 transition-all group">
                   Final Step <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -167,6 +264,7 @@ export default function OnboardingRitual() {
             </motion.div>
           )}
 
+          {/* Step 4 — City */}
           {step === 4 && (
             <motion.div key="s4" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} className="space-y-8">
               <div>
@@ -194,6 +292,7 @@ export default function OnboardingRitual() {
               </div>
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
     </div>
