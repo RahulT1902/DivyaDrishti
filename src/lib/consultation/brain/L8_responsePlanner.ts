@@ -1,19 +1,29 @@
-// Pundit Brain — Layer 8: Response Planner
+// Pundit Brain — Layer 8: Response Planner + Answer Plan
 //
-// Before writing a single word, the planner answers 5 questions:
-//   1. What exactly did the user ask?
-//   2. What is the one-sentence answer?
-//   3. How confident am I?
-//   4. Why do I think that?
-//   5. What's the practical advice?
+// Two outputs:
 //
-// The directAnswer and summaryCard lock the LLM into Answer-first format.
-// Without them, the LLM drifts into explanation mode.
+// 1. ResponsePlan  — controls depth, sections, length
+// 2. AnswerPlan    — pure conclusions for the LLM (no chart data)
+//
+// The AnswerPlan is the contract between the reasoning engine and the LLM.
+// It contains only what an astrologer would SAY — not what they calculated.
+//
+//   directAnswer:          "Health is stable today."
+//   confidence:            High (88%)
+//   probabilities:         [{ label: "Serious concern", value: 5 }, ...]
+//   timeline:              "Next 5–7 days"
+//   mainObservation:       "Recovery phase — energy consolidating"
+//   unexpectedObservation: "Mental fatigue is more significant than any physical risk"
+//   recommendation:        "Maintain your routine. Don't overexert."
+//
+// Notice: no planets. No houses. No Sun at 65%.
+// Those are supporting evidence — they stay inside the engine.
 
 import type {
   IntentAnalysis, AstrologicalDiagnosis, UserState,
   ObservationSet, PunditPersonality, DomainStoryArc,
-  ResponsePlan, ResponseDepth, SummaryCard, DiagnosisState,
+  ResponsePlan, ResponseDepth, SummaryCard,
+  AnswerPlan, ProbabilityItem, ReasoningChain,
 } from "./types";
 import type { StoredDomainMemory } from "../sessionMemory";
 
@@ -30,24 +40,18 @@ function selectDepth(intent: IntentAnalysis, userState: UserState): ResponseDept
 
 function depthToLength(depth: ResponseDepth): string {
   switch (depth) {
-    case "quick":        return "1 short paragraph (3–5 sentences). Answer → Why → Advice.";
-    case "detailed":     return "Summary card + 2 short paragraphs. Answer → Why → Advice. May include 'What I'm watching' if relevant.";
-    case "very_detailed": return "Summary card + 3 paragraphs. Answer → Why → Timeline → Advice. May include 'What I'm watching'.";
+    case "quick":         return "1 short paragraph (3–5 sentences). Answer then brief reason.";
+    case "detailed":      return "2 paragraphs. Answer → Why → Advice. Optional 'What I'm watching' bullets.";
+    case "very_detailed": return "3 paragraphs. Answer → Why → Timeline → Advice.";
   }
 }
 
 // ── Direct answer (the ONE sentence that opens the response) ──────────────────
-// The LLM is instructed to use this or a natural adaptation as its first line.
-// This prevents the drift into chart-mechanics mode.
 
-function buildDirectAnswer(
-  intent:    IntentAnalysis,
-  diagnosis: AstrologicalDiagnosis,
-): string {
+function buildDirectAnswer(intent: IntentAnalysis, diagnosis: AstrologicalDiagnosis): string {
   const { overallState, probability, timeline, domain } = diagnosis;
   const question = intent.stated.toLowerCase();
 
-  // Probability / chance questions → give the number immediately
   const isProbabilityQ = intent.type === "Probability"
     || /chances?|probability|likelihood|odds|how likely|will (i|it)/i.test(question);
   if (isProbabilityQ) {
@@ -55,48 +59,168 @@ function buildDirectAnswer(
     return `${level} — I'd put the probability around ${probability}%.`;
   }
 
-  // Timing questions → give the window
   if ((intent.type === "Timing" || /when|by when|how long|timeline/i.test(question)) && timeline) {
     return `The window I'm seeing is ${timeline}.`;
   }
 
-  // Decision questions → yes/no/hold first
   if (intent.type === "Decision" || /should i|can i|is it (a )?good|right time/i.test(question)) {
-    if (overallState === "Highly Favorable" || overallState === "Favorable") {
-      return `Yes — the current period supports moving forward on this.`;
-    }
-    if (overallState === "Difficult") {
-      return `I'd hold off — the timing isn't in your favour right now.`;
-    }
-    if (overallState === "Challenging") {
-      return `Proceed carefully — the chart shows some friction but not a hard stop.`;
-    }
+    if (overallState === "Highly Favorable" || overallState === "Favorable") return `Yes — the current period supports moving forward on this.`;
+    if (overallState === "Difficult")    return `I'd hold off — the timing isn't in your favour right now.`;
+    if (overallState === "Challenging")  return `Proceed carefully — there's friction, but not a hard stop.`;
     return `It's a reasonable time to move, but with measured steps.`;
   }
 
-  // Forecast / general state questions → one-sentence state assessment
-  const stateMap: Record<DiagnosisState, (d: string) => string> = {
+  const map: Record<string, (d: string) => string> = {
     "Highly Favorable": (d) => `Your ${d} looks very strong right now — this is a genuinely good period.`,
     "Favorable":        (d) => `Your ${d} looks positive at the moment.`,
-    "Moderate":         (d) => `Your ${d} is in a stable, moderate phase — nothing alarming, nothing exceptional.`,
+    "Moderate":         (d) => `Your ${d} is in a stable, moderate phase right now.`,
     "Challenging":      (d) => `There's some genuine friction in your ${d} right now.`,
     "Difficult":        (d) => `The ${d} picture is under real pressure right now.`,
   };
-
-  return (stateMap[overallState] ?? stateMap["Moderate"])(domain);
+  return (map[overallState] ?? map["Moderate"])(domain);
 }
 
-// ── Summary card ──────────────────────────────────────────────────────────────
-// Visual snapshot at the top of every response. Users get the status at a glance
-// before reading a single word of explanation.
+// ── Domain-specific probabilities ─────────────────────────────────────────────
 
-function scoreToStars(score: number): number {
-  if (score >= 80) return 5;
-  if (score >= 65) return 4;
-  if (score >= 50) return 3;
-  if (score >= 35) return 2;
-  return 1;
+function buildDomainProbabilities(domain: string, diagnosis: AstrologicalDiagnosis): ProbabilityItem[] {
+  const { overallScore, probability } = diagnosis;
+
+  switch (domain) {
+    case "health":
+      return [
+        { label: "Serious concern",   value: Math.max(5,  Math.min(55, 100 - overallScore)) },
+        { label: "Minor sensitivity", value: overallScore < 60 ? 35 : 15 },
+        { label: "Recovery pace",     value: Math.min(95, overallScore) },
+      ];
+    case "career":
+      return [
+        { label: "Positive outcome",  value: probability },
+        { label: "Delay or friction", value: Math.max(10, Math.min(60, 100 - probability - 15)) },
+      ];
+    case "finance":
+      return [
+        { label: "Financial gain",   value: overallScore >= 65 ? probability : Math.min(40, probability) },
+        { label: "Loss risk",        value: overallScore < 50 ? 30 : 10 },
+      ];
+    case "relationship":
+      return [
+        { label: "Harmony improving", value: overallScore >= 50 ? probability : Math.max(20, probability - 20) },
+        { label: "Tension easing",    value: overallScore >= 65 ? 75 : 40 },
+      ];
+    default:
+      return [{ label: "Positive direction", value: probability }];
+  }
 }
+
+// ── Main observation (plain-English summary of life arc + state) ──────────────
+
+function buildMainObservation(
+  lifeStory: DomainStoryArc | null,
+  diagnosis: AstrologicalDiagnosis,
+  domain:    string,
+): string {
+  if (lifeStory?.currentStage && lifeStory.events.length > 0) {
+    const lastEvent = lifeStory.events[lifeStory.events.length - 1];
+    return `${lastEvent.event} — now in ${lifeStory.currentStage} phase`;
+  }
+  if (lifeStory?.currentStage) {
+    return `Currently in ${lifeStory.currentStage} phase for ${domain}`;
+  }
+  const plain: Record<string, string> = {
+    "Highly Favorable": `Strong positive period for ${domain}`,
+    "Favorable":        `Good period for ${domain}`,
+    "Moderate":         `Stable, moderate phase for ${domain}`,
+    "Challenging":      `Friction and resistance in ${domain} right now`,
+    "Difficult":        `Significant pressure in ${domain}`,
+  };
+  return plain[diagnosis.overallState] ?? `${domain}: ${diagnosis.overallState}`;
+}
+
+// ── Recommendation (what to actually do) ─────────────────────────────────────
+
+function buildRecommendation(
+  domain:    string,
+  diagnosis: AstrologicalDiagnosis,
+  reasoning: ReasoningChain,
+): string {
+  const silentAdvice = reasoning.silentQuestions[5];
+  if (silentAdvice && silentAdvice.length > 15 && !silentAdvice.startsWith("Stay consistent")) {
+    return silentAdvice;
+  }
+
+  const map: Record<string, Record<string, string>> = {
+    health: {
+      "Highly Favorable": "Continue your current routine. Your body is working well — don't interrupt it.",
+      "Favorable":        "Maintain your routine and rest adequately.",
+      "Moderate":         "Don't overexert. Consistency matters more than new remedies right now.",
+      "Challenging":      "Slow down and prioritise recovery. This is not a period to push through fatigue.",
+      "Difficult":        "Seek medical attention if symptoms persist. Rest is non-negotiable.",
+    },
+    career: {
+      "Highly Favorable": "Move forward confidently. The timing is genuinely in your favour.",
+      "Favorable":        "Keep the momentum. Consistent effort pays off more than big moves.",
+      "Moderate":         "Focus on quality over speed. Avoid impulsive decisions.",
+      "Challenging":      "Hold your position. The friction is temporary — don't let it push you into reactive choices.",
+      "Difficult":        "Don't force outcomes. Use this period to prepare, not execute.",
+    },
+    finance: {
+      "Highly Favorable": "This is a good window for financial decisions you've been considering.",
+      "Favorable":        "Proceed with planned decisions, but maintain discipline.",
+      "Moderate":         "Smaller, safer moves over large commitments right now.",
+      "Challenging":      "Avoid major financial moves. Protect what you have.",
+      "Difficult":        "No new commitments. Focus on stability.",
+    },
+    relationship: {
+      "Highly Favorable": "This is a good time for important conversations you've been postponing.",
+      "Favorable":        "Small, consistent gestures matter more than grand ones right now.",
+      "Moderate":         "Stay patient. Minor misunderstandings are temporary.",
+      "Challenging":      "Don't escalate. Give things space and let time work.",
+      "Difficult":        "Avoid high-stakes conversations this week. Let things settle first.",
+    },
+  };
+
+  return map[domain]?.[diagnosis.overallState] ?? "Stay consistent with your current energy.";
+}
+
+// ── Answer Plan (the LLM contract) ────────────────────────────────────────────
+
+export function buildAnswerPlan(
+  intent:       IntentAnalysis,
+  diagnosis:    AstrologicalDiagnosis,
+  lifeStory:    DomainStoryArc | null,
+  observations: ObservationSet,
+  reasoning:    ReasoningChain,
+): AnswerPlan {
+  const confidenceMap: Record<string, number> = { high: 88, medium: 65, low: 45 };
+
+  return {
+    directAnswer:          buildDirectAnswer(intent, diagnosis),
+    confidence:            diagnosis.confidence === "high" ? "High" : diagnosis.confidence === "medium" ? "Medium" : "Low",
+    confidencePercent:     confidenceMap[diagnosis.confidence] ?? 65,
+    probabilities:         buildDomainProbabilities(intent.domain, diagnosis),
+    timeline:              diagnosis.timeline,
+    mainObservation:       buildMainObservation(lifeStory, diagnosis, intent.domain),
+    unexpectedObservation: observations.crossDomainInsight ?? observations.proactiveNotes[0] ?? null,
+    recommendation:        buildRecommendation(intent.domain, diagnosis, reasoning),
+  };
+}
+
+// ── Summary card (pre-rendered server-side — LLM never touches this) ──────────
+
+export function renderSummaryCard(card: SummaryCard): string {
+  const filled = "★".repeat(card.ratingOf5);
+  const empty  = "☆".repeat(5 - card.ratingOf5);
+  const statsLine = card.stats.map(s => `${s.label}: **${s.value}**`).join(" · ");
+
+  return (
+    `**${card.title}** ${filled}${empty}  \n` +
+    `*${card.phase}*\n\n` +
+    (statsLine ? `${statsLine}` : "") +
+    `\n\n---`
+  );
+}
+
+// ── Summary card builder ──────────────────────────────────────────────────────
 
 function buildSummaryCard(
   domain:    string,
@@ -104,17 +228,16 @@ function buildSummaryCard(
   lifeStory: DomainStoryArc | null,
   intent:    IntentAnalysis,
 ): SummaryCard {
-  const { overallScore, overallState, probability, timeline, challengingFactors } = diagnosis;
-  const stars = scoreToStars(overallScore);
-  const phase = lifeStory?.currentStage ?? overallState;
+  const { overallScore, probability, timeline, challengingFactors } = diagnosis;
+  const stars  = overallScore >= 80 ? 5 : overallScore >= 65 ? 4 : overallScore >= 50 ? 3 : overallScore >= 35 ? 2 : 1;
+  const phase  = lifeStory?.currentStage ?? diagnosis.overallState;
 
-  // Domain-specific stats
   const statsMap: Record<string, Array<{ label: string; value: string }>> = {
     health: [
-      { label: "Risk",     value: overallScore >= 65 ? "Low"      : overallScore >= 50 ? "Moderate" : "Elevated" },
-      { label: "Energy",   value: overallScore >= 70 ? "Good"     : overallScore >= 50 ? "Moderate" : "Low" },
+      { label: "Risk",     value: overallScore >= 65 ? "Low"     : overallScore >= 50 ? "Moderate" : "Elevated" },
+      { label: "Energy",   value: overallScore >= 70 ? "Good"    : overallScore >= 50 ? "Moderate" : "Low" },
       { label: "Recovery", value: phase === "Recovery" ? "Ongoing" : overallScore >= 65 ? "Not needed" : "Possible" },
-      { label: "Concern",  value: overallScore >= 65 ? "None"     : overallScore >= 50 ? "Mild"     : "Present" },
+      { label: "Concern",  value: overallScore >= 65 ? "None"    : overallScore >= 50 ? "Mild"     : "Present" },
     ],
     career: [
       { label: "Probability", value: `${probability}%` },
@@ -123,31 +246,24 @@ function buildSummaryCard(
       { label: "Risk",        value: challengingFactors.length > 1 ? "Present" : "Low" },
     ],
     finance: [
-      { label: "Direction",   value: overallState === "Challenging" || overallState === "Difficult" ? "Caution" : "Positive" },
+      { label: "Direction",   value: diagnosis.overallState === "Challenging" || diagnosis.overallState === "Difficult" ? "Caution" : "Positive" },
       { label: "Risk",        value: overallScore >= 65 ? "Low" : overallScore >= 50 ? "Moderate" : "Elevated" },
       { label: "Opportunity", value: overallScore >= 70 ? "Yes" : overallScore >= 50 ? "Moderate" : "Limited" },
       { label: "Timeline",    value: timeline ?? "Not specific" },
     ],
     relationship: [
-      { label: "Harmony",   value: overallScore >= 65 ? "Good"   : overallScore >= 50 ? "Mixed"   : "Strained" },
+      { label: "Harmony",   value: overallScore >= 65 ? "Good"  : overallScore >= 50 ? "Mixed"    : "Strained" },
       { label: "Tension",   value: challengingFactors.length > 1 ? "Present" : "Low" },
       { label: "Direction", value: lifeStory?.nextChapter ?? "Stable" },
       { label: "Focus",     value: overallScore >= 65 ? "Growth" : "Resolution" },
     ],
   };
 
-  // Title: include timeframe if asked about today/this week
   const timeLabel = intent.timeframe === "today" ? " Today"
-    : /week/i.test(intent.timeframe ?? "") ? " This Week"
-    : "";
+    : /week/i.test(intent.timeframe ?? "") ? " This Week" : "";
   const title = `${domain.charAt(0).toUpperCase() + domain.slice(1)}${timeLabel}`;
 
-  return {
-    title,
-    ratingOf5: stars,
-    phase,
-    stats: statsMap[domain] ?? [],
-  };
+  return { title, ratingOf5: stars, phase, stats: statsMap[domain] ?? [] };
 }
 
 // ── Section inclusion ─────────────────────────────────────────────────────────
@@ -161,24 +277,17 @@ function decideSections(
   const highConfidence = diagnosis.confidence !== "low";
 
   return {
-    timeline: !isQuick && diagnosis.timeline !== null && highConfidence
-              && (intent.type === "Timing" || intent.type === "Forecast" || diagnosis.probability >= 65),
-
-    probability: intent.type === "Probability" || intent.type === "Decision",
-
-    practicalAdvice: ["Advice", "Decision", "Timing"].includes(intent.type)
-                     || intent.subIntents.some(s => /should|do|action|step/i.test(s)),
-
+    timeline:             !isQuick && diagnosis.timeline !== null && highConfidence
+                          && (intent.type === "Timing" || intent.type === "Forecast" || diagnosis.probability >= 65),
+    probability:          intent.type === "Probability" || intent.type === "Decision",
+    practicalAdvice:      ["Advice", "Decision", "Timing"].includes(intent.type)
+                          || intent.subIntents.some(s => /should|do|action|step/i.test(s)),
     planetaryExplanation: intent.type === "PlanetQuestion",
-
-    spiritualRemedy: depth === "very_detailed"
-                     && (intent.domain === "health" || intent.domain === "relationship")
-                     && diagnosis.overallState !== "Highly Favorable",
-
-    questionBackToUser: intent.isFollowUp && intent.domain === "general",
-
-    // "What I'm watching" bullets: only when there are real concerns and space to mention them
-    watchingList: !isQuick && diagnosis.challengingFactors.length > 0,
+    spiritualRemedy:      depth === "very_detailed"
+                          && (intent.domain === "health" || intent.domain === "relationship")
+                          && diagnosis.overallState !== "Highly Favorable",
+    questionBackToUser:   intent.isFollowUp && intent.domain === "general",
+    watchingList:         !isQuick && diagnosis.challengingFactors.length > 0,
   };
 }
 
@@ -198,13 +307,13 @@ function buildHistoryReference(
   }
 
   const mem = memories.find(m => m.domain === domain);
-  if (mem?.whySentence) return `The last reading established: ${mem.whySentence}`;
+  if (mem?.whySentence) return `Last reading: ${mem.whySentence}`;
   if (mem?.overallLine)  return `From our last session: ${mem.overallLine}`;
 
   return null;
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Main exports ──────────────────────────────────────────────────────────────
 
 export function planResponse(
   intent:       IntentAnalysis,
@@ -216,7 +325,6 @@ export function planResponse(
   memories:     StoredDomainMemory[],
 ): ResponsePlan {
   const depth            = selectDepth(intent, userState);
-  const directAnswer     = buildDirectAnswer(intent, diagnosis);
   const summaryCard      = buildSummaryCard(intent.domain, diagnosis, lifeStory, intent);
   const includeSections  = decideSections(intent, diagnosis, depth);
   const referenceHistory = buildHistoryReference(lifeStory, memories, intent.domain, depth);
@@ -225,7 +333,7 @@ export function planResponse(
   return {
     depth,
     targetLength:     depthToLength(depth),
-    directAnswer,
+    directAnswer:     buildDirectAnswer(intent, diagnosis),
     summaryCard,
     includeSections,
     referenceHistory,

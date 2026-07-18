@@ -194,28 +194,50 @@ export interface RealityContext {
   realitySummary:        string;
 }
 
+// ── Answer Plan (L8 output — pure conclusions, no chart data) ─────────────────
+// This is what the LLM receives. No planets, no houses, no percentages from the
+// chart engine. The LLM's job is to narrate conclusions, not justify them.
+
+export interface ProbabilityItem {
+  label: string;   // "Serious concern" | "Promotion" | "Cold risk"
+  value: number;   // 5–95
+}
+
+export interface AnswerPlan {
+  directAnswer:          string;          // one sentence — the answer to the question
+  confidence:            "High" | "Medium" | "Low";
+  confidencePercent:     number;          // 45 | 65 | 88
+  probabilities:         ProbabilityItem[];
+  timeline:              string | null;
+  mainObservation:       string;          // plain-English summary of what's happening
+  unexpectedObservation: string | null;   // astrologer's intuition: "what actually stands out"
+  recommendation:        string;          // what to do — practical, direct
+}
+
 // ── Full Brain Context ────────────────────────────────────────────────────────
 
 export interface PunditBrainContext {
   realityContext: RealityContext;   // Layer 0 — must run first
-  intent:       IntentAnalysis;
-  userState:    UserState;
-  lifeStory:    DomainStoryArc | null;
-  diagnosis:    AstrologicalDiagnosis;
-  observations: ObservationSet;
-  reasoning:    ReasoningChain;
-  personality:  PunditPersonality;
-  responsePlan: ResponsePlan;
+  intent:         IntentAnalysis;
+  userState:      UserState;
+  lifeStory:      DomainStoryArc | null;
+  diagnosis:      AstrologicalDiagnosis;
+  observations:   ObservationSet;
+  reasoning:      ReasoningChain;
+  personality:    PunditPersonality;
+  responsePlan:   ResponsePlan;
+  answerPlan:     AnswerPlan;       // pre-computed conclusion — what the LLM narrates from
 }
 
 // ── Brain Output ──────────────────────────────────────────────────────────────
 
 export interface PunditBrainOutput {
-  systemPrompt:  string;
-  userPrompt:    string;
-  temperature:   number;
-  lifeStory:     DomainStoryArc | null;
-  clarification: ClarificationNeeded | null;
+  systemPrompt:        string;
+  userPrompt:          string;
+  temperature:         number;
+  lifeStory:           DomainStoryArc | null;
+  clarification:       ClarificationNeeded | null;
+  renderedSummaryCard: string;   // pre-rendered markdown — prepended in route.ts
   metadata: {
     domain:     string;
     tone:       PunditTone;

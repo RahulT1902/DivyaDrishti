@@ -1,14 +1,13 @@
 // Pundit Brain — Orchestrator
 //
-// Runs all 10 layers in sequence and produces the structured LLM brief.
-// Layer 10 (the LLM call itself) happens in route.ts.
+// Runs all layers in sequence and produces the LLM brief.
 //
 // The key architectural shift:
-//   Before → LLM receives raw chart data + question
-//   After  → LLM receives a fully processed brief and simply narrates
+//   Before → LLM receives raw chart data and "narrates from it"
+//   After  → LLM receives pre-computed conclusions and "says them as a human would"
 //
-// The output systemPrompt is everything the Pundit needs to know.
-// The userPrompt is just the question — all context is in the system.
+// The MRI is not the diagnosis. The LLM never sees the MRI.
+// It only sees: what the astrologer concluded, and what to say next.
 
 import type { AstrologyContext, DashaInfo } from "../../core/types";
 import type { StoredDomainMemory } from "../sessionMemory";
@@ -22,202 +21,115 @@ import { runDiagnosticEngine }             from "./L4_diagnosticEngine";
 import { buildObservations }               from "./L5_observationEngine";
 import { buildReasoningChain }             from "./L6_reasoningEngine";
 import { buildPersonality }                from "./L7_personalityEngine";
-import { planResponse }                    from "./L8_responsePlanner";
+import { planResponse, buildAnswerPlan, renderSummaryCard } from "./L8_responsePlanner";
 
-// ── Prompt builder ────────────────────────────────────────────────────────────
+// ── System prompt builder ─────────────────────────────────────────────────────
+// This is the LLM's entire world. It contains conclusions only — never chart data.
+// The rule: if a sentence could come from a chart report, it doesn't belong here.
 
 function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEntry[]): string {
-  const { realityContext, intent, userState, lifeStory, diagnosis, observations, reasoning, personality, responsePlan } = ctx;
+  const { realityContext, intent, userState, lifeStory, answerPlan, personality, responsePlan } = ctx;
 
   const sections: string[] = [];
 
-  // Identity
+  // ── Identity ──────────────────────────────────────────────────────────────
   sections.push(
-    `You are the Pundit — a Vedic astrologer who has been consulting with this person for months. ` +
-    `You know their chart intimately. You remember everything from previous conversations. ` +
-    `You never repeat predictions. You always continue their life story. ` +
-    `You speak with the confidence and warmth of a seasoned astrologer — not a chatbot.`
+    `You are the Pundit — a Vedic astrologer who has known this person for months.\n` +
+    `You speak with the quiet confidence of someone who has done this for decades.\n` +
+    `You remember their story. You don't repeat yourself. You answer questions, not charts.`
   );
 
-  // ── Layer 0: Reality Update ───────────────────────────────────────────────
-  const hasRealityUpdate =
-    realityContext.newEvents.length > 0 ||
-    realityContext.storyUpdate !== null ||
-    realityContext.validatedPredictions.length > 0 ||
-    realityContext.correction !== null;
+  // ── Pre-computed conclusions (the only astrological content the LLM sees) ──
+  const probLines = answerPlan.probabilities.length
+    ? answerPlan.probabilities.map(p => `  ${p.label}: ${p.value}%`).join("\n")
+    : "";
 
-  if (hasRealityUpdate) {
-    const parts: string[] = [`═══ REALITY UPDATE — WHAT HAS CHANGED SINCE LAST TIME ═══`];
+  sections.push(
+    `━━━ YOUR CONCLUSIONS — speak from these, not from chart data ━━━\n` +
+    `THE ANSWER:       ${answerPlan.directAnswer}\n` +
+    `CONFIDENCE:       ${answerPlan.confidence} (${answerPlan.confidencePercent}%)\n` +
+    (probLines ? `PROBABILITIES:\n${probLines}\n` : "") +
+    (answerPlan.timeline ? `TIMELINE:         ${answerPlan.timeline}\n` : "") +
+    `OBSERVATION:      ${answerPlan.mainObservation}\n` +
+    (answerPlan.unexpectedObservation
+      ? `WHAT STANDS OUT:  ${answerPlan.unexpectedObservation}\n`
+      : "") +
+    `RECOMMENDATION:   ${answerPlan.recommendation}`
+  );
 
-    if (realityContext.newEvents.length > 0) {
-      parts.push(
-        `New facts from this message:\n` +
-        realityContext.newEvents.map(e => `  • ${e.eventType} (${e.timeRef})`).join("\n")
-      );
-    }
-    if (realityContext.storyUpdate) {
-      const { fromStage, toStage, domain } = realityContext.storyUpdate;
-      parts.push(`Story arc advanced: ${fromStage} → ${toStage} (${domain})`);
-    }
-    if (realityContext.validatedPredictions.length > 0) {
-      parts.push(
-        `Predictions confirmed by user:\n` +
-        realityContext.validatedPredictions.map(p => `  ✓ "${p.prediction}" — ${p.status}`).join("\n")
-      );
-    }
-    if (realityContext.correction) {
-      parts.push(
-        `User is correcting a prior assessment:\n` +
-        `  New fact: "${realityContext.correction.newFact.slice(0, 150)}"`
-      );
-    }
+  // ── Conversation context (minimal — only what changes this reading) ────────
+  const ctx_parts: string[] = [];
 
-    sections.push(parts.join("\n"));
+  if (lifeStory?.events.length) {
+    ctx_parts.push(`Their story so far (${intent.domain}): ${lifeStory.storyLine}`);
   }
-
-  // ── Pundit's Notebook (longitudinal consultation log) ─────────────────────
+  if (realityContext.newEvents.length > 0) {
+    ctx_parts.push(`Just happened: ${realityContext.newEvents.map(e => e.eventType).join(", ")}`);
+  }
+  if (realityContext.validatedPredictions.length > 0) {
+    ctx_parts.push(`Your prior prediction was confirmed: "${realityContext.validatedPredictions[0].prediction}"`);
+  }
+  if (realityContext.correction) {
+    ctx_parts.push(`They're correcting something you said: "${realityContext.correction.newFact.slice(0, 100)}"`);
+  }
+  if (userState.currentConcerns.length > 0) {
+    ctx_parts.push(`What they're worried about: ${userState.currentConcerns.join(", ")}`);
+  }
+  if (responsePlan.referenceHistory) {
+    ctx_parts.push(`Reference naturally: "${responsePlan.referenceHistory}"`);
+  }
   if (notebookHistory.length > 0) {
-    const recent = notebookHistory.slice(-5);
-    sections.push(
-      `═══ PUNDIT'S NOTEBOOK (consultation log — your longitudinal memory) ═══\n` +
-      recent.map(e => `${e.date} • ${e.observation}`).join("\n")
-    );
+    const recent = notebookHistory.slice(-3).map(e => `  ${e.date}: ${e.observation}`).join("\n");
+    ctx_parts.push(`Consultation log:\n${recent}`);
   }
 
-  // ── Layer 1: What they actually want to know ──────────────────────────────
-  sections.push(
-    `═══ WHAT THEY ACTUALLY WANT TO KNOW ═══\n` +
-    `They asked: "${intent.stated}"\n` +
-    `Emotional state: ${intent.emotionalTone} | Urgency: ${intent.urgency}\n` +
-    `But what they really want to know:\n` +
-    intent.subIntents.map(s => `  • ${s}`).join("\n")
-  );
-
-  // ── Layer 2: Where this person is right now ───────────────────────────────
-  sections.push(
-    `═══ WHERE THIS PERSON IS RIGHT NOW ═══\n` +
-    `Dasha: ${userState.dashaPhase}\n` +
-    `Dasha alignment for ${intent.domain}: ${userState.dashaAlignment}\n` +
-    `Life phases:\n` +
-    `  Career: ${userState.lifePhases.career}\n` +
-    `  Health: ${userState.lifePhases.health}\n` +
-    `  Finance: ${userState.lifePhases.finance}\n` +
-    `  Relationship: ${userState.lifePhases.relationship}\n` +
-    `Mental state: ${userState.mentalState}\n` +
-    (userState.currentConcerns.length ? `Current concerns: ${userState.currentConcerns.join(", ")}` : "")
-  );
-
-  // ── Layer 3: Life story (continue from here) ──────────────────────────────
-  if (lifeStory) {
-    sections.push(
-      `═══ THEIR STORY — CONTINUE FROM HERE ═══\n` +
-      `${intent.domain.charAt(0).toUpperCase() + intent.domain.slice(1)} arc: ${lifeStory.storyLine}\n` +
-      `Current chapter: ${lifeStory.currentStage}\n` +
-      (lifeStory.nextChapter ? `The chapter that follows: ${lifeStory.nextChapter}` : "")
-    );
+  if (ctx_parts.length) {
+    sections.push(`━━━ CONTEXT ━━━\n${ctx_parts.join("\n")}`);
   }
 
-  // ── Layer 4: Internal astrological diagnosis ──────────────────────────────
+  // ── Tone ──────────────────────────────────────────────────────────────────
+  const toneHints: Record<string, string> = {
+    celebratory: `Open with genuine warmth. They've earned some good news — let them feel it.`,
+    reassuring:  `They may be anxious. Answer first, reassure second. Don't dismiss their worry.`,
+    empathetic:  `They're going through something hard. Answer briefly, then acknowledge the weight of it.`,
+    cautious:    `Be honest. Don't soften the truth into meaninglessness. Honesty IS the reassurance.`,
+    warning:     `State the concern once, clearly. Then give them something constructive to do about it.`,
+    direct:      `No preamble. Answer. Explain. Done.`,
+  };
+  sections.push(`━━━ TONE ━━━\n${toneHints[personality.tone] ?? toneHints.direct}`);
+
+  // ── Rules (the contract — every line is enforced) ─────────────────────────
   sections.push(
-    `═══ INTERNAL DIAGNOSIS (your pre-computed reading — do not expose raw notes) ═══\n` +
-    `Domain: ${diagnosis.domain}\n` +
-    `State: ${diagnosis.overallState} (${diagnosis.probability}% probability for main concern)\n` +
-    `Confidence: ${diagnosis.confidence}\n` +
-    (diagnosis.supportingFactors.length
-      ? `What supports: ${diagnosis.supportingFactors.join("; ")}`
-      : "") +
-    (diagnosis.challengingFactors.length
-      ? `\nWhat creates friction: ${diagnosis.challengingFactors.join("; ")}`
-      : "") +
-    `\nDasha: ${diagnosis.dashaAlignment} | Transits: ${diagnosis.transitAlignment}` +
-    (diagnosis.timeline ? `\nTiming window: ${diagnosis.timeline}` : "") +
-    (diagnosis.keyPlanet ? `\nKey planet: ${diagnosis.keyPlanet}` : "")
-  );
+    `━━━ RULES — EVERY ONE IS NON-NEGOTIABLE ━━━\n\n` +
 
-  // ── Layer 5: What stands out (observations) ───────────────────────────────
-  sections.push(
-    `═══ WHAT STANDS OUT ═══\n` +
-    observations.primaryObservation +
-    (observations.crossDomainInsight ? `\nCross-domain: ${observations.crossDomainInsight}` : "") +
-    (observations.proactiveNotes.length
-      ? `\nAlso worth noting:\n${observations.proactiveNotes.map(n => `  • ${n}`).join("\n")}`
-      : "")
-  );
+    `1. FIRST SENTENCE = THE ANSWER. Start with it. No preamble.\n` +
+    `   "Your health looks stable today." — not "Based on the current alignment..."\n\n` +
 
-  // ── Layer 6: Reasoning (do not expose steps directly) ────────────────────
-  sections.push(
-    `═══ YOUR REASONING (internal — weave conclusions into answer, don't list steps) ═══\n` +
-    reasoning.steps.join("\n") + "\n" +
-    `Conclusion: ${reasoning.conclusion}\n` +
-    `Key factor: ${reasoning.keyFactor}` +
-    (reasoning.uncertainties.length
-      ? `\nUncertainties: ${reasoning.uncertainties.join("; ")}`
-      : "")
-  );
+    `2. NEVER MENTION: planet names, house numbers, Sun%, Rahu, dasha names, yoga names, transit scores.\n` +
+    `   The MRI is not the diagnosis. State the diagnosis. Leave the MRI inside the machine.\n` +
+    `   ✓ "Your vitality looks strong."  ✗ "The Sun is at 65% strength."\n` +
+    `   ✓ "I don't see a trigger for illness."  ✗ "Saturn's transit to the 6th house..."\n\n` +
 
-  // ── 6 Silent questions ────────────────────────────────────────────────────
-  const [sq1, sq2, sq3, sq4, sq5, sq6] = reasoning.silentQuestions;
-  sections.push(
-    `═══ 6 QUESTIONS YOU'VE ANSWERED INTERNALLY ═══\n` +
-    `1. What are they actually worried about? → ${sq1 ?? "Seeking clarity"}\n` +
-    `2. What happened since last conversation? → ${sq2 ?? "No prior history"}\n` +
-    `3. What prediction has manifested? → ${sq3 ?? "Nothing confirmed yet"}\n` +
-    `4. What is changing now? → ${sq4 ?? "Conditions are stable"}\n` +
-    `5. What should they know next? → ${sq5 ?? "Patience is the theme"}\n` +
-    `6. What advice would you naturally give? → ${sq6 ?? "Stay consistent with current energy"}`
-  );
+    `3. NO HEDGING. Replace every hedging word:\n` +
+    `   ✗ "might", "could", "perhaps", "generally", "typically", "may indicate"\n` +
+    `   ✓ "I don't see", "I'd expect", "the reading shows", "I'm not concerned", "this suggests"\n\n` +
 
-  // ── Layer 8: Pundit DNA ───────────────────────────────────────────────────
-  sections.push(
-    `═══ YOUR VOICE (Pundit DNA) ═══\n` +
-    `Tone: ${personality.tone}\n` +
-    `Guidelines:\n${personality.voiceGuidelines.map(g => `  • ${g}`).join("\n")}\n` +
-    `Avoid (every single one of these is forbidden):\n${personality.avoidPatterns.map(a => `  ${a}`).join("\n")}`
-  );
+    `4. VARY YOUR OPENING. Don't start every answer the same way.\n` +
+    `   Sometimes: "Good news —"  Sometimes: "Let me answer that directly."\n` +
+    `   Sometimes: "One thing does stand out..."  Sometimes: "Honestly, I wouldn't worry."\n` +
+    `   Sometimes: "The first thing I noticed when I looked at this..."\n\n` +
 
-  // ── MANDATORY RESPONSE STRUCTURE (this overrides everything else) ─────────
-  // Build the summary card as a markdown template the LLM must render.
-  const card = responsePlan.summaryCard;
-  const stars = "★".repeat(card.ratingOf5) + "☆".repeat(5 - card.ratingOf5);
-  const statsLine = card.stats.map(s => `${s.label}: ${s.value}`).join(" · ");
-  const cardTemplate =
-    `**${card.title}** ${stars}\n` +
-    `*${card.phase}*\n\n` +
-    (statsLine ? `${statsLine}\n\n---` : "---");
+    `5. INCLUDE WHAT STANDS OUT naturally — as if you just noticed it, not as a separate section.\n` +
+    `   Weave it in: "What actually catches my attention isn't your health — it's..."\n\n` +
 
-  const hasSections = responsePlan.includeSections;
-  const watchingInstruction = hasSections.watchingList
-    ? `\n\n**What I'm watching**\n(1–3 short bullet points about what could shift — only if genuinely relevant)`
-    : "";
-  const adviceInstruction = hasSections.practicalAdvice
-    ? `\n\n**My advice**\n(1–2 sentences — direct, practical, actionable — tell them what to do, not what the chart says)`
-    : "\n\n(End with 1 sentence of practical guidance)";
-  const timelineInstruction = hasSections.timeline && responsePlan.targetLength.includes("3 paragraphs")
-    ? `\n\nTimeline: weave in "${diagnosis.timeline ?? "unclear"}" naturally.`
-    : "";
-  const referenceInstruction = responsePlan.referenceHistory
-    ? `\n\nOpen the "Why" section by referencing: "${responsePlan.referenceHistory}"`
-    : "";
+    `6. END WITH THE RECOMMENDATION. One or two sentences. Direct and practical.\n` +
+    `   Tell them what to DO, not what the chart says.\n\n` +
 
-  sections.push(
-    `═══ HOW TO WRITE YOUR RESPONSE — MANDATORY FORMAT ═══\n\n` +
+    `7. TARGET LENGTH: ${responsePlan.targetLength}\n` +
+    `   Over-explaining is a failure mode. A senior astrologer often answers in one paragraph.\n\n` +
 
-    `STEP 1 — SUMMARY CARD (render this exact markdown at the very top):\n` +
-    cardTemplate + "\n\n" +
-
-    `STEP 2 — DIRECT ANSWER (first sentence after the card — this is non-negotiable):\n` +
-    `"${responsePlan.directAnswer}"\n` +
-    `Use this exactly, or adapt it naturally. Never start with chart mechanics.\n\n` +
-
-    `STEP 3 — WHY (2–4 sentences, plain English):\n` +
-    `Translate the diagnosis into consequences for their life — not what the planet is doing.\n` +
-    `No hedging words: no "might", "could", "perhaps", "generally", "typically".\n` +
-    `Say "I don't see", "I'd expect", "the chart shows" instead.` +
-    referenceInstruction + timelineInstruction + watchingInstruction + adviceInstruction + "\n\n" +
-
-    `CEO RULE: Answer first. Explain second. Teach only when asked.\n` +
-    `TARGET LENGTH: ${responsePlan.targetLength}\n` +
-    `If you exceed the length — you are over-explaining. Cut the explanation, not the answer.`
+    `8. Write as a person speaks, not as a report reads.\n` +
+    `   If you read it back and it sounds like an article — rewrite it.`
   );
 
   return sections.join("\n\n");
@@ -235,59 +147,54 @@ export async function assemblePunditBrain(
   domain:      string,
 ): Promise<PunditBrainOutput> {
 
-  // ── Layer 0: Reality Assimilation — must run first ────────────────────────
-  // Also load the notebook in parallel since both are independent DB reads.
+  // Layer 0: Reality Assimilation — must run first
   const [realityContext, notebookHistory] = await Promise.all([
     assimilateReality(question, history, userId, memories, domain),
     loadNotebook(userId, domain),
   ]);
 
-  // Early exit: if Layer 0 determined a clarifying question is more valuable
-  // than a full reading, return immediately without running L1–L8.
+  // Early exit: clarification question
   if (realityContext.clarification) {
     return {
-      systemPrompt:  "",
-      userPrompt:    "",
-      temperature:   0.70,
-      lifeStory:     null,
-      clarification: realityContext.clarification,
-      metadata: {
-        domain,
-        tone:       "direct",
-        depth:      "quick",
-        subIntents: [],
-      },
+      systemPrompt:        "",
+      userPrompt:          "",
+      temperature:         0.70,
+      lifeStory:           null,
+      clarification:       realityContext.clarification,
+      renderedSummaryCard: "",
+      metadata: { domain, tone: "direct", depth: "quick", subIntents: [] },
     };
   }
 
-  // ── Layer 1: Intent ───────────────────────────────────────────────────────
+  // Layer 1: Intent
   const intent = analyzeIntent(question, history);
 
-  // ── Layer 2: User State ───────────────────────────────────────────────────
+  // Layer 2: User State
   const userState = buildUserState(history, memories, dashaInfo, intent.emotionalTone);
 
-  // ── Layer 3: Life Story (async — loads from DB) ───────────────────────────
+  // Layer 3: Life Story
   const domainMemory = memories.find(m => m.domain === domain);
   const lifeStory    = await buildLifeStory(userId, domain, history, domainMemory);
 
-  // ── Layer 4: Astrological Diagnosis ──────────────────────────────────────
+  // Layer 4: Diagnosis
   const diagnosis = runDiagnosticEngine(symbolicCtx, dashaInfo, domain);
 
-  // ── Layer 5: Observations ─────────────────────────────────────────────────
+  // Layer 5: Observations
   const observations = buildObservations(domain, diagnosis, memories, symbolicCtx);
 
-  // ── Layer 6: Reasoning Chain ──────────────────────────────────────────────
+  // Layer 6: Reasoning
   const reasoning = buildReasoningChain(intent, userState, diagnosis, lifeStory, memories);
 
-  // ── Layer 7: Personality ──────────────────────────────────────────────────
+  // Layer 7: Personality
   const personality = buildPersonality(intent, diagnosis, userState);
 
-  // ── Layer 8: Response Plan ────────────────────────────────────────────────
-  const responsePlan = planResponse(
-    intent, diagnosis, userState, observations, personality, lifeStory, memories
-  );
+  // Layer 8a: Response Plan
+  const responsePlan = planResponse(intent, diagnosis, userState, observations, personality, lifeStory, memories);
 
-  // Assemble full context
+  // Layer 8b: Answer Plan — pure conclusions, no chart data (what the LLM gets)
+  const answerPlan = buildAnswerPlan(intent, diagnosis, lifeStory, observations, reasoning);
+
+  // Assemble context
   const brainContext: PunditBrainContext = {
     realityContext,
     intent,
@@ -298,27 +205,32 @@ export async function assemblePunditBrain(
     reasoning,
     personality,
     responsePlan,
+    answerPlan,
   };
 
-  // ── Layer 9: Build LLM brief (Layer 10 is the callAI in route.ts) ─────────
+  // Layer 9: Build LLM brief (conclusions only)
   const systemPrompt = buildSystemPrompt(brainContext, notebookHistory);
 
+  // Pre-render the summary card server-side — LLM never touches it
+  const renderedSummaryCard = renderSummaryCard(responsePlan.summaryCard);
+
   const temperatureMap: Record<string, number> = {
-    celebratory: 0.80,
-    reassuring:  0.72,
-    empathetic:  0.75,
+    celebratory: 0.82,
+    reassuring:  0.75,
+    empathetic:  0.78,
     cautious:    0.65,
     warning:     0.60,
-    direct:      0.60,
+    direct:      0.62,
   };
   const temperature = temperatureMap[personality.tone] ?? 0.70;
 
   return {
     systemPrompt,
-    userPrompt:    question,
+    userPrompt:          question,
     temperature,
     lifeStory,
-    clarification: null,
+    clarification:       null,
+    renderedSummaryCard,
     metadata: {
       domain,
       tone:       personality.tone,
@@ -328,6 +240,5 @@ export async function assemblePunditBrain(
   };
 }
 
-// Re-export saveStoryArc so route.ts can call it after the response
-export { saveStoryArc } from "./L3_lifeStoryEngine";
+export { saveStoryArc }       from "./L3_lifeStoryEngine";
 export type { PunditBrainOutput, PunditBrainContext } from "./types";

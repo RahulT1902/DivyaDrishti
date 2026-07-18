@@ -381,9 +381,10 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
           targetDomain,
         );
 
-        // ── Layer 10: LLM narrates from the fully structured brief ─────────────
-        // If Layer 0 decided a clarifying question is more useful, skip the LLM
-        // and return the pre-written question directly.
+        // ── Layer 10: LLM narrates from pre-computed conclusions ─────────────
+        // If Layer 0 decided a clarifying question is more useful, return it directly.
+        // Otherwise: LLM narrates the answer, then the summary card is prepended.
+        // The summary card is pre-rendered server-side — the LLM never sees chart data.
         let rawText: string;
         if (brain.clarification) {
           rawText = brain.clarification.question;
@@ -393,7 +394,10 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             prompt:      brain.userPrompt,
             temperature: brain.temperature,
           });
-          rawText = text;
+          // Prepend the pre-rendered summary card above the LLM narrative
+          rawText = brain.renderedSummaryCard
+            ? `${brain.renderedSummaryCard}\n\n${text}`
+            : text;
         }
 
         // Persist domain assessment for future sessions (fire-and-forget)
