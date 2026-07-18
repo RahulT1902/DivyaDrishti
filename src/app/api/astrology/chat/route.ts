@@ -412,12 +412,11 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
               ]
             : undefined;
 
-          const { text } = await callAI({
-            system:      brain.systemPrompt,
-            prompt:      brain.userPrompt,
-            temperature: brain.temperature,
-            ...(chatMessages ? { messages: chatMessages } : {}),
-          });
+          const { text } = await callAI(
+            chatMessages
+              ? { system: brain.systemPrompt, messages: chatMessages, temperature: brain.temperature }
+              : { system: brain.systemPrompt, prompt: brain.userPrompt, temperature: brain.temperature }
+          );
 
           // Strip emoji and collapse stray blank lines — the model sometimes
           // ignores the "no emoji" instruction despite it being first in the prompt.
