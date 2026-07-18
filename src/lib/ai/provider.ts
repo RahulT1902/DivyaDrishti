@@ -72,7 +72,7 @@ export function getAIModel() {
 // ─── callAI: One-shot with Automatic Fallback ──────────────────────────────
 
 interface CallAIOptions {
-  prompt: string;
+  prompt?: string;
   system?: string;
   temperature?: number;
   maxTokens?: number;
@@ -89,6 +89,12 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
   const { prompt, system, temperature = 0.7, maxTokens, messages } = options;
   const errors: string[] = [];
 
+  // Build the payload — SDK rejects requests that define both prompt and messages.
+  // Prefer messages (multi-turn) when present; fall back to prompt (single-turn).
+  const turnPayload = messages?.length
+    ? { messages }
+    : { prompt };
+
   // ── 1. DeepSeek (primary) ─────────────────────────────────────────────
   if (hasDeepSeek) {
     try {
@@ -98,7 +104,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
       });
       const { text } = await generateText({
         model: client.chat("deepseek-chat"),
-        system, prompt, messages, temperature,
+        system, ...turnPayload, temperature,
         ...(maxTokens ? { maxTokens } : {}),
       } as any);
       console.log("[AI] DeepSeek: OK");
@@ -119,7 +125,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
       });
       const { text } = await generateText({
         model: client.chat("llama-3.3-70b-versatile"),
-        system, prompt, messages, temperature,
+        system, ...turnPayload, temperature,
         ...(maxTokens ? { maxTokens } : {}),
       } as any);
       console.log("[AI] Groq: OK");
@@ -137,7 +143,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
       const client = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
       const { text } = await generateText({
         model: client("gemini-2.0-flash"),
-        system, prompt, messages, temperature,
+        system, ...turnPayload, temperature,
         ...(maxTokens ? { maxTokens } : {}),
       } as any);
       console.log("[AI] Gemini: OK");
