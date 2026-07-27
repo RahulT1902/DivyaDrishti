@@ -716,8 +716,14 @@ function computeTopPriorities(
   const conf     = diagnosis.confidence === "high" ? 3 : diagnosis.confidence === "medium" ? 2 : 1;
 
   if (brief.type === "health") {
-    if (brief.primarySystem)
-      candidates.push({ text: `${brief.primarySystem} is the primary area of sensitivity (${brief.illnessProbability}% illness probability)`, score: severity * conf * noveltyFactor(brief.primarySystem) });
+    // Use body-part language, not system name or raw %
+    const watchPhrase = brief.bodyParts.length > 0
+      ? brief.bodyParts.slice(0, 2).join(" and ").toLowerCase()
+      : brief.primarySystem.toLowerCase();
+    const feelingLabel = brief.illnessProbability >= 70 ? "real chance of feeling off if you push"
+      : brief.illnessProbability >= 55 ? "possible if not careful"
+      : "mild — worth being careful";
+    candidates.push({ text: `${watchPhrase} — ${feelingLabel}`, score: severity * conf * noveltyFactor(brief.primarySystem) });
     if (brief.energyNote)
       candidates.push({ text: brief.energyNote, score: 1.5 * conf * noveltyFactor("energy") });
     if (brief.mentalNote)
@@ -728,14 +734,17 @@ function computeTopPriorities(
 
   if (brief.type === "career") {
     const top = brief.aspects[0];
-    if (top)
-      candidates.push({ text: `${top.name}: ${top.direction} (${top.probability}%)`, score: severity * conf * noveltyFactor(top.name) });
+    if (top) {
+      // Direction label as natural language, not raw %
+      const dirLabel = top.direction === "Strong" ? "looking strong" : top.direction === "Building" ? "building momentum" : top.direction === "Stable" ? "holding steady" : top.direction === "Weak" ? "under pressure" : "facing obstacles";
+      candidates.push({ text: `${top.name}: ${dirLabel}`, score: severity * conf * noveltyFactor(top.name) });
+    }
     if (brief.opportunityNote)
       candidates.push({ text: brief.opportunityNote, score: 2 * conf * noveltyFactor(brief.opportunityNote.slice(0, 20)) });
     if (brief.frictionNote)
       candidates.push({ text: brief.frictionNote, score: 1.5 * conf * noveltyFactor("delay") });
     if (brief.strategyNote)
-      candidates.push({ text: `Strategy: ${brief.strategyNote}`, score: 1.8 * conf * 1.0 });
+      candidates.push({ text: brief.strategyNote, score: 1.8 * conf * 1.0 });
   }
 
   if (brief.type === "finance") {
@@ -756,9 +765,9 @@ function computeTopPriorities(
   }
 
   if (brief.type === "spirituality") {
-    candidates.push({ text: `Focus on ${brief.keyPlanet} (${brief.confidence}% confidence)`, score: 3 * conf * 1.0 });
+    candidates.push({ text: `Focus on ${brief.keyPlanet} this period`, score: 3 * conf * 1.0 });
     candidates.push({ text: brief.whyNow, score: 2 * conf * 1.0 });
-    candidates.push({ text: `Expected: ${brief.expectedBenefit}`, score: 1.5 * conf * 1.0 });
+    candidates.push({ text: brief.expectedBenefit, score: 1.5 * conf * 1.0 });
   }
 
   return candidates
@@ -858,7 +867,13 @@ export function buildConsultationBrief(
 
       const pa = c.aspects.find(a => a.name === c.primaryAspect);
       mainConclusion = pa
-        ? `${c.primaryAspect} probability is around ${pa.probability}% — the chart ${pa.direction === "Strong" ? "strongly supports" : pa.direction === "Building" ? "is building toward" : "shows steady support for"} this.`
+        ? pa.direction === "Strong"
+          ? `${c.primaryAspect} is looking genuinely well-supported right now — the chart is leaning strongly in your favour.`
+          : pa.direction === "Building"
+          ? `${c.primaryAspect} is building — not guaranteed yet, but conditions are moving in the right direction.`
+          : pa.direction === "Stable"
+          ? `${c.primaryAspect} is holding steady — not a peak moment, but progress is real.`
+          : `${c.primaryAspect} faces some friction right now — the chart shows genuine obstacles worth understanding.`
         : `Your career direction looks ${overallVerdict.toLowerCase()}.`;
 
       unexpectedObservation =
@@ -1053,15 +1068,16 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
 
   if (db.type === "career") {
     lines.push(`PRIMARY FOCUS: ${db.primaryAspect}`);
-    lines.push(`CAREER BREAKDOWN (use these exact probabilities — do not invent others):`);
+    lines.push(`CAREER BREAKDOWN (reference for direction — narrate naturally, don't list percentages mechanically):`);
     db.aspects.forEach(a => {
       const pad = " ".repeat(Math.max(1, 18 - a.name.length));
-      lines.push(`  ${a.name}:${pad}${a.direction} (${a.probability}%)`);
+      // Direction word + rounded % as an anchor — say "around X%" or "roughly X%", not the exact figure
+      lines.push(`  ${a.name}:${pad}${a.direction} (~${a.probability}%)`);
     });
     lines.push(`OPPORTUNITY: ${db.opportunityNote}`);
     if (db.frictionNote) lines.push(`FRICTION: ${db.frictionNote}`);
-    lines.push(`TIMING: ${db.timing ?? "No specific window yet"}  ← DO NOT INVENT A DIFFERENT TIMELINE`);
-    lines.push(`OVERALL PROBABILITY: ${db.overallProbability}%  ← USE THIS EXACT NUMBER`);
+    lines.push(`TIMING: ${db.timing ?? "No specific window yet"}  ← anchor your timeline to this, do not invent a different one`);
+    lines.push(`OVERALL PROBABILITY: ~${db.overallProbability}%  ← anchor your estimate to this range; say "around X%" not the exact figure`);
   }
 
   if (db.type === "finance") {
@@ -1090,7 +1106,7 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   }
 
   if (db.type === "spirituality") {
-    lines.push(`KEY PLANET: ${db.keyPlanet}  (confidence: ${db.confidence}%)`);
+    lines.push(`KEY PLANET: ${db.keyPlanet}`);
     lines.push(`WHY NOW: ${db.whyNow}`);
     lines.push(`LIFE AREAS SUPPORTED: ${db.lifeAreasSupported.join(", ")}`);
     lines.push(`HOW LONG: ${db.duration}`);

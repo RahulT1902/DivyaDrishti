@@ -393,6 +393,32 @@ function buildSummaryCard(
     return { title, ratingOf5: stars, phase, stats };
   }
 
+  // ── Career: use rich CareerBrief data when available ─────────────────────
+  if (domain === "career" && consultationBrief?.domainBrief.type === "career") {
+    const c = consultationBrief.domainBrief;
+    const careerPhase = diagnosis.overallState === "Highly Favorable" || diagnosis.overallState === "Favorable"
+      ? "Positive Momentum"
+      : diagnosis.overallState === "Moderate"
+      ? "Steady Phase"
+      : "Consolidation Phase";
+
+    const stats: SummaryCard["stats"] = [];
+    stats.push({ label: "Primary Focus", value: c.primaryAspect });
+    // Direction-based label, not raw %
+    const mainAspect = c.aspects.find(a => a.name === c.primaryAspect);
+    if (mainAspect) {
+      const dirText = mainAspect.direction === "Strong" ? "Well supported"
+        : mainAspect.direction === "Building" ? "Building"
+        : mainAspect.direction === "Stable" ? "Holding steady"
+        : mainAspect.direction === "Weak" ? "Under pressure"
+        : "Facing friction";
+      stats.push({ label: "Direction", value: dirText });
+    }
+    if (c.timing) stats.push({ label: "Timing", value: c.timing });
+    stats.push({ label: "Risk", value: c.frictionNote ? "Present" : "Low" });
+    return { title, ratingOf5: stars, phase: careerPhase, stats };
+  }
+
   // ── Other domains ─────────────────────────────────────────────────────────
   const rawPhase = lifeStory?.currentStage ?? diagnosis.overallState;
   const FRIENDLY_PHASE: Record<string, string> = {
@@ -407,14 +433,14 @@ function buildSummaryCard(
       // Fallback when consultationBrief is unavailable
       { label: "Risk",     value: overallScore >= 65 ? "Low" : overallScore >= 50 ? "Moderate" : "Elevated" },
       { label: "Energy",   value: overallScore >= 70 ? "Good" : overallScore >= 50 ? "Moderate" : "Low" },
-      { label: "Severity", value: overallScore >= 65 ? "None" : overallScore >= 50 ? "Mild" : "Present" },
+      { label: "Sensitivity", value: overallScore >= 65 ? "None" : overallScore >= 50 ? "Mild" : "Worth monitoring" },
       ...(timeline ? [{ label: "Timeline", value: timeline }] : []),
     ],
     career: [
-      { label: "Probability", value: `${probability}%` },
-      { label: "Momentum",    value: overallScore >= 65 ? "Building" : overallScore >= 50 ? "Stable" : "Slow" },
-      { label: "Timeline",    value: timeline ?? "Unclear" },
-      { label: "Risk",        value: challengingFactors.length > 1 ? "Present" : "Low" },
+      // Fallback when consultationBrief is unavailable
+      { label: "Momentum",  value: overallScore >= 65 ? "Building" : overallScore >= 50 ? "Stable" : "Slow" },
+      { label: "Timeline",  value: timeline ?? "Unclear" },
+      { label: "Risk",      value: challengingFactors.length > 1 ? "Present" : "Low" },
     ],
     finance: [
       { label: "Direction",   value: diagnosis.overallState === "Challenging" || diagnosis.overallState === "Difficult" ? "Caution" : "Positive" },
