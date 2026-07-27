@@ -366,15 +366,27 @@ function buildSummaryCard(
     if (isSecondaryClose && secondary)
       stats.push({ label: "Secondary Watch Area", value: secondary.name });
 
-    // Likelihood: show both systems when secondary is close
+    // Likelihood → human feeling language, not raw %
+    const likelihoodText = (pct: number): string => {
+      if (pct >= 70) return "Take it easy — real chance of feeling off";
+      if (pct >= 55) return "Possible if not careful";
+      if (pct >= 40) return "Low — stay mindful";
+      return "Looking clear";
+    };
     const shortName = (name: string) => name.split(/[\s&]/)[0].trim();
     const likelihoodVal = isSecondaryClose && secondary
-      ? `${shortName(h.primarySystem)} ${h.illnessProbability}% | ${shortName(secondary.name)} ${Math.round(h.illnessProbability * 0.75)}%`
-      : `${h.illnessProbability}%`;
+      ? `${shortName(h.primarySystem)}: ${likelihoodText(h.illnessProbability)}  ·  ${shortName(secondary.name)}: ${likelihoodText(Math.round(h.illnessProbability * 0.7))}`
+      : likelihoodText(h.illnessProbability);
     stats.push({ label: "Likelihood", value: likelihoodVal });
 
-    if (h.severity)
-      stats.push({ label: "Severity", value: h.severity });
+    if (h.severity) {
+      const sevMap: Record<string, string> = {
+        Significant: "Worth taking seriously",
+        Moderate:    "Mild — be careful",
+        Minor:       "Very mild",
+      };
+      stats.push({ label: "Sensitivity", value: sevMap[h.severity] ?? h.severity });
+    }
     if (h.timeline)
       stats.push({ label: "Timeline", value: h.timeline });
 

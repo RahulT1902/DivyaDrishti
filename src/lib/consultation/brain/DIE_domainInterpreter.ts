@@ -824,14 +824,21 @@ export function buildConsultationBrief(
       domainBrief    = h;
       overallVerdict = h.overallStatus;
 
+      // Use body-part language for the opening sentence, never the system name
+      const hBodyPhrase = h.bodyParts.length >= 2
+        ? `your ${h.bodyParts[0].toLowerCase()} and ${h.bodyParts[1].toLowerCase()}`
+        : h.bodyParts.length === 1
+        ? `your ${h.bodyParts[0].toLowerCase()}`
+        : `your ${h.primarySystem.toLowerCase()}`;
+
       mainConclusion =
         h.overallStatus === "Healthy"
           ? "Your health looks clear today — I'm not seeing anything to worry about."
           : h.overallStatus === "Mild Sensitivity"
-          ? `Your ${h.primarySystem.toLowerCase()} is the area to watch today — mild, nothing serious, but worth being careful.`
+          ? `There's a mild sensitivity around ${hBodyPhrase} — nothing serious, but worth being a little careful.`
           : h.overallStatus === "Moderate Concern"
-          ? `Your ${h.primarySystem.toLowerCase()} is under real stress today — I'd slow down and take it easy.`
-          : `Your ${h.primarySystem.toLowerCase()} needs attention today — the sensitivity is significant and I wouldn't push through it.`;
+          ? `${hBodyPhrase.charAt(0).toUpperCase() + hBodyPhrase.slice(1)} are under some stress today — I'd take it easy and not push through.`
+          : `${hBodyPhrase.charAt(0).toUpperCase() + hBodyPhrase.slice(1)} need some extra care right now — I wouldn't push through it.`;
 
       unexpectedObservation = h.mentalNote;
 
@@ -1003,10 +1010,14 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
         lines.push(`  PRIMARY: ${primary.name} (${primary.score}) — strongest active system. Narrate this first.`);
       }
     } else {
-      lines.push(`PRIMARY AREA: ${db.primarySystem}`);
+      // Use body-part language; primarySystem is internal, never expose it to LLM
+      const primaryLabel = db.bodyParts.length > 0
+        ? db.bodyParts.slice(0, 3).join(", ")
+        : db.primarySystem;
+      lines.push(`PRIMARY AREA: ${primaryLabel}`);
     }
     if (db.bodyParts.length > 0)
-      lines.push(`SPECIFIC AREA: ${db.bodyParts.join("  ·  ")}`);
+      lines.push(`BODY PARTS: ${db.bodyParts.join("  ·  ")}`);
     if (db.symptoms.length > 0) {
       lines.push(`IF ANYTHING DEVELOPS, EXPECT:`);
       db.symptoms.forEach(s => lines.push(`  • ${s}`));
@@ -1019,9 +1030,20 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
       lines.push(`RED FLAGS (only mention if relevant):`);
       db.redFlags.forEach(r => lines.push(`  • ${r}`));
     }
-    lines.push(`ILLNESS PROBABILITY: ${db.illnessProbability}%  ← USE THIS EXACT NUMBER, NO OTHERS`);
-    if (db.severity)
-      lines.push(`SEVERITY: ${db.severity} — temporary if anything develops`);
+    // Translate probability to feeling language — never expose the raw % to the LLM
+    const probLabel = db.illnessProbability >= 70 ? "real chance of feeling off if you push"
+      : db.illnessProbability >= 55 ? "possible if you're not careful"
+      : db.illnessProbability >= 40 ? "low — worth being mindful"
+      : "unlikely — looking clear";
+    lines.push(`ILLNESS LIKELIHOOD: ${probLabel}  ← speak this way, NEVER quote a percentage`);
+    if (db.severity) {
+      const sevPhrase: Record<string, string> = {
+        Significant: "worth taking seriously — don't dismiss",
+        Moderate:    "mild — just be a bit careful",
+        Minor:       "very mild — just a touch of extra care",
+      };
+      lines.push(`CONCERN LEVEL: ${sevPhrase[db.severity] ?? db.severity} — temporary if anything develops`);
+    }
     lines.push(`SERIOUS ILLNESS RISK: ${db.seriousRisk}  ← DO NOT CONTRADICT THIS`);
     lines.push(`TIMELINE: ${db.timeline ?? "No illness expected — nothing to time"}  ← DO NOT INVENT A DIFFERENT TIMELINE`);
     if (db.recovery) lines.push(`RECOVERY: ${db.recovery}`);
@@ -1098,15 +1120,24 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   if (isFollowUp) {
     lines.push(
       `\nFOLLOW-UP INSTRUCTION: The user already received the full diagnosis in a prior turn. ` +
-      `Do NOT repeat the same content or opening. ` +
-      `Begin with a phrase that continues the conversation naturally — choose one that fits:\n` +
+      `Do NOT repeat the same content, the same opening, or the same conclusion.\n\n` +
+
+      `CASE A — Their question lists specific areas to explore ` +
+      `(e.g. "Is this about energy levels, sleep, digestion, or something else?"):\n` +
+      `  → Pick ONE area from their list — whichever is most relevant from the DIAGNOSIS above.\n` +
+      `  → Go deep on ONLY that one area. 2–3 paragraphs entirely about it.\n` +
+      `  → Do NOT say "actually it's about [a different system]" — pick FROM what they listed.\n` +
+      `  → Use personal body-part language: "your stomach", "how tired you feel", "your sleep quality".\n` +
+      `  → Start: "Let's focus on [X] specifically..." or "Looking more closely at [X]..."\n\n` +
+
+      `CASE B — Their question is a specific follow-up ("what about sleep?", "tell me more about digestion"):\n` +
+      `  → Answer only that specific sub-question in 2–3 paragraphs.\n` +
+      `  → Continue the conversation naturally:\n` +
       `  "Good follow-up — looking specifically at [X]..."\n` +
-      `  "That's actually a different area. Let me separate it out..."\n` +
       `  "Building on what I said — if we isolate [X]..."\n` +
-      `  "Interestingly, [X] isn't where the chart points..."\n` +
-      `  "Now that you've narrowed it down to [X]..."\n` +
-      `Answer ONLY the specific sub-question. If the area they ask about is NOT in the PRIMARY AREA, ` +
-      `tell them it's not flagged, and mention what the STABLE / GOOD NEWS areas are.`
+      `  "Interestingly, [X] isn't where the chart points..."\n\n` +
+
+      `In both cases: body-part language only, never system names. Keep it to 2–3 paragraphs.`
     );
   } else {
     lines.push(`\nYOUR OPENING SENTENCE: "${brief.mainConclusion}"  ← START WITH THIS EXACTLY`);
