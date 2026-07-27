@@ -23,7 +23,7 @@ import type {
   IntentAnalysis, AstrologicalDiagnosis, UserState,
   ObservationSet, PunditPersonality, DomainStoryArc,
   ResponsePlan, ResponseDepth, SummaryCard,
-  AnswerPlan, ProbabilityItem, ReasoningChain,
+  AnswerPlan, ProbabilityItem, ReasoningChain, ConsultationBrief,
 } from "./types";
 import type { StoredDomainMemory } from "../sessionMemory";
 
@@ -289,7 +289,7 @@ export function renderSummaryCard(card: SummaryCard): string {
 
   const header = `${card.title}  ${filled}${empty}\n${card.phase}`;
   const stats  = card.stats.length
-    ? card.stats.map(s => `${s.label}: ${s.value}`).join("  ·  ")
+    ? card.stats.map(s => `${s.label}: ${s.value}`).join("\n")
     : "";
 
   return stats ? `${header}\n\n${stats}` : header;
@@ -302,27 +302,94 @@ function buildSummaryCard(
   diagnosis: AstrologicalDiagnosis,
   lifeStory: DomainStoryArc | null,
   intent:    IntentAnalysis,
+  consultationBrief?: ConsultationBrief,
 ): SummaryCard {
   const { overallScore, probability, timeline, challengingFactors } = diagnosis;
-  const stars  = overallScore >= 80 ? 5 : overallScore >= 65 ? 4 : overallScore >= 50 ? 3 : overallScore >= 35 ? 2 : 1;
+  const stars = overallScore >= 80 ? 5 : overallScore >= 65 ? 4 : overallScore >= 50 ? 3 : overallScore >= 35 ? 2 : 1;
+
+  const timeLabel = intent.timeframe === "today" ? " Today"
+    : intent.timeframe === "tomorrow" ? " Tomorrow"
+    : /week/i.test(intent.timeframe ?? "") ? " This Week"
+    : /month/i.test(intent.timeframe ?? "") ? " This Month" : "";
+  const DOMAIN_TITLE: Record<string, string> = {
+    spirituality: "Planetary Support",
+    education:    "Education",
+    business:     "Business",
+    family:       "Family",
+  };
+  // "general" domain title adapts to the timeframe rather than using a fixed label
+  const titleBase = domain === "general"
+    ? (intent.timeframe === "today" ? "Today's Reading"
+       : intent.timeframe === "tomorrow" ? "Tomorrow's Reading"
+       : "Daily Reading")
+    : (DOMAIN_TITLE[domain] ?? (domain.charAt(0).toUpperCase() + domain.slice(1)));
+  const title = domain === "general" ? titleBase : `${titleBase}${timeLabel}`;
+
+  // ── Health: use rich HealthBrief data for meaningful card content ─────────
+  if (domain === "health" && consultationBrief?.domainBrief.type === "health") {
+    const h         = consultationBrief.domainBrief;
+    const primary   = h.rankedSystems?.[0];
+    const secondary = h.rankedSystems?.[1];
+    const isSecondaryClose = !!(primary && secondary && secondary.score >= primary.score - 12);
+
+    const HEALTH_PHASE: Record<string, string> = {
+      "Healthy":             "Stable",
+      "Mild Sensitivity":    "Mild Sensitivity",
+      "Moderate Concern":    "Needs Attention",
+      "Significant Concern": "Significant Concern",
+    };
+    const phase = HEALTH_PHASE[h.overallStatus] ?? h.overallStatus;
+
+    const stats: SummaryCard["stats"] = [];
+
+    stats.push({
+      label: "Good News",
+      value: h.goodNews.length > 0 ? h.goodNews.slice(0, 2).join(" · ") : "Overall constitution looks steady",
+    });
+
+    stats.push({ label: "Primary Watch Area", value: h.primarySystem });
+
+    if (isSecondaryClose && secondary)
+      stats.push({ label: "Secondary Watch Area", value: secondary.name });
+
+    if (h.bodyParts.length > 0)
+      stats.push({ label: "Affected Body Parts", value: h.bodyParts.join(" · ") });
+
+    // Likelihood: show both systems when secondary is close
+    const shortName = (name: string) => name.split(/[\s&]/)[0].trim();
+    const likelihoodVal = isSecondaryClose && secondary
+      ? `${shortName(h.primarySystem)} ${h.illnessProbability}% | ${shortName(secondary.name)} ${Math.round(h.illnessProbability * 0.75)}%`
+      : `${h.illnessProbability}%`;
+    stats.push({ label: "Likelihood", value: likelihoodVal });
+
+    if (h.severity)
+      stats.push({ label: "Severity", value: h.severity });
+    if (h.timeline)
+      stats.push({ label: "Timeline", value: h.timeline });
+
+    return { title, ratingOf5: stars, phase, stats };
+  }
+
+  // ── Other domains ─────────────────────────────────────────────────────────
   const rawPhase = lifeStory?.currentStage ?? diagnosis.overallState;
   const FRIENDLY_PHASE: Record<string, string> = {
-    "Unknown":          diagnosis.overallState,
-    "spirituality":     "Planetary Guidance",
-    "general":          "Weekly Outlook",
+    "Unknown":      diagnosis.overallState,
+    "spirituality": "Planetary Guidance",
+    "general":      "Weekly Outlook",
   };
   const phase = FRIENDLY_PHASE[rawPhase] ?? rawPhase;
 
   const statsMap: Record<string, Array<{ label: string; value: string }>> = {
     health: [
-      { label: "Risk",     value: overallScore >= 65 ? "Low"     : overallScore >= 50 ? "Moderate" : "Elevated" },
-      { label: "Energy",   value: overallScore >= 70 ? "Good"    : overallScore >= 50 ? "Moderate" : "Low" },
-      { label: "Recovery", value: phase === "Recovery" ? "Ongoing" : overallScore >= 65 ? "Not needed" : "Possible" },
-      { label: "Concern",  value: overallScore >= 65 ? "None"    : overallScore >= 50 ? "Mild"     : "Present" },
+      // Fallback when consultationBrief is unavailable
+      { label: "Risk",     value: overallScore >= 65 ? "Low" : overallScore >= 50 ? "Moderate" : "Elevated" },
+      { label: "Energy",   value: overallScore >= 70 ? "Good" : overallScore >= 50 ? "Moderate" : "Low" },
+      { label: "Severity", value: overallScore >= 65 ? "None" : overallScore >= 50 ? "Mild" : "Present" },
+      ...(timeline ? [{ label: "Timeline", value: timeline }] : []),
     ],
     career: [
       { label: "Probability", value: `${probability}%` },
-      { label: "Momentum",    value: overallScore >= 65 ? "Building"  : overallScore >= 50 ? "Stable" : "Slow" },
+      { label: "Momentum",    value: overallScore >= 65 ? "Building" : overallScore >= 50 ? "Stable" : "Slow" },
       { label: "Timeline",    value: timeline ?? "Unclear" },
       { label: "Risk",        value: challengingFactors.length > 1 ? "Present" : "Low" },
     ],
@@ -333,24 +400,12 @@ function buildSummaryCard(
       { label: "Timeline",    value: timeline ?? "Not specific" },
     ],
     relationship: [
-      { label: "Harmony",   value: overallScore >= 65 ? "Good"  : overallScore >= 50 ? "Mixed"    : "Strained" },
+      { label: "Harmony",   value: overallScore >= 65 ? "Good" : overallScore >= 50 ? "Mixed" : "Strained" },
       { label: "Tension",   value: challengingFactors.length > 1 ? "Present" : "Low" },
       { label: "Direction", value: lifeStory?.nextChapter ?? "Stable" },
       { label: "Focus",     value: overallScore >= 65 ? "Growth" : "Resolution" },
     ],
   };
-
-  const timeLabel = intent.timeframe === "today" ? " Today"
-    : /week/i.test(intent.timeframe ?? "") ? " This Week" : "";
-  const DOMAIN_TITLE: Record<string, string> = {
-    spirituality: "Planetary Support",
-    general:      "Weekly Guidance",
-    education:    "Education",
-    business:     "Business",
-    family:       "Family",
-  };
-  const titleBase = DOMAIN_TITLE[domain] ?? (domain.charAt(0).toUpperCase() + domain.slice(1));
-  const title = `${titleBase}${timeLabel}`;
 
   return { title, ratingOf5: stars, phase, stats: statsMap[domain] ?? [] };
 }
@@ -412,9 +467,10 @@ export function planResponse(
   personality:  PunditPersonality,
   lifeStory:    DomainStoryArc | null,
   memories:     StoredDomainMemory[],
+  consultationBrief?: ConsultationBrief,
 ): ResponsePlan {
   const depth            = selectDepth(intent, userState);
-  const summaryCard      = buildSummaryCard(intent.domain, diagnosis, lifeStory, intent);
+  const summaryCard      = buildSummaryCard(intent.domain, diagnosis, lifeStory, intent, consultationBrief);
   const includeSections  = decideSections(intent, diagnosis, depth);
   const referenceHistory = buildHistoryReference(lifeStory, memories, intent.domain, depth);
   const openWithObservation = observations.isOffTopic && depth !== "quick";

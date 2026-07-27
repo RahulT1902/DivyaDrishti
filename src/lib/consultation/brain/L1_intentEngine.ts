@@ -191,18 +191,25 @@ function detectFollowUp(q: string, history: Array<{ role: string; content: strin
   const hasDomain = DOMAIN_PATTERNS.some(([, p]) => p.test(q));
   const continuationWord = /^(and |but |so |then |what about |how about |ok |okay |also )/i.test(q.trim());
   const pureWh = /^(why|when|how|who|what|which)\??$/i.test(q.trim());
-  return pureWh || (!hasDomain && words <= 8) || continuationWord;
+  // Auto-generated "Explore This" question: "Is this about X, Y, or something else?"
+  // Also covers user clarifications like "Is this related to digestion?" etc.
+  const isClarification = /^(is this (about|related|more|for)|which (of these|area|one)|tell me more|more about|focus on|what about the)/i.test(q.trim());
+  return pureWh || (!hasDomain && words <= 8) || continuationWord || isClarification;
 }
 
 // ── Timeframe ─────────────────────────────────────────────────────────────────
 
 function detectTimeframe(q: string): string | null {
-  if (/\btomorrow\b/i.test(q))      return "tomorrow";
-  if (/\btoday\b/i.test(q))         return "today";
-  if (/this month/i.test(q))        return "this month";
-  if (/next month/i.test(q))        return "next month";
-  if (/this week/i.test(q))         return "this week";
-  if (/this year/i.test(q))         return "this year";
+  if (/\btomorrow\b/i.test(q))              return "tomorrow";
+  if (/\btoday\b/i.test(q))                return "today";
+  if (/this month/i.test(q))               return "this month";
+  if (/next month/i.test(q))               return "next month";
+  if (/this week/i.test(q))               return "this week";
+  if (/next year|coming year/i.test(q))   return "next year";
+  if (/this year/i.test(q))               return "this year";
+  // Specific year references like "in 2027", "for 2027", "career 2027"
+  const yearMatch = q.match(/\b(202[5-9]|203\d)\b/);
+  if (yearMatch) return yearMatch[1];
   return null;
 }
 

@@ -19,30 +19,33 @@ import type {
 import type { BodyRiskProfile } from "../../intelligence/health/bodyRiskProfile";
 import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
 import type { PromiseResult, DomainActivation } from "../../intelligence/lifeInsights/services";
+import type { InvestigationReport } from "./CIE_investigationEngine";
+import { renderInvestigationReport } from "./CIE_investigationEngine";
 
 // ── Chart-specific data bundle (passed from route.ts into the brain) ──────────
 
 export interface ChartData {
-  bodyRiskProfile?:  BodyRiskProfile | null;
-  healthFindings?:   HealthFindings | null;
-  natalPromise?:     PromiseResult | null;
-  domainActivation?: DomainActivation | null;
-  manifestations?:   Array<{ title: string; probability: number }> | null;
+  bodyRiskProfile?:   BodyRiskProfile | null;
+  healthFindings?:    HealthFindings | null;
+  natalPromise?:      PromiseResult | null;
+  domainActivation?:  DomainActivation | null;
+  manifestations?:    Array<{ title: string; probability: number }> | null;
+  investigationReport?: InvestigationReport;
 }
 
 // ── Body parts per health system ──────────────────────────────────────────────
 // Maps internal system keys to the human-readable parts the LLM will mention.
 
 const BODY_PARTS: Record<string, string[]> = {
-  respiratorySystem:       ["throat", "nasal passages", "upper airways"],
+  respiratorySystem:       ["throat", "nose", "sinuses", "upper airways"],
   throat:                  ["throat", "vocal cords", "ear canals", "nasal cavity"],
-  coldViralSusceptibility: ["throat", "sinuses", "nasal passages"],
+  coldViralSusceptibility: ["throat", "nose", "sinuses"],
   head:                    ["head", "temples", "forehead"],
   joints:                  ["knees", "hips", "shoulders", "fingers"],
   back:                    ["lower back", "spine", "lumbar region"],
   heart:                   ["chest", "heart area"],
-  stomach:                 ["stomach", "upper abdomen"],
-  digestiveSystem:         ["intestines", "gut", "lower abdomen"],
+  stomach:                 ["stomach", "upper abdomen", "food pipe"],
+  digestiveSystem:         ["intestines", "gut", "stomach", "lower abdomen"],
   nervousSystem:           ["brain activity", "nerve pathways"],
   skinHealth:              ["skin surface", "face", "scalp"],
   kidneys:                 ["kidney region", "lower back"],
@@ -321,9 +324,9 @@ function interpretHealth(
 
   const timeline: string | null =
     primaryScore < 52 ? null
-    : primaryScore < 65 ? "3–5 days if anything develops"
-    : primaryScore < 78 ? "5–7 days, possibly longer"
-    : "this week";
+    : primaryScore < 65 ? "3–5 days"
+    : primaryScore < 78 ? "5–7 days"
+    : "5–7 days, don't rush it";
 
   // Strong areas: low-score systems not currently activated
   const activeSet  = new Set(findings.activeSystems);
@@ -332,9 +335,9 @@ function interpretHealth(
     .slice(0, 3)
     .map(([, name]) => name);
 
-  // Mental note — when stress/energy is as activated as physical systems
+  // Mental note — only flag when mental load meaningfully exceeds physical sensitivity
   const mentalScore = Math.max(profile.mentalWellness, profile.energyStamina);
-  const mentalNote  = (mentalScore >= primaryScore - 5 || isFunctional)
+  const mentalNote  = (mentalScore >= primaryScore + 8 || (isFunctional && mentalScore >= 65))
     ? "Mental fatigue and stress are a greater risk today than physical illness."
     : null;
 
@@ -764,6 +767,43 @@ function computeTopPriorities(
     .map(c => c.text);
 }
 
+// ── Health system → ruling planet ────────────────────────────────────────────
+// Vedic correspondence: which planet governs each body system.
+// Used to generate the WHY explanation in health consultations.
+
+const SYSTEM_RULING_PLANET: Record<string, string> = {
+  respiratorySystem:       "Mercury",
+  coldViralSusceptibility: "Moon",
+  throat:                  "Mercury",
+  digestiveSystem:         "Moon",
+  stomach:                 "Moon",
+  head:                    "Sun",
+  heart:                   "Sun",
+  joints:                  "Saturn",
+  back:                    "Saturn",
+  kidneys:                 "Venus",
+  liver:                   "Jupiter",
+  mentalWellness:          "Moon",
+  nervousSystem:           "Mercury",
+  energyStamina:           "Sun",
+  sleep:                   "Moon",
+  recovery:                "Saturn",
+  immuneSystem:            "Sun",
+  skinHealth:              "Venus",
+  inflammation:            "Mars",
+  allergySensitivity:      "Moon",
+};
+
+const PLANET_HEALTH_WHY: Record<string, string> = {
+  Mercury: "Mercury governs the respiratory and nervous systems — when it is stressed or weak, the airways and nerves become sensitive",
+  Moon:    "The Moon governs fluid balance, cold sensitivity, the digestive system, and emotional health — today its influence is stronger than usual",
+  Sun:     "The Sun governs vitality and immune strength — a weakened solar influence reduces energy and resistance simultaneously",
+  Saturn:  "Saturn governs the structural systems — joints, spine, and recovery pace all follow Saturn's cycles closely",
+  Venus:   "Venus governs skin health and kidney function — sensitivity in these areas tracks Venus's current transit position",
+  Jupiter: "Jupiter governs liver function, metabolism, and expansion — imbalanced Jupiter creates heaviness and sluggishness in these areas",
+  Mars:    "Mars governs inflammation, heat, and physical drive — an aggravated Mars creates heat-based sensitivity in the affected tissues",
+};
+
 // ── Main builder ──────────────────────────────────────────────────────────────
 
 export function buildConsultationBrief(
@@ -786,12 +826,12 @@ export function buildConsultationBrief(
 
       mainConclusion =
         h.overallStatus === "Healthy"
-          ? "Your health looks stable today — nothing developing."
+          ? "Your health looks clear today — I'm not seeing anything to worry about."
           : h.overallStatus === "Mild Sensitivity"
-          ? `${h.primarySystem} is today's most active area — mild sensitivity, about ${h.illnessProbability}% chance of anything developing.`
+          ? `Your ${h.primarySystem.toLowerCase()} is the area to watch today — mild, nothing serious, but worth being careful.`
           : h.overallStatus === "Moderate Concern"
-          ? `Your ${h.primarySystem.toLowerCase()} needs attention today — moderate sensitivity with ${h.illnessProbability}% illness probability.`
-          : `${h.primarySystem} is significantly activated today — ${h.illnessProbability}% illness probability. Take this seriously.`;
+          ? `Your ${h.primarySystem.toLowerCase()} is under real stress today — I'd slow down and take it easy.`
+          : `Your ${h.primarySystem.toLowerCase()} needs attention today — the sensitivity is significant and I wouldn't push through it.`;
 
       unexpectedObservation = h.mentalNote;
 
@@ -893,11 +933,19 @@ export function buildConsultationBrief(
     }
   }
 
-  // Planet context — WHY the key planet matters for this specific chart
-  const planetContext = chartData.natalPromise?.supporting
-    .find(s => diagnosis.keyPlanet && s.toLowerCase().includes(diagnosis.keyPlanet.toLowerCase()))
-    ?? chartData.natalPromise?.supporting[0]
-    ?? null;
+  // Planet context — WHY the key planet matters for this domain
+  // For health: use Vedic system→planet mapping to explain WHY this area is activated
+  // For other domains: pull from natal promise if available
+  let planetContext: string | null = null;
+  if (domain === "health" && domainBrief.type === "health") {
+    const rulingPlanet = SYSTEM_RULING_PLANET[domainBrief.primarySystemKey];
+    planetContext = rulingPlanet ? (PLANET_HEALTH_WHY[rulingPlanet] ?? null) : null;
+  } else {
+    planetContext = chartData.natalPromise?.supporting
+      .find(s => diagnosis.keyPlanet && s.toLowerCase().includes(diagnosis.keyPlanet.toLowerCase()))
+      ?? chartData.natalPromise?.supporting[0]
+      ?? null;
+  }
 
   const remedies = computeRemedies(domain, domainBrief);
 
@@ -914,6 +962,7 @@ export function buildConsultationBrief(
     planetContext,
     topPriorities,
     domainBrief,
+    investigationReport: chartData.investigationReport,
   };
 }
 
@@ -923,6 +972,12 @@ export function buildConsultationBrief(
 
 export function renderConsultationBrief(brief: ConsultationBrief, question: string, isFollowUp = false): string {
   const { domainBrief: db } = brief;
+
+  // ── Prepend Investigation Trail when available ────────────────────────────
+  const investigationBlock = brief.investigationReport
+    ? renderInvestigationReport(brief.investigationReport, question) + "\n\n"
+    : "";
+
   const lines: string[] = [
     `━━━ DIAGNOSIS (engine-computed — DO NOT invent numbers beyond what is listed here) ━━━`,
     `QUESTION: "${question}"`,
@@ -1074,5 +1129,5 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     brief.remedies.forEach(r => lines.push(`  • ${r}`));
   }
 
-  return lines.join("\n");
+  return investigationBlock + lines.join("\n");
 }

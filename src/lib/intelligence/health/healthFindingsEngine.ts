@@ -48,7 +48,7 @@ const DISPLAY_NAMES: Record<string, string> = {
   digestiveSystem:         "Digestive System",
   nervousSystem:           "Nervous System",
   inflammation:            "Inflammation",
-  coldViralSusceptibility: "Cold & Viral Susceptibility",
+  coldViralSusceptibility: "Upper Respiratory Tract",
   allergySensitivity:      "Allergy Sensitivity",
   skinHealth:              "Skin Health",
   energyStamina:           "Energy & Stamina",

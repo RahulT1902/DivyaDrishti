@@ -316,6 +316,7 @@ export interface ConsultationBrief {
   planetContext:         string | null;  // WHY the key planet matters — from natal promise, chart-specific
   topPriorities:         string[];  // top 3 observations scored by severity × confidence × novelty
   domainBrief:           DomainBrief;
+  investigationReport?:  import("./CIE_investigationEngine").InvestigationReport;
 }
 
 // ── Full Brain Context ────────────────────────────────────────────────────────
