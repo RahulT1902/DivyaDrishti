@@ -30,19 +30,29 @@ import type { StoredDomainMemory } from "../sessionMemory";
 // ── Depth decision ────────────────────────────────────────────────────────────
 
 function selectDepth(intent: IntentAnalysis, userState: UserState): ResponseDepth {
-  if (intent.emotionalTone === "low" || intent.emotionalTone === "worried") return "detailed";
   if (intent.isFollowUp || intent.type === "FollowUp") return "quick";
   if (["PlanetQuestion", "DashaQuestion", "TransitQuestion"].includes(intent.type)) return "quick";
-  if (intent.type === "Decision" || intent.type === "Timing") return "very_detailed";
-  if (userState.conversationDepth === "deep") return "detailed";
-  return intent.type === "Forecast" ? "detailed" : "quick";
+
+  // Year-level questions → full annual reading
+  const tf = intent.timeframe ?? "";
+  if (/^202[5-9]$|^203\d$/.test(tf) || /next year|coming year/i.test(tf)) return "year_outlook";
+
+  // Weekly / monthly / complex questions → full consultation
+  if (tf === "this week" || tf === "this month" || tf === "next month") return "consultation";
+  if (intent.type === "Decision" || intent.type === "Probability" || intent.type === "Timing") return "consultation";
+  if (intent.emotionalTone === "low" || intent.emotionalTone === "worried") return "consultation";
+  if (intent.type === "Forecast" && tf === "") return "consultation";
+
+  // Today / tomorrow / simple daily check
+  return "daily";
 }
 
 function depthToLength(depth: ResponseDepth): string {
   switch (depth) {
-    case "quick":         return "1 short paragraph (3–5 sentences). Answer then brief reason.";
-    case "detailed":      return "2 paragraphs. Answer → Why → Advice. Optional 'What I'm watching' bullets.";
-    case "very_detailed": return "3 paragraphs. Answer → Why → Timeline → Advice.";
+    case "quick":        return "2–3 short paragraphs, ~80–120 words. Answer only the specific sub-question they asked.";
+    case "daily":        return "3–4 paragraphs, ~150–180 words. Direct answer + key observation + recommendation + mini summary stats.";
+    case "consultation": return "4–6 paragraphs, 300–400 words. Full consultation with Overall Summary at the end.";
+    case "year_outlook": return "7–9 paragraphs, 450–550 words. Full annual reading with Domain Summary for [Year] at the end.";
   }
 }
 
@@ -344,16 +354,17 @@ function buildSummaryCard(
 
     stats.push({
       label: "Good News",
-      value: h.goodNews.length > 0 ? h.goodNews.slice(0, 2).join(" · ") : "Overall constitution looks steady",
+      value: h.goodNews.length > 0 ? h.goodNews[0] : "Overall constitution looks steady",
     });
 
-    stats.push({ label: "Primary Watch Area", value: h.primarySystem });
+    // Primary Watch Area: show body parts (specific and human) not the system name
+    const primaryBodyLabel = h.bodyParts.length > 0
+      ? h.bodyParts.slice(0, 3).join(", ")
+      : h.primarySystem;
+    stats.push({ label: "Primary Watch Area", value: primaryBodyLabel });
 
     if (isSecondaryClose && secondary)
       stats.push({ label: "Secondary Watch Area", value: secondary.name });
-
-    if (h.bodyParts.length > 0)
-      stats.push({ label: "Affected Body Parts", value: h.bodyParts.join(" · ") });
 
     // Likelihood: show both systems when secondary is close
     const shortName = (name: string) => name.split(/[\s&]/)[0].trim();
@@ -427,7 +438,7 @@ function decideSections(
     practicalAdvice:      ["Advice", "Decision", "Timing"].includes(intent.type)
                           || intent.subIntents.some(s => /should|do|action|step/i.test(s)),
     planetaryExplanation: intent.type === "PlanetQuestion",
-    spiritualRemedy:      depth === "very_detailed"
+    spiritualRemedy:      (depth === "consultation" || depth === "year_outlook")
                           && (intent.domain === "health" || intent.domain === "relationship")
                           && diagnosis.overallState !== "Highly Favorable",
     questionBackToUser:   intent.isFollowUp && intent.domain === "general",

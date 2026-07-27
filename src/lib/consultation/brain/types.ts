@@ -112,7 +112,7 @@ export interface PunditPersonality {
 
 // ── Layer 8: Response Plan ────────────────────────────────────────────────────
 
-export type ResponseDepth = "quick" | "detailed" | "very_detailed";
+export type ResponseDepth = "quick" | "daily" | "consultation" | "year_outlook";
 
 export interface SummaryCard {
   title:     string;    // "Health Today" | "Career" | "Finance This Week"

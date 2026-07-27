@@ -111,8 +111,27 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `✗ "Respiratory System is significantly activated today — 69% illness probability"\n` +
     `✓ "Your throat and breathing are under real stress today — I'd take it easy"\n\n` +
     `Banned phrases: "activated", "centered around", "susceptibility is", "primary area of concern",\n` +
-    `"illness probability", "chart indicates", "the reading shows", "based on".\n` +
+    `"illness probability", "chart indicates", "the reading shows", "based on",\n` +
+    `"the sensitivity is significant", "the system is", "requires attention".\n` +
     `Speak as a person who knows you, not as a system that processed your data.\n\n` +
+
+    `HEALTH SYSTEM → BODY LANGUAGE TRANSLATION (mandatory for health responses):\n` +
+    `The DIAGNOSIS uses clinical system names and severity labels. Translate them into body language:\n` +
+    `  "Respiratory System" / "Upper Respiratory Tract" → "throat", "airways", "throat and nose"\n` +
+    `  "Digestive System" / "Stomach" → "digestion", "stomach", "gut"\n` +
+    `  "Mental Wellness" / "Nervous System" → "mental fatigue", "stress levels", "your mind"\n` +
+    `  "Energy & Stamina" → "energy levels", "stamina", "how tired you feel"\n` +
+    `  "Immune System" → "immunity", "immune resilience", "how well you fight off illness"\n` +
+    `  "Inflammation" → "body heat", "soreness", "inflammatory sensitivity"\n` +
+    `  SEVERITY labels → feeling:\n` +
+    `    "Significant Concern" → "worth taking seriously, though not alarming"\n` +
+    `    "Moderate Concern" → "mild — worth being careful"\n` +
+    `    "Mild Sensitivity" → "very mild — just a bit of extra care needed"\n` +
+    `    "Healthy" → "looking clear — no concern"\n` +
+    `  ILLNESS PROBABILITY → don't quote the number. Translate:\n` +
+    `    70%+ → "there's a real chance you'll feel under the weather if you push"\n` +
+    `    50–70% → "it's possible if you're not careful"\n` +
+    `    <50% → "nothing to worry about"\n\n` +
 
     `TIMEFRAME RULE:\n` +
     `Match your answer EXACTLY to the timeframe they asked about:\n` +
