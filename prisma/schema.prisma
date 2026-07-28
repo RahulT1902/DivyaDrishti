@@ -32,6 +32,7 @@ model User {
   consultationMemory ConsultationMemory[]
   consultationStory  ConsultationStory[]
   punditNotebook     PunditNotebook[]
+  savedReadings      SavedReading[]
 
   // Legacy/Internal (Keeping for migration safety)
   birthDetails       BirthDetails?
@@ -108,6 +109,23 @@ model PunditNotebook {
 
   @@unique([userId, domain])
   @@index([userId])
+}
+
+model SavedReading {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  question           String   @db.Text
+  answer             String   @db.Text
+  followUp           String?
+  investigationTrail String?  @db.Text
+  domain             String?  // "career" | "health" | "finance" | "relationship"
+
+  createdAt          DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
 }
 
 model UserProfile {

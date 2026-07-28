@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Compass, Sparkles, Loader2, ArrowRight, FlaskConical, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Compass, Sparkles, Loader2, ArrowRight, FlaskConical, ChevronDown, ChevronUp, Bookmark, BookmarkCheck } from "lucide-react";
 import { authFetch } from "@/lib/auth/webFetch";
 import DashaCountdown from "@/components/DashaCountdown";
 
@@ -11,6 +11,8 @@ interface Message {
   content: string;
   followUp?: string;
   investigationTrail?: string;
+  savedId?: string;      // set after saving to /api/astrology/readings
+  userQuestion?: string; // the question that triggered this pundit message
 }
 
 export default function PunditChatView() {
@@ -41,6 +43,7 @@ export default function PunditChatView() {
     if (!text.trim() || loading) return;
 
     const userMessage: Message = { role: "user", content: text };
+    const triggeredBy = text;
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setLoading(true);
@@ -64,6 +67,7 @@ export default function PunditChatView() {
             content: result.data.answer,
             followUp: result.data.followUp,
             investigationTrail: result.data.investigationTrail ?? undefined,
+            userQuestion: triggeredBy,
           }
         ]);
       } else {
@@ -85,6 +89,30 @@ export default function PunditChatView() {
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveReading = async (msgIndex: number) => {
+    const m = messages[msgIndex];
+    if (!m || m.role !== "pundit" || m.savedId) return;
+    try {
+      const res = await authFetch("/api/astrology/readings", {
+        method: "POST",
+        body: JSON.stringify({
+          question: m.userQuestion ?? "",
+          answer: m.content,
+          followUp: m.followUp ?? null,
+          investigationTrail: m.investigationTrail ?? null,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setMessages(prev => prev.map((msg, i) =>
+          i === msgIndex ? { ...msg, savedId: result.data.id } : msg
+        ));
+      }
+    } catch {
+      // Silent — bookmark is non-critical
     }
   };
 
@@ -140,6 +168,27 @@ export default function PunditChatView() {
                 {/* Investigation trail — "Why did Pundit say this?" */}
                 {m.role === "pundit" && m.investigationTrail && (
                   <InvestigationTrailPanel trail={m.investigationTrail} />
+                )}
+
+                {/* Bookmark / Save Reading */}
+                {m.role === "pundit" && i > 0 && (
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    onClick={() => handleSaveReading(i)}
+                    className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest transition-colors mt-1 ${
+                      m.savedId
+                        ? "text-amber-500 cursor-default"
+                        : "text-amber-400/50 hover:text-amber-500"
+                    }`}
+                    disabled={!!m.savedId}
+                  >
+                    {m.savedId
+                      ? <><BookmarkCheck className="w-3 h-3" /> Saved</>
+                      : <><Bookmark className="w-3 h-3" /> Save Reading</>
+                    }
+                  </motion.button>
                 )}
 
                 {m.role === "pundit" && m.followUp && (
