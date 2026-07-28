@@ -609,3 +609,50 @@ export function renderInvestigationReport(report: InvestigationReport, question:
 
   return lines.join("\n");
 }
+
+// ── User-facing trail renderer ────────────────────────────────────────────────
+// Clean, readable version for the "Why did Pundit say this?" panel.
+// No LLM instruction language — just what was examined and why.
+
+export function renderInvestigationTrailForUser(report: InvestigationReport): string {
+  const chartLabel: Record<string, string> = {
+    D1: "Birth chart (D1)", D9: "Navamsa chart (D9)",
+    D10: "Career chart (D10)", D2: "Wealth chart (D2)",
+  };
+  const chartNames = report.chartsExamined
+    .map(c => chartLabel[c] ?? c)
+    .join(", ");
+
+  const supporting = report.evidence.filter(e => e.direction === "supporting").slice(0, 4);
+  const challenging = report.evidence.filter(e => e.direction === "challenging").slice(0, 3);
+  const notes = report.evidence.filter(e => e.direction === "neutral").slice(0, 2);
+
+  const lines: string[] = [
+    `Charts examined: ${chartNames}`,
+    ``,
+  ];
+
+  if (supporting.length > 0) {
+    lines.push(`What supports the reading:`);
+    supporting.forEach(e => lines.push(`  ✓ ${e.finding}`));
+    lines.push(``);
+  }
+  if (challenging.length > 0) {
+    lines.push(`Tensions considered:`);
+    challenging.forEach(e => lines.push(`  ✗ ${e.finding}`));
+    lines.push(``);
+  }
+  if (notes.length > 0) {
+    lines.push(`Also noted:`);
+    notes.forEach(e => lines.push(`  · ${e.finding}`));
+    lines.push(``);
+  }
+
+  const { overallScore, confidence, timeline } = report.conclusion;
+  const confidenceLabel = confidence === "high" ? "High confidence"
+    : confidence === "medium" ? "Medium confidence"
+    : "Low confidence — limited chart data";
+  lines.push(`Score: ${overallScore}/100 · ${confidenceLabel}${timeline ? ` · Timing: ${timeline}` : ""}`);
+
+  return lines.join("\n");
+}

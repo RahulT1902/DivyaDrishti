@@ -24,7 +24,7 @@ import { buildPersonality }                from "./L7_personalityEngine";
 import { planResponse, buildAnswerPlan, renderSummaryCard } from "./L8_responsePlanner";
 import { buildConsultationBrief, renderConsultationBrief } from "./DIE_domainInterpreter";
 import type { ChartData } from "./DIE_domainInterpreter";
-import { runInvestigation } from "./CIE_investigationEngine";
+import { runInvestigation, renderInvestigationTrailForUser } from "./CIE_investigationEngine";
 
 // ── System prompt builder ─────────────────────────────────────────────────────
 // This is the LLM's entire world. It contains conclusions only — never chart data.
@@ -570,6 +570,7 @@ export async function assemblePunditBrain(
     lifeStory,
     clarification:       null,
     renderedSummaryCard,
+    investigationTrail:  renderInvestigationTrailForUser(investigationReport),
     metadata: {
       domain,
       tone:       personality.tone,

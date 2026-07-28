@@ -206,6 +206,7 @@ export async function POST(req: NextRequest) {
     // 5. LLM Agentic Layer
     let answerText = "";
     let followUpText = buildFollowUp(intent.domain, intent.type);
+    let investigationTrail: string | null = null;
 
     if (!hasAnyProvider()) {
       answerText = `[Deterministic Insight]: ${narrative.heroInsight}\n\n${narrative.realityTranslation}\n\n👉 Focus on structured consistency during this ${intent.domain} phase.`;
@@ -394,6 +395,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
           targetDomain,
           chartData,
         );
+        investigationTrail = brain.investigationTrail ?? null;
 
         // ── Layer 10: LLM narrates from pre-computed conclusions ─────────────
         // If Layer 0 decided a clarifying question is more useful, return it directly.
@@ -458,6 +460,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
     return buildSuccessResponse({
       answer: answerText,
       followUp: followUpText,
+      investigationTrail,
       confidence: "high",
       intent: { domain: intent.domain, type: intent.type }
     });
