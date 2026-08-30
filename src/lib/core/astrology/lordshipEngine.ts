@@ -37,6 +37,11 @@ export interface AscendantLordshipInfo {
   houseSignNames: Record<number, string>;
 }
 
+export function getHouseLord(ascendantSign: Sign, houseNumber: number): PlanetName {
+  const houseSign = (((((ascendantSign - 1) + (houseNumber - 1)) % 12) + 12) % 12 + 1) as Sign;
+  return SIGN_RULERS[houseSign];
+}
+
 export function getAscendantLordshipInfo(lagnaSign: Sign): AscendantLordshipInfo {
   const houseRulers: Record<number, PlanetName> = {};
   const houseSigns: Record<number, Sign> = {};
@@ -46,7 +51,7 @@ export function getAscendantLordshipInfo(lagnaSign: Sign): AscendantLordshipInfo
   };
 
   for (let house = 1; house <= 12; house++) {
-    const sign = (((lagnaSign + house - 2) % 12) + 1) as Sign;
+    const sign = getHouseSign(lagnaSign, house);
     const ruler = SIGN_RULERS[sign];
 
     houseSigns[house] = sign;
@@ -80,4 +85,8 @@ export function getAscendantLordshipInfo(lagnaSign: Sign): AscendantLordshipInfo
     houseSigns,
     houseSignNames,
   };
+}
+
+export function getHouseSign(ascendantSign: Sign, houseNumber: number): Sign {
+  return (((((ascendantSign - 1) + (houseNumber - 1)) % 12) + 12) % 12 + 1) as Sign;
 }

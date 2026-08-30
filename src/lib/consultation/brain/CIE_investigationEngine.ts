@@ -17,6 +17,7 @@
 import type { AstrologyContext, DashaInfo, PlanetName, Sign, ChartType, DivisionalChart } from "../../core/types";
 import type { ChartData } from "./DIE_domainInterpreter";
 import { interpretChartTransit, type TransitInterpretationAudit } from "../../core/transit-engine/chartTransitInterpreter";
+import { getHouseLord } from "../../core/astrology/lordshipEngine";
 
 // ── Chart Intelligence Matrix ─────────────────────────────────────────────────
 // Maps domain → which charts, which houses, and which planets to examine.
@@ -247,8 +248,8 @@ function collectDivisionalEvidence(
       const dignityNote = lordRec.isExalted ? "exalted" : lordRec.isInOwnHouse ? "in own sign" : lordRec.isDebilitated ? "debilitated" : `in house ${placed}`;
       const direction: EvidenceItem["direction"] = isGood && !lordRec.isDebilitated ? "supporting" : "challenging";
       items.push({
-        label: `${chart} ${primaryHouse}th lord (${lordRec.lord})`,
-        finding: `${chart} ${primaryHouse}th lord ${lordRec.lord} is ${dignityNote} — ${direction === "supporting" ? "solid foundation" : "friction"} in ${domain}`,
+        label: `${chart} house ${primaryHouse} ruler (${lordRec.lord})`,
+        finding: `${chart} divisional house ${primaryHouse} ruler ${lordRec.lord} is ${dignityNote} in ${chart} — ${direction === "supporting" ? "solid foundation" : "friction"} in ${domain} (Note: ${chart} divisional ruler, distinct from Natal D1 10th lord)`,
         weight: lordRec.isExalted || lordRec.isDebilitated ? 70 : 50,
         direction,
         source: chart,
@@ -573,10 +574,21 @@ export function runInvestigation(
   if (ascendantSign) {
     const topTransitEv = (ctx.transit ?? [])[0];
     const planetMatch = question?.match(/\b(Sun|Moon|Mars|Mercury|Jupiter|Venus|Saturn|Rahu|Ketu)\b/i);
-    let targetPlanet: PlanetName = (topTransitEv?.planet as PlanetName) ?? "Venus";
-    if (planetMatch) {
-      targetPlanet = (planetMatch[1].charAt(0).toUpperCase() + planetMatch[1].slice(1).toLowerCase()) as PlanetName;
-    }
+    
+    // Domain-aware default house lord based on natal chart
+    const DOMAIN_HOUSE_MAP: Record<string, number> = {
+      career: 10,
+      finance: 2,
+      relationship: 7,
+      health: 1,
+      spirituality: 9,
+    };
+    const targetHouse = DOMAIN_HOUSE_MAP[domain] ?? 10;
+    const domainHouseLord = getHouseLord(ascendantSign, targetHouse);
+
+    let targetPlanet: PlanetName = (planetMatch
+      ? (planetMatch[1].charAt(0).toUpperCase() + planetMatch[1].slice(1).toLowerCase()) as PlanetName
+      : (topTransitEv?.planet as PlanetName) ?? domainHouseLord);
 
     const signMatch = question?.match(/\b(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\b/i);
     const SIGN_NAME_MAP: Record<string, Sign> = {
@@ -630,7 +642,19 @@ export function renderInvestigationReport(report: InvestigationReport, question:
 
   if (report.transitAudit) {
     const audit = report.transitAudit;
+    const asc = audit.chart.ascendant;
+    const lord10 = getHouseLord(asc, 10);
+    const lord5 = getHouseLord(asc, 5);
+    const lord12 = getHouseLord(asc, 12);
+
     lines.push(
+      ``,
+      `━━━ AUTHORITATIVE NATAL HOUSE LORDS (D1) ━━━`,
+      `ASCENDANT: ${audit.chart.ascendantName} (1st Lord: ${audit.chart.lagnaLord})`,
+      `10TH HOUSE LORD: ${lord10}`,
+      `5TH HOUSE LORD: ${lord5}`,
+      `12TH HOUSE LORD: ${lord12}`,
+      `(CRITICAL MANDATE: Never assign Venus to the 10th house. For ${audit.chart.ascendantName} Ascendant, ${lord10} is the 10th house lord.)`,
       ``,
       `━━━ CHART-SPECIFIC TRANSIT AUDIT (AUTHORITATIVE - DO NOT OVERRIDE) ━━━`,
       `ASCENDANT: ${audit.chart.ascendantName} (Lagna Lord: ${audit.chart.lagnaLord})`,
