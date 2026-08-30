@@ -88,11 +88,10 @@ export interface InvestigationReport {
   evidence:       EvidenceItem[];
   reasoning:      ReasoningStep[];
   conclusion: {
-    overallScore: number;   // 0–100
-    probability:  number;   // 0–100
+    overallScore: number;   // 0–100 Signal Strength
     timeline:     string | null;
     keyPlanet:    PlanetName | null;
-    confidence:   "high" | "medium" | "low";
+    confidence:   "high" | "medium" | "low"; // Calculation Confidence
   };
   transitAudit?: TransitInterpretationAudit;
 }
@@ -566,10 +565,6 @@ export function runInvestigation(
   const rawScore    = 50 + ((supportingWeight - challengingWeight) / totalWeight) * 42;
   const overallScore = Math.round(Math.max(10, Math.min(95, rawScore)));
 
-  // Probability gets a dasha bonus when timing aligns
-  const dashaBonus = evidence.some(e => e.source === "Dasha" && e.direction === "supporting") ? 8 : 0;
-  const probability = Math.round(Math.min(95, Math.max(15, overallScore + dashaBonus)));
-
   // Timeline — only when there's active transit or favorable dasha
   const hasActiveTransit = evidence.some(e => e.source === "Transit" && e.direction === "supporting");
   const hasDashaSupport  = evidence.some(e => e.source === "Dasha"   && e.direction === "supporting");
@@ -639,7 +634,7 @@ export function runInvestigation(
     chartsExamined: [...chartKeysUsed],
     evidence,
     reasoning,
-    conclusion: { overallScore, probability, timeline, keyPlanet, confidence },
+    conclusion: { overallScore, timeline, keyPlanet, confidence },
     transitAudit,
   };
 }
@@ -713,10 +708,10 @@ export function renderInvestigationReport(report: InvestigationReport, question:
     }
   }
 
-  const { overallScore, probability, timeline, confidence } = report.conclusion;
+  const { overallScore, timeline, confidence } = report.conclusion;
   lines.push(
     ``,
-    `SIGNAL STRENGTH: ${overallScore}/100  |  CALCULATION CONFIDENCE: ${confidence.toUpperCase()}  |  PROBABILITY: ${probability}%`,
+    `SIGNAL STRENGTH: ${overallScore}/100  |  CALCULATION CONFIDENCE: ${confidence.toUpperCase()}`,
   );
   if (timeline) {
     lines.push(`TIMING WINDOW: ${timeline}`);

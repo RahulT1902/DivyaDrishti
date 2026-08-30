@@ -33,7 +33,7 @@ export function buildChartFacts(
   const natalPositions: Partial<Record<PlanetName, PlanetPlacementFact>> = {};
   const transitPositions: Partial<Record<PlanetName, PlanetPlacementFact>> = {};
   const dignities: Partial<Record<PlanetName, SignDignity>> = {};
-  const conditions: Partial<Record<PlanetName, PlanetaryCondition>>;
+  const conditions: Partial<Record<PlanetName, PlanetaryCondition>> = {};
 
   for (const p of natalPlanets) {
     const calculatedHouse = p.house ?? (((((p.sign - ascendantSign) % 12) + 12) % 12) + 1);
@@ -45,6 +45,7 @@ export function buildChartFacts(
     };
     const dignity = getDignityInfo(p.planet, p.sign, options);
     dignities[p.planet] = dignity.condition.signDignity;
+    conditions[p.planet] = dignity.condition;
   }
 
   for (const p of transitPlanets) {
@@ -68,7 +69,7 @@ export function buildChartFacts(
     natalPlanetPositions: natalPositions,
     transitPlanetPositions: transitPositions,
     planetaryDignities: dignities,
-    planetaryConditions: {},
+    planetaryConditions: conditions,
   };
 }
 
@@ -87,11 +88,11 @@ export function validateInterpretationFacts(
       if (planet !== authoritativeLord) {
         // Strict pattern checks for incorrect house lord claims
         const patterns = [
-          new RegExp(`\\b${house}(?:st|nd|rd|th)?[- ]house lord ${planet}\\b`, "i"),
-          new RegExp(`\\b${house}(?:st|nd|rd|th)? lord ${planet}\\b`, "i"),
+          new RegExp(`(?<!D10\\s+)\\b${house}(?:st|nd|rd|th)?[- ]house lord ${planet}\\b`, "i"),
+          new RegExp(`(?<!D10\\s+)\\b${house}(?:st|nd|rd|th)? lord ${planet}\\b`, "i"),
           new RegExp(`\\blord of (?:your |the |a )?${house}(?:st|nd|rd|th)? house is ${planet}\\b`, "i"),
-          new RegExp(`\\b${planet} is (?:your |the |a )?${house}(?:st|nd|rd|th)?[- ]house lord\\b`, "i"),
-          new RegExp(`\\b${planet} is (?:your |the |a )?${house}(?:st|nd|rd|th)? lord\\b`, "i"),
+          new RegExp(`(?<!D10\\s+)\\b${planet} is (?:your |the |a )?${house}(?:st|nd|rd|th)?[- ]house lord\\b`, "i"),
+          new RegExp(`(?<!D10\\s+)\\b${planet} is (?:your |the |a )?${house}(?:st|nd|rd|th)? lord\\b`, "i"),
         ];
 
         for (const pattern of patterns) {
