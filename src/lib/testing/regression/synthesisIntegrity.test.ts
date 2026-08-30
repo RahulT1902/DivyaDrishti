@@ -15,6 +15,7 @@ function assert(condition: boolean, message: string) {
 
 const geminiSuite: any = {
   D1: {
+    metadata: { name: "Rasi Chart", source: "Computed" },
     chartType: "D1",
     ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" },
     houses: [
@@ -47,8 +48,9 @@ const geminiSuite: any = {
     yogas: [],
     strengths: [],
   },
-  D9: { chartType: "D9", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
+  D9: { metadata: { name: "Navamsa", source: "Computed" }, chartType: "D9", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
   D10: {
+    metadata: { name: "Dasamsa", source: "Computed" },
     chartType: "D10",
     ascendant: { sign: 4, signName: "Cancer", degreeInSign: 15, nakshatra: "Pushya", lord: "Moon" },
     houses: [
@@ -63,7 +65,7 @@ const geminiSuite: any = {
     yogas: [],
     strengths: [],
   },
-  D2: { chartType: "D2", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 0, nakshatra: "", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
+  D2: { metadata: { name: "Hora", source: "Placeholder" }, chartType: "D2", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 0, nakshatra: "", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
 };
 
 const geminiContext = new AstrologyContextBuilder().build(geminiSuite as ChartSuite, {});
