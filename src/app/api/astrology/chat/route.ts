@@ -66,16 +66,16 @@ export async function POST(req: NextRequest) {
     // Determine domain — fall back to history scan when current question is ambiguous
     let targetDomain = forcedDomain || extractedIntent.domain;
     if (!targetDomain || targetDomain === "general") {
-      // Scan recent user messages in history for a clear domain signal
-      const recentUserText = history
+      // Scan recent user messages in reverse chronological order for the most recent clear domain
+      const recentUserMsgs = history
         .filter(m => m.role === "user")
-        .slice(-3)
-        .map(m => m.content)
-        .join(" ");
-      if (recentUserText) {
-        const historyIntent = extractIntent(recentUserText);
-        if (historyIntent.domain && historyIntent.domain !== "general") {
-          targetDomain = historyIntent.domain;
+        .slice(-4)
+        .reverse();
+      for (const m of recentUserMsgs) {
+        const hIntent = extractIntent(m.content);
+        if (hIntent.domain && hIntent.domain !== "general") {
+          targetDomain = hIntent.domain;
+          break;
         }
       }
     }
@@ -415,12 +415,13 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             : undefined;
 
           // Token budget — match the brain's depth decision to the expected word count.
-          // The new Groq model defaults to ~150 tokens without an explicit cap.
+          // The new Groq model (openai/gpt-oss-20b) defaults to ~150 tokens of output,
+          // which is far too short for consultation/year_outlook responses.
           const depthTokens: Record<string, number> = {
-            quick:        400,
-            daily:        600,
-            consultation: 1200,
-            year_outlook: 1800,
+            quick:        400,   // 80–120 words
+            daily:        600,   // 150–180 words
+            consultation: 1200,  // 300–400 words
+            year_outlook: 1800,  // 450–550 words
           };
           const maxTokens = depthTokens[brain.metadata.depth] ?? 1200;
 

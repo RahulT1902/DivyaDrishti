@@ -31,13 +31,13 @@ import type { StoredDomainMemory } from "../sessionMemory";
 
 function selectDepth(intent: IntentAnalysis, userState: UserState): ResponseDepth {
   if (intent.isFollowUp || intent.type === "FollowUp") return "quick";
-  if (["PlanetQuestion", "DashaQuestion", "TransitQuestion"].includes(intent.type)) return "quick";
 
   // Year-level questions → full annual reading
   const tf = intent.timeframe ?? "";
   if (/^202[5-9]$|^203\d$/.test(tf) || /next year|coming year/i.test(tf)) return "year_outlook";
 
-  // Weekly / monthly / complex questions → full consultation
+  // Planet / Dasha / Transit / Weekly / monthly / complex questions → full consultation
+  if (["PlanetQuestion", "DashaQuestion", "TransitQuestion"].includes(intent.type)) return "consultation";
   if (tf === "this week" || tf === "this month" || tf === "next month") return "consultation";
   if (intent.type === "Decision" || intent.type === "Probability" || intent.type === "Timing") return "consultation";
   if (intent.emotionalTone === "low" || intent.emotionalTone === "worried") return "consultation";
@@ -320,20 +320,30 @@ function buildSummaryCard(
   const timeLabel = intent.timeframe === "today" ? " Today"
     : intent.timeframe === "tomorrow" ? " Tomorrow"
     : /week/i.test(intent.timeframe ?? "") ? " This Week"
-    : /month/i.test(intent.timeframe ?? "") ? " This Month" : "";
+    : /month/i.test(intent.timeframe ?? "") ? " This Month"
+    : intent.timeframe ? ` (${intent.timeframe})` : "";
   const DOMAIN_TITLE: Record<string, string> = {
     spirituality: "Planetary Support",
     education:    "Education",
     business:     "Business",
     family:       "Family",
   };
-  // "general" domain title adapts to the timeframe rather than using a fixed label
-  const titleBase = domain === "general"
-    ? (intent.timeframe === "today" ? "Today's Reading"
+
+  let titleBase: string;
+  if (intent.type === "TransitQuestion") {
+    titleBase = domain === "general" ? "Transit Outlook" : `${domain.charAt(0).toUpperCase() + domain.slice(1)} Transit`;
+  } else if (intent.type === "PlanetQuestion") {
+    titleBase = domain === "general" ? "Planetary Reading" : `${domain.charAt(0).toUpperCase() + domain.slice(1)} Alignment`;
+  } else if (intent.type === "DashaQuestion") {
+    titleBase = domain === "general" ? "Dasha Insights" : `${domain.charAt(0).toUpperCase() + domain.slice(1)} Dasha`;
+  } else if (domain === "general") {
+    titleBase = intent.timeframe === "today" ? "Today's Reading"
        : intent.timeframe === "tomorrow" ? "Tomorrow's Reading"
-       : "Daily Reading")
-    : (DOMAIN_TITLE[domain] ?? (domain.charAt(0).toUpperCase() + domain.slice(1)));
-  const title = domain === "general" ? titleBase : `${titleBase}${timeLabel}`;
+       : "Daily Reading";
+  } else {
+    titleBase = DOMAIN_TITLE[domain] ?? (domain.charAt(0).toUpperCase() + domain.slice(1));
+  }
+  const title = `${titleBase}${timeLabel}`;
 
   // ── Health: use rich HealthBrief data for meaningful card content ─────────
   if (domain === "health" && consultationBrief?.domainBrief.type === "health") {

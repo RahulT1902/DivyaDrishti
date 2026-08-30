@@ -300,6 +300,8 @@ IMPORTANT RULES:
 - Do NOT repeat the base guidance word for word. Expand, personalise, and deepen it.
 - End with one memorable closing line (no heading needed).`;
 
+      // Token budget: prompt asks for 3–5 rich paragraphs. The new Groq model
+      // defaults to ~150 tokens without an explicit cap, truncating responses.
       const analyzeTokens = timeframe === "this-year" ? 1800 : 1200;
       try {
         const { text } = await callAI({ prompt: llmPrompt, temperature: 0.82, maxTokens: analyzeTokens });
