@@ -47,7 +47,7 @@ export function getAIModel() {
 
   if (provider === "gemini") {
     const client = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
-    return { model: client("gemini-2.5-flash"), provider: "gemini" as const };
+    return { model: client("gemini-3.6-flash"), provider: "gemini" as const };
   }
 
   if (provider === "groq") {
@@ -55,7 +55,7 @@ export function getAIModel() {
       baseURL: "https://api.groq.com/openai/v1",
       apiKey: process.env.GROQ_API_KEY,
     });
-    return { model: client.chat("llama3-70b-8192"), provider: "groq" as const };
+    return { model: client.chat("openai/gpt-oss-20b"), provider: "groq" as const };
   }
 
   if (provider === "deepseek") {
@@ -124,8 +124,8 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
         apiKey: process.env.GROQ_API_KEY,
       });
       const { text } = await generateText({
-        model: client.chat("llama3-70b-8192"),
-        system, prompt, messages, temperature,
+        model: client.chat("openai/gpt-oss-20b"),
+        system, ...turnPayload, temperature,
         ...(maxTokens ? { maxTokens } : {}),
       } as any);
       console.log("[AI] Groq: OK");
@@ -142,8 +142,8 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
     try {
       const client = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
       const { text } = await generateText({
-        model: client("gemini-2.5-flash"),
-        system, prompt, messages, temperature,
+        model: client("gemini-3.6-flash"),
+        system, ...turnPayload, temperature,
         ...(maxTokens ? { maxTokens } : {}),
       } as any);
       console.log("[AI] Gemini: OK");
