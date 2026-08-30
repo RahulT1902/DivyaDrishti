@@ -90,15 +90,32 @@ export function validateInterpretationFacts(
         const patterns = [
           new RegExp(`\\b${house}(?:st|nd|rd|th)?[- ]house lord ${planet}\\b`, "i"),
           new RegExp(`\\b${house}(?:st|nd|rd|th)? lord ${planet}\\b`, "i"),
-          new RegExp(`\\blord of (?:the )?${house}(?:st|nd|rd|th)? house is ${planet}\\b`, "i"),
-          new RegExp(`\\b${planet} is (?:the )?${house}(?:st|nd|rd|th)?[- ]house lord\\b`, "i"),
-          new RegExp(`\\b${planet} is (?:the )?${house}(?:st|nd|rd|th)? lord\\b`, "i"),
+          new RegExp(`\\blord of (?:your |the |a )?${house}(?:st|nd|rd|th)? house is ${planet}\\b`, "i"),
+          new RegExp(`\\b${planet} is (?:your |the |a )?${house}(?:st|nd|rd|th)?[- ]house lord\\b`, "i"),
+          new RegExp(`\\b${planet} is (?:your |the |a )?${house}(?:st|nd|rd|th)? lord\\b`, "i"),
         ];
 
         for (const pattern of patterns) {
           if (pattern.test(textToValidate)) {
             errors.push(
               `Calculation Integrity Failure: Text incorrectly asserts '${planet}' is the ${house}th house lord for ${chartFacts.ascendantSignName} Ascendant. Authoritative ${house}th house lord is '${authoritativeLord}'.`
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // Placement Mismatch Validation
+  for (const planet of ALL_PLANETS) {
+    const natalFact = chartFacts.natalPlanetPositions[planet];
+    if (natalFact) {
+      for (let wrongHouse = 1; wrongHouse <= 12; wrongHouse++) {
+        if (wrongHouse !== natalFact.house) {
+          const placementPattern = new RegExp(`\\b${planet} (?:is )?in (?:natal )?house ${wrongHouse}\\b`, "i");
+          if (placementPattern.test(textToValidate)) {
+            errors.push(
+              `Placement Integrity Failure: Text asserts '${planet}' is in natal house ${wrongHouse}, but authoritative chart facts place '${planet}' in house ${natalFact.house}.`
             );
           }
         }

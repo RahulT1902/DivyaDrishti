@@ -1071,13 +1071,12 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     lines.push(`CAREER BREAKDOWN (reference for direction — narrate naturally, don't list percentages mechanically):`);
     db.aspects.forEach(a => {
       const pad = " ".repeat(Math.max(1, 18 - a.name.length));
-      // Direction word + rounded % as an anchor — say "around X%" or "roughly X%", not the exact figure
-      lines.push(`  ${a.name}:${pad}${a.direction} (~${a.probability}%)`);
+      lines.push(`  ${a.name}:${pad}${a.direction} (Signal: ${a.probability}/100)`);
     });
     lines.push(`OPPORTUNITY: ${db.opportunityNote}`);
     if (db.frictionNote) lines.push(`FRICTION: ${db.frictionNote}`);
     lines.push(`TIMING: ${db.timing ?? "No specific window yet"}  ← anchor your timeline to this, do not invent a different one`);
-    lines.push(`OVERALL PROBABILITY: ~${db.overallProbability}%  ← anchor your estimate to this range; say "around X%" not the exact figure`);
+    lines.push(`OVERALL SIGNAL STRENGTH: ${db.overallProbability}/100`);
   }
 
   if (db.type === "finance") {
