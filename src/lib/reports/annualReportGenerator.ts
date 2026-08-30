@@ -176,9 +176,10 @@ async function generateDomain(
   );
 
   const { text } = await callAI({
-    system: brain.systemPrompt,
-    prompt: brain.userPrompt,
+    system:      brain.systemPrompt,
+    prompt:      brain.userPrompt,
     temperature: brain.temperature,
+    maxTokens:   1800, // year_outlook: 7–9 paragraphs, 450–550 words
   });
 
   const cleanText = text
