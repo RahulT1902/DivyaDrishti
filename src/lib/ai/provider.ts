@@ -125,7 +125,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
       });
       const { text } = await generateText({
         model: client.chat("openai/gpt-oss-20b"),
-        system, ...turnPayload, temperature,
+        system, prompt, messages, temperature,
         ...(maxTokens ? { maxTokens } : {}),
       } as any);
       console.log("[AI] Groq: OK");
@@ -143,7 +143,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
       const client = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
       const { text } = await generateText({
         model: client("gemini-3.6-flash"),
-        system, ...turnPayload, temperature,
+        system, prompt, messages, temperature,
         ...(maxTokens ? { maxTokens } : {}),
       } as any);
       console.log("[AI] Gemini: OK");
