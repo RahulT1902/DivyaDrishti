@@ -16,6 +16,7 @@
 
 import type { AstrologyContext, DashaInfo, PlanetName, ChartType, DivisionalChart } from "../../core/types";
 import type { ChartData } from "./DIE_domainInterpreter";
+import { interpretChartTransit, type TransitInterpretationAudit } from "../../core/transit-engine/chartTransitInterpreter";
 
 // ── Chart Intelligence Matrix ─────────────────────────────────────────────────
 // Maps domain → which charts, which houses, and which planets to examine.
@@ -92,6 +93,7 @@ export interface InvestigationReport {
     keyPlanet:    PlanetName | null;
     confidence:   "high" | "medium" | "low";
   };
+  transitAudit?: TransitInterpretationAudit;
 }
 
 // ── Planet → Domain role descriptions ────────────────────────────────────────
@@ -564,12 +566,26 @@ export function runInvestigation(
 
   const reasoning = buildReasoning(domain, evidence, overallScore, dashaInfo);
 
+  // Generate deterministic chart transit audit
+  let transitAudit: TransitInterpretationAudit | undefined;
+  const ascendantSign = ctx.chartSuite?.D1?.ascendant?.sign;
+  if (ascendantSign) {
+    const topTransitEv = (ctx.transit ?? [])[0];
+    const targetPlanet: PlanetName = (topTransitEv?.planet as PlanetName) ?? "Venus";
+    const transitSign: Sign = (targetPlanet === "Venus" ? 7 : targetPlanet === "Jupiter" ? 3 : targetPlanet === "Saturn" ? 11 : 7) as Sign;
+
+    transitAudit = interpretChartTransit(ascendantSign, targetPlanet, transitSign, {
+      dashaInfo: dashaInfo ? { mahadasha: dashaInfo.mahadasha, antardasha: dashaInfo.antardasha } : undefined,
+    });
+  }
+
   return {
     domain,
     chartsExamined: [...chartKeysUsed],
     evidence,
     reasoning,
     conclusion: { overallScore, probability, timeline, keyPlanet, confidence },
+    transitAudit,
   };
 }
 
@@ -596,6 +612,38 @@ export function renderInvestigationReport(report: InvestigationReport, question:
   if (report.reasoning.length > 0) {
     lines.push(``, `ENGINE REASONING:`);
     report.reasoning.forEach(r => lines.push(`  ${r.step}. ${r.claim}`));
+  }
+
+  if (report.transitAudit) {
+    const audit = report.transitAudit;
+    lines.push(
+      ``,
+      `━━━ CHART-SPECIFIC TRANSIT AUDIT (AUTHORITATIVE - DO NOT OVERRIDE) ━━━`,
+      `ASCENDANT: ${audit.chart.ascendantName} (Lagna Lord: ${audit.chart.lagnaLord})`,
+      `TRANSITING PLANET: ${audit.transit.planet} in ${audit.transit.signName} (House ${audit.transit.house})`,
+      `PLANETARY DIGNITY: ${audit.planetRole.signDignity.toUpperCase()} (${audit.planetRole.stateDescription})`,
+      `HOUSES RULED: House(s) ${audit.planetRole.housesRuled.join(", ")}`,
+      `OVERALL VERDICT: ${audit.overallVerdict} (Confidence: ${audit.confidence.toUpperCase()})`,
+      ``,
+      `THEME HIERARCHY:`,
+      `[PRIMARY THEMES - MUST LEAD READING]:`
+    );
+    audit.themes.primary.forEach(t => lines.push(`  • ${t.topic}: ${t.description} (Source: ${t.source})`));
+
+    lines.push(`[SECONDARY THEMES - NATURAL PLANETARY MEANING]:`);
+    audit.themes.secondary.forEach(t => lines.push(`  • ${t.topic}: ${t.description}`));
+
+    if (audit.themes.conditional.length > 0) {
+      lines.push(`[CONDITIONAL THEMES - INCLUDED WITH CAUSAL SUPPORT]:`);
+      audit.themes.conditional.forEach(t => lines.push(`  • ${t.topic}: ${t.description} (Source: ${t.source})`));
+    } else {
+      lines.push(`[CONDITIONAL THEMES]: None supported by chart — DO NOT invent communication or relationship conflicts.`);
+    }
+
+    if (audit.themes.advisory.length > 0) {
+      lines.push(`[PRACTICAL ADVISORY GUIDANCE - SEPARATED FROM PREDICTIONS]:`);
+      audit.themes.advisory.forEach(t => lines.push(`  • ${t.topic}: ${t.description}`));
+    }
   }
 
   const { overallScore, probability, timeline, confidence } = report.conclusion;
