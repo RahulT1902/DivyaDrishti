@@ -15,7 +15,7 @@ import { buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
 import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
 import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
 import { buildV5Prompt } from "@/lib/intelligence/v5/promptBuilder";
-import { NatalPromiseAnalyzer, LifeDomainActivationEngine } from "@/lib/intelligence/lifeInsights/services";
+import { NatalPromiseAnalyzer, LifeDomainActivationEngine, ManifestationRankingEngine } from "@/lib/intelligence/lifeInsights/services";
 import { adaptEngineOutput, buildChartSuite } from "@/lib/core/chart-engine";
 import { AstrologyContextBuilder } from "@/lib/core/context-builder/astroContextBuilder";
 import { TransitAnalyzer, evaluateTransitRules, HEALTH_TRANSIT_RULES } from "@/lib/core/transit-engine";
@@ -25,10 +25,9 @@ import { HealthEngine } from "@/lib/domains/health";
 import { CareerEngine } from "@/lib/domains/career";
 import { MarriageEngine } from "@/lib/domains/marriage";
 import { FinanceEngine } from "@/lib/domains/finance";
-import { buildConversationState } from "@/lib/consultation/conversationState";
-import { resolveConsultationIntent } from "@/lib/consultation/intentResolver";
-import { planConsultation } from "@/lib/consultation/questionPlanner";
 import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } from "@/lib/consultation/sessionMemory";
+import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
+import type { ChartData } from "@/lib/consultation/brain";
 
 export async function POST(req: NextRequest) {
   try {
@@ -207,6 +206,7 @@ export async function POST(req: NextRequest) {
     // 5. LLM Agentic Layer
     let answerText = "";
     let followUpText = buildFollowUp(intent.domain, intent.type);
+    let investigationTrail: string | null = null;
 
     if (!hasAnyProvider()) {
       answerText = `[Deterministic Insight]: ${narrative.heroInsight}\n\n${narrative.realityTranslation}\n\n👉 Focus on structured consistency during this ${intent.domain} phase.`;
@@ -295,6 +295,11 @@ export async function POST(req: NextRequest) {
       const activations = LifeDomainActivationEngine.evaluate(mdLordVedic, adLordVedic, chart as any, promiseMapVedic);
       const domainActivation = activations.find(a => a.domain === vedaDomainKey) || activations.sort((a, b) => b.score - a.score)[0];
 
+      // Manifestation probabilities for career/finance/relationship (health doesn't use these)
+      const manifestations = targetDomain !== "health"
+        ? ManifestationRankingEngine.getRanked(vedaDomainKey, mdLordVedic, adLordVedic, chart as any, domainPromise?.potential ?? 60)
+        : null;
+
       // Build a concise kundali context string the LLM will narrate from
       let kundaliContext = "";
       if (domainPromise) {
@@ -369,65 +374,74 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
       });
 
       try {
-        // ── Consultation Intelligence Layer ───────────────────────────────────
-        // Runs before the domain engine. Decides whether to reuse prior reasoning
-        // (delta/direct) or trigger a fresh domain evaluation (full).
-        const consultState  = buildConversationState(question, history, storedMemories);
-        const consultIntent = resolveConsultationIntent(question, consultState);
-        const consultPlan   = planConsultation(consultIntent, consultState, symbolicCtx, dashaInfo);
-
-        // ── Symbolic Engine Path (supported domains: health, career, marriage, finance) ──
-        // The symbolic engine has already run the full 8-layer pipeline above.
-        // Here we select the domain engine, evaluate the AstrologyContext, and build
-        // a structured prompt (systemInstruction + userMessage) for the LLM narrator.
-        // The narrator receives pre-computed conclusions — it narrates, not reasons.
-        const symbolicEngineRunners: Partial<Record<string, () => { systemInstruction: string; userMessage: string }>> = {
-          // Health: uses enriched prompt (body risk profile + symbolic) for guaranteed specificity.
-          // healthFindings always ranks and scores every body system — no "no concerns" fallback.
-          health: () => {
-            const e = new HealthEngine();
-            const assessment = e.evaluate(symbolicCtx);
-            if (healthFindings) {
-              return e.buildEnrichedPrompt(assessment, healthFindings, dashaInfo, moonNakshatraIndex, question, temporalLabel);
-            }
-            return e.buildPrompt(assessment, question);
-          },
-          career:       () => { const e = new CareerEngine();   return e.buildPrompt(e.evaluate(symbolicCtx), question); },
-          relationship: () => { const e = new MarriageEngine(); return e.buildPrompt(e.evaluate(symbolicCtx), question); },
-          family:       () => { const e = new MarriageEngine(); return e.buildPrompt(e.evaluate(symbolicCtx), question); },
-          finance:      () => { const e = new FinanceEngine();  return e.buildPrompt(e.evaluate(symbolicCtx), question); },
-          business:     () => { const e = new FinanceEngine();  return e.buildPrompt(e.evaluate(symbolicCtx), question); },
+        // ── Pundit Brain (10-layer reasoning engine) ──────────────────────────
+        // Layers 1–9 run here; Layer 10 (LLM) is the callAI below.
+        // The symbolic pipeline output (symbolicCtx) feeds Layer 4 (Diagnostic Engine).
+        // The brain returns a fully structured systemPrompt so the LLM only narrates.
+        const chartData: ChartData = {
+          bodyRiskProfile:  targetDomain === "health" ? bodyRiskProfile : null,
+          healthFindings:   targetDomain === "health" ? healthFindings  : null,
+          natalPromise:     domainPromise ?? null,
+          domainActivation: domainActivation ?? null,
+          manifestations:   targetDomain !== "health" ? manifestations  : null,
         };
-        const buildSymbolicPromptCtx = symbolicEngineRunners[targetDomain];
+        const brain = await assemblePunditBrain(
+          question,
+          history,
+          user.id,
+          storedMemories,
+          symbolicCtx,
+          dashaInfo,
+          targetDomain,
+          chartData,
+        );
+        investigationTrail = brain.investigationTrail ?? null;
 
+        // ── Layer 10: LLM narrates from pre-computed conclusions ─────────────
+        // If Layer 0 decided a clarifying question is more useful, return it directly.
+        // Otherwise: LLM narrates the answer, then the summary card is prepended.
+        // The summary card is pre-rendered server-side — the LLM never sees chart data.
         let rawText: string;
-        if (consultPlan.responseMode !== "full" && consultPlan.directPrompt) {
-          // ── Consultation path: delta or direct — answer only the specific question ──
-          const { text } = await callAI({
-            system:      consultPlan.directPrompt.system,
-            prompt:      consultPlan.directPrompt.user,
-            temperature: 0.65,
-          });
-          rawText = text;
-        } else if (buildSymbolicPromptCtx) {
-          // ── Symbolic path: domain engine drives the reasoning; LLM only narrates ──
-          const promptCtx = buildSymbolicPromptCtx();
-          const { text } = await callAI({
-            system:      promptCtx.systemInstruction,
-            prompt:      promptCtx.userMessage,
-            temperature: 0.72,
-          });
-          rawText = text;
-
-          // Persist this domain assessment for future sessions (fire-and-forget)
-          const memoryData = extractMemoryFromResponse(targetDomain, rawText, dashaInfo, consultState.priorTopics);
-          if (memoryData) {
-            void saveConsultationMemory(user.id, memoryData);
-          }
+        if (brain.clarification) {
+          rawText = brain.clarification.question;
         } else {
-          // ── V5 fallback: general and unsupported domains use the brief-based V5 prompt ──
-          const { text } = await callAI({ prompt, temperature: 0.72 });
-          rawText = text;
+          // Pass conversation history as messages so follow-up questions have context.
+          // When messages is set, the AI SDK uses it over prompt.
+          const chatMessages = history.length > 0
+            ? [
+                ...history.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+                { role: "user" as const, content: brain.userPrompt },
+              ]
+            : undefined;
+
+          const { text } = await callAI(
+            chatMessages
+              ? { system: brain.systemPrompt, messages: chatMessages, temperature: brain.temperature }
+              : { system: brain.systemPrompt, prompt: brain.userPrompt, temperature: brain.temperature }
+          );
+
+          // Strip emoji and collapse stray blank lines — the model sometimes
+          // ignores the "no emoji" instruction despite it being first in the prompt.
+          const cleanText = text
+            .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+
+          // Prepend the pre-rendered summary card above the LLM narrative
+          rawText = brain.renderedSummaryCard
+            ? `${brain.renderedSummaryCard}\n\n${cleanText}`
+            : cleanText;
+        }
+
+        // Persist domain assessment for future sessions (fire-and-forget)
+        const memoryData = extractMemoryFromResponse(targetDomain, rawText, dashaInfo, brain.metadata.subIntents);
+        if (memoryData) {
+          void saveConsultationMemory(user.id, memoryData);
+        }
+
+        // Persist updated life story arc (fire-and-forget)
+        if (brain.lifeStory && brain.metadata.domain !== "general") {
+          void saveStoryArc(user.id, brain.lifeStory);
         }
 
         // Extract the LLM-generated follow-up suggestion (EXPLORE: line)
@@ -446,6 +460,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
     return buildSuccessResponse({
       answer: answerText,
       followUp: followUpText,
+      investigationTrail,
       confidence: "high",
       intent: { domain: intent.domain, type: intent.type }
     });

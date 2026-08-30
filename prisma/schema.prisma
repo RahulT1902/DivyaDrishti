@@ -30,6 +30,10 @@ model User {
   lifeInsightAnalytics          LifeInsightAnalytics[]
   lifeInsightPredictionJournals LifeInsightPredictionJournal[]
   consultationMemory ConsultationMemory[]
+  consultationStory  ConsultationStory[]
+  punditNotebook     PunditNotebook[]
+  savedReadings      SavedReading[]
+  annualReports      AnnualReport[]
 
   // Legacy/Internal (Keeping for migration safety)
   birthDetails       BirthDetails?
@@ -66,6 +70,86 @@ model ConsultationMemory {
 
   @@unique([userId, domain])
   @@index([userId])
+}
+
+// Tracks the evolving life story arc per domain per user.
+// The Pundit reads this to continue the consultation from the current chapter,
+// rather than treating each session as a fresh start.
+model ConsultationStory {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  domain       String   // "career" | "health" | "finance" | "relationship"
+  currentStage String?  // "Promotion Window" | "Recovery" | "Stable" | etc.
+  storyLine    String?  // Human-readable: "Discussion started → Manager supportive → Decision pending"
+  events       Json?    // StoryEvent[] — chronological events in this domain
+  nextChapter  String?  // Predicted next stage
+  predictions  Json?    // PredictionAssessment[] — tracked forecast outcomes
+
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, domain])
+  @@index([userId])
+}
+
+// Longitudinal consultation log per user per domain.
+// Stores dated observations so the Pundit remembers not just what was said
+// but what was noticed — appraisal delays, recovery milestones, turning points.
+model PunditNotebook {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  domain    String   // "career" | "health" | "finance" | "relationship"
+  entries   Json?    // NotebookEntry[] — max 20 entries, LRU
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([userId, domain])
+  @@index([userId])
+}
+
+model AnnualReport {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  year        Int
+  career      String?  @db.Text
+  health      String?  @db.Text
+  finance     String?  @db.Text
+  relationship String? @db.Text
+
+  // Payment
+  razorpayOrderId   String?  @unique
+  razorpayPaymentId String?
+  paidAt            DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, year])
+  @@index([userId])
+}
+
+model SavedReading {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  question           String   @db.Text
+  answer             String   @db.Text
+  followUp           String?
+  investigationTrail String?  @db.Text
+  domain             String?  // "career" | "health" | "finance" | "relationship"
+
+  createdAt          DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
 }
 
 model UserProfile {

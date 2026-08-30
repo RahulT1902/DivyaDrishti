@@ -36,8 +36,8 @@ export function extractIntent(question: string, userSeed?: string): Intent {
   };
 
   // Career
-  if (/(job|career|switch|promotion|work|boss|profession|office)/i.test(q)) scores.career += 1;
-  if (/(salary|hike|interview|colleague|manager|resign|fired|workplace)/i.test(q)) scores.career += 0.5;
+  if (/(job|career|switch|promotion|work|boss|profession|office|appraisal|management|appreciation)/i.test(q)) scores.career += 1;
+  if (/(salary|hike|interview|colleague|manager|resign|fired|workplace|recognition|raise|increment|supervisor|performance|annual review|higher management|senior management)/i.test(q)) scores.career += 0.5;
 
   // Finance
   if (/(money|invest|loan|debt|wealth|saving|income|cash|finance|financial)/i.test(q)) scores.finance += 1;
@@ -48,12 +48,12 @@ export function extractIntent(question: string, userSeed?: string): Intent {
   if (/(breakup|divorce|dating|romance|couple|compatibility|rishta|vivah)/i.test(q)) scores.relationship += 0.5;
 
   // Health
-  if (/(health|sick|stress|sleep|body|medical|doctor|illness|disease)/i.test(q)) scores.health += 1;
-  if (/(fitness|diet|mental|energy|fatigue|pain|surgery|recovery|wellbeing)/i.test(q)) scores.health += 0.5;
+  if (/(health|sick|stress|sleep|body|medical|doctor|illness|disease|stomach|gut|digestion|liver|kidney|chest|lung|joint|back|skin|head|throat|allerg|fever|cold|cough)/i.test(q)) scores.health += 1;
+  if (/(fitness|diet|mental|energy|fatigue|pain|surgery|recovery|wellbeing|nausea|acidity|gastric|constipat|bloat|migrain|tummy|abdomen)/i.test(q)) scores.health += 0.5;
 
   // Spirituality
-  if (/(spiritual|meditation|karma|dharma|moksha|pooja|prayer|deity|temple|sadhana)/i.test(q)) scores.spirituality += 1;
-  if (/(mantra|ritual|fast|vrat|pilgrimage|astral|soul|consciousness|awakening)/i.test(q)) scores.spirituality += 0.5;
+  if (/(spiritual|meditation|karma|dharma|moksha|pooja|prayer|deity|temple|sadhana|worship|planet.*support|which.*planet|god.*worship|strengthen.*planet|planet.*help)/i.test(q)) scores.spirituality += 1;
+  if (/(mantra|ritual|fast|vrat|pilgrimage|astral|soul|consciousness|awakening|gemstone|remedy|puja|planet.*favor|favorable.*planet)/i.test(q)) scores.spirituality += 0.5;
 
   // Family
   if (/(family|parent|father|mother|child|son|daughter|sibling|brother|sister)/i.test(q)) scores.family += 1;

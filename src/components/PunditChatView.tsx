@@ -2,13 +2,17 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, User, Compass, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { Send, Compass, Sparkles, Loader2, ArrowRight, FlaskConical, ChevronDown, ChevronUp, Bookmark, BookmarkCheck } from "lucide-react";
 import { authFetch } from "@/lib/auth/webFetch";
+import DashaCountdown from "@/components/DashaCountdown";
 
 interface Message {
   role: "user" | "pundit";
   content: string;
   followUp?: string;
+  investigationTrail?: string;
+  savedId?: string;      // set after saving to /api/astrology/readings
+  userQuestion?: string; // the question that triggered this pundit message
 }
 
 export default function PunditChatView() {
@@ -39,6 +43,7 @@ export default function PunditChatView() {
     if (!text.trim() || loading) return;
 
     const userMessage: Message = { role: "user", content: text };
+    const triggeredBy = text;
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setLoading(true);
@@ -60,7 +65,9 @@ export default function PunditChatView() {
           {
             role: "pundit",
             content: result.data.answer,
-            followUp: result.data.followUp
+            followUp: result.data.followUp,
+            investigationTrail: result.data.investigationTrail ?? undefined,
+            userQuestion: triggeredBy,
           }
         ]);
       } else {
@@ -85,6 +92,30 @@ export default function PunditChatView() {
     }
   };
 
+  const handleSaveReading = async (msgIndex: number) => {
+    const m = messages[msgIndex];
+    if (!m || m.role !== "pundit" || m.savedId) return;
+    try {
+      const res = await authFetch("/api/astrology/readings", {
+        method: "POST",
+        body: JSON.stringify({
+          question: m.userQuestion ?? "",
+          answer: m.content,
+          followUp: m.followUp ?? null,
+          investigationTrail: m.investigationTrail ?? null,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setMessages(prev => prev.map((msg, i) =>
+          i === msgIndex ? { ...msg, savedId: result.data.id } : msg
+        ));
+      }
+    } catch {
+      // Silent — bookmark is non-critical
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto h-[80vh] flex flex-col bg-white border border-[#F1E7D0] rounded-3xl overflow-hidden shadow-md">
       
@@ -105,8 +136,11 @@ export default function PunditChatView() {
           </div>
       </div>
 
+      {/* Dasha Countdown Strip */}
+      <DashaCountdown onAskDasha={(q) => handleSend(q)} />
+
       {/* Message Area */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide"
       >
@@ -130,6 +164,32 @@ export default function PunditChatView() {
                     <p className="text-sm font-normal leading-relaxed">{m.content}</p>
                   )}
                 </div>
+
+                {/* Investigation trail — "Why did Pundit say this?" */}
+                {m.role === "pundit" && m.investigationTrail && (
+                  <InvestigationTrailPanel trail={m.investigationTrail} />
+                )}
+
+                {/* Bookmark / Save Reading */}
+                {m.role === "pundit" && i > 0 && (
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    onClick={() => handleSaveReading(i)}
+                    className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest transition-colors mt-1 ${
+                      m.savedId
+                        ? "text-amber-500 cursor-default"
+                        : "text-amber-400/50 hover:text-amber-500"
+                    }`}
+                    disabled={!!m.savedId}
+                  >
+                    {m.savedId
+                      ? <><BookmarkCheck className="w-3 h-3" /> Saved</>
+                      : <><Bookmark className="w-3 h-3" /> Save Reading</>
+                    }
+                  </motion.button>
+                )}
 
                 {m.role === "pundit" && m.followUp && (
                    <motion.div 
@@ -194,6 +254,34 @@ export default function PunditChatView() {
          </p>
       </div>
 
+    </div>
+  );
+}
+
+function InvestigationTrailPanel({ trail }: { trail: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="pl-2">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1.5 text-[9px] font-bold text-amber-500/60 uppercase tracking-widest hover:text-amber-600 transition-colors mt-1"
+      >
+        <FlaskConical className="w-3 h-3" />
+        Why did Pundit say this?
+        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-2 p-3 bg-amber-50/50 border border-amber-100 rounded-xl overflow-hidden"
+          >
+            <pre className="text-[10px] text-amber-700/70 font-mono leading-relaxed whitespace-pre-wrap">{trail}</pre>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
