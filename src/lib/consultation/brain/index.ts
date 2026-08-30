@@ -377,6 +377,16 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
   // ── HARD RULES — non-negotiable ───────────────────────────────────────────
   sections.push(
+    `━━━ AUTHORITATIVE ASTROLOGY AUDIT DIRECTIVE (mandatory — do not violate) ━━━\n\n` +
+    `The supplied chart-specific astrology audit is authoritative.\n` +
+    `Do not recalculate, reinterpret, reorder, or contradict its house, lordship, dignity, aspect, dasha, or theme-priority determinations.\n\n` +
+    `RULES:\n` +
+    `1. Preserve PRIMARY themes as primary in your response.\n` +
+    `2. Preserve SECONDARY themes as secondary.\n` +
+    `3. Mention CONDITIONAL themes ONLY when their supporting factors are present in the audit.\n` +
+    `4. Clearly distinguish ADVISORY guidance from predictions.\n` +
+    `5. Never invent unsupported challenges or communication warnings.\n` +
+    `6. Never introduce a generic planetary interpretation that conflicts with the audit.\n\n` +
     `━━━ HARD RULES — NON-NEGOTIABLE ━━━\n\n` +
 
     `• NEVER use emoji in your response. Write in plain connected paragraphs only.\n` +
@@ -491,7 +501,7 @@ export async function assemblePunditBrain(
   // CIE: Chart Investigation Engine — assembles evidence from divisional charts,
   // planet strengths, dashas, transits, yogas, and inferences BEFORE the LLM runs.
   // Result is attached to chartData so buildConsultationBrief can include it in the brief.
-  const investigationReport = runInvestigation(domain, symbolicCtx, dashaInfo, chartData);
+  const investigationReport = runInvestigation(domain, symbolicCtx, dashaInfo, chartData, question);
   const enrichedChartData: ChartData = { ...chartData, investigationReport };
 
   // Domain Interpretation Engine — converts chart data to domain-specific conclusions

@@ -495,6 +495,7 @@ export function runInvestigation(
   ctx:       AstrologyContext,
   dashaInfo: DashaInfo | undefined,
   chartData: ChartData,
+  question?: string,
 ): InvestigationReport {
   const req = CHART_INTELLIGENCE_MATRIX[domain] ?? CHART_INTELLIGENCE_MATRIX.general;
 
@@ -571,8 +572,21 @@ export function runInvestigation(
   const ascendantSign = ctx.chartSuite?.D1?.ascendant?.sign;
   if (ascendantSign) {
     const topTransitEv = (ctx.transit ?? [])[0];
-    const targetPlanet: PlanetName = (topTransitEv?.planet as PlanetName) ?? "Venus";
-    const transitSign: Sign = (targetPlanet === "Venus" ? 7 : targetPlanet === "Jupiter" ? 3 : targetPlanet === "Saturn" ? 11 : 7) as Sign;
+    const planetMatch = question?.match(/\b(Sun|Moon|Mars|Mercury|Jupiter|Venus|Saturn|Rahu|Ketu)\b/i);
+    let targetPlanet: PlanetName = (topTransitEv?.planet as PlanetName) ?? "Venus";
+    if (planetMatch) {
+      targetPlanet = (planetMatch[1].charAt(0).toUpperCase() + planetMatch[1].slice(1).toLowerCase()) as PlanetName;
+    }
+
+    const signMatch = question?.match(/\b(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\b/i);
+    const SIGN_NAME_MAP: Record<string, Sign> = {
+      aries: 1, taurus: 2, gemini: 3, cancer: 4, leo: 5, virgo: 6,
+      libra: 7, scorpio: 8, sagittarius: 9, capricorn: 10, aquarius: 11, pisces: 12
+    };
+    let transitSign: Sign = (targetPlanet === "Venus" ? 7 : targetPlanet === "Jupiter" ? 3 : targetPlanet === "Saturn" ? 11 : 7) as Sign;
+    if (signMatch) {
+      transitSign = SIGN_NAME_MAP[signMatch[1].toLowerCase()] ?? transitSign;
+    }
 
     transitAudit = interpretChartTransit(ascendantSign, targetPlanet, transitSign, {
       dashaInfo: dashaInfo ? { mahadasha: dashaInfo.mahadasha, antardasha: dashaInfo.antardasha } : undefined,
