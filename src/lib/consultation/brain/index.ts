@@ -476,7 +476,7 @@ export async function assemblePunditBrain(
   }
 
   // Layer 1: Intent
-  const intent = analyzeIntent(question, history);
+  const intent = analyzeIntent(question, history, domain);
 
   // Layer 2: User State
   const userState = buildUserState(history, memories, dashaInfo, intent.emotionalTone);

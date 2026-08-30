@@ -29,9 +29,12 @@ function detectDomain(q: string): string {
 
 // ── Intent type ───────────────────────────────────────────────────────────────
 
-type IntentType = "Forecast" | "Timing" | "Decision" | "Advice" | "Probability" | "Explanation" | "FollowUp";
+type IntentType = "Forecast" | "Timing" | "Decision" | "Advice" | "Probability" | "Explanation" | "FollowUp" | "TransitQuestion" | "PlanetQuestion" | "DashaQuestion";
 
 function detectType(q: string): IntentType {
+  if (/\b(transit|transiting|transit of|moving into|ingress)\b/i.test(q)) return "TransitQuestion";
+  if (/\b(dasha|mahadasha|antardasha|pratyantar)\b/i.test(q)) return "DashaQuestion";
+  if (/\b(sun|moon|mars|mercury|jupiter|venus|saturn|rahu|ketu)\b.*(effect|impact|influence|placement|position|transiting|in my)/i.test(q)) return "PlanetQuestion";
   if (/^why\??$|why (am i|is my|are my|isn'?t)|what('?s| is) (causing|blocking)/i.test(q)) return "Explanation";
   if (/^when\??$|when will|how (soon|long)|best time|right time|which month/i.test(q))      return "Timing";
   if (/should i|shall i|is it (good|right|wise) to|would it be better/i.test(q))            return "Decision";
@@ -87,6 +90,12 @@ function inferSubIntents(
 ): string[] {
   const intents: string[] = [];
   const isFollowUp = history.filter(m => m.role === "user").length > 0;
+
+  if (type === "TransitQuestion" || type === "PlanetQuestion" || type === "DashaQuestion") {
+    intents.push(`What does this specific planetary movement mean for my ${domain}?`);
+    intents.push(`How will this transit affect my immediate timing and focus?`);
+    intents.push(`What should I do or watch out for during this period?`);
+  }
 
   switch (domain) {
     case "career":
@@ -207,6 +216,9 @@ function detectTimeframe(q: string): string | null {
   if (/this week/i.test(q))               return "this week";
   if (/next year|coming year/i.test(q))   return "next year";
   if (/this year/i.test(q))               return "this year";
+  // Specific month/date references like "2nd Sept", "Sept 2", "2 September", "September 2026"
+  const monthDateMatch = q.match(/\b(\d{1,2}(?:st|nd|rd|th)?\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i);
+  if (monthDateMatch) return monthDateMatch[0];
   // Specific year references like "in 2027", "for 2027", "career 2027"
   const yearMatch = q.match(/\b(202[5-9]|203\d)\b/);
   if (yearMatch) return yearMatch[1];
@@ -218,9 +230,13 @@ function detectTimeframe(q: string): string | null {
 export function analyzeIntent(
   question: string,
   history:  Array<{ role: string; content: string }>,
+  overrideDomain?: string,
 ): IntentAnalysis {
   const q        = question.trim();
-  const domain   = detectDomain(q);
+  let domain     = detectDomain(q);
+  if (domain === "general" && overrideDomain && overrideDomain !== "general") {
+    domain = overrideDomain;
+  }
   const type     = detectType(q);
   const tone     = detectEmotionalTone(q, history);
   const urgency  = detectUrgency(q);
