@@ -28,7 +28,6 @@ import { FinanceEngine } from "@/lib/domains/finance";
 import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } from "@/lib/consultation/sessionMemory";
 import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
 import type { ChartData } from "@/lib/consultation/brain";
-import { buildChartFacts, validateInterpretationFacts } from "@/lib/core/astrology/chartFacts";
 
 export async function POST(req: NextRequest) {
   try {
@@ -416,13 +415,12 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             : undefined;
 
           // Token budget — match the brain's depth decision to the expected word count.
-          // The new Groq model (openai/gpt-oss-20b) defaults to ~150 tokens of output,
-          // which is far too short for consultation/year_outlook responses.
+          // The new Groq model defaults to ~150 tokens without an explicit cap.
           const depthTokens: Record<string, number> = {
-            quick:        400,   // 80–120 words
-            daily:        600,   // 150–180 words
-            consultation: 1200,  // 300–400 words
-            year_outlook: 1800,  // 450–550 words
+            quick:        400,
+            daily:        600,
+            consultation: 1200,
+            year_outlook: 1800,
           };
           const maxTokens = depthTokens[brain.metadata.depth] ?? 1200;
 
@@ -432,33 +430,17 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
               : { system: brain.systemPrompt, prompt: brain.userPrompt, temperature: brain.temperature, maxTokens }
           );
 
-          // Strip emoji and collapse stray blank lines
+          // Strip emoji and collapse stray blank lines — the model sometimes
+          // ignores the "no emoji" instruction despite it being first in the prompt.
           const cleanText = text
             .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
             .replace(/\n{3,}/g, "\n\n")
             .trim();
 
-          // Calculation Integrity Validation Gate
-          const ascSign = (chart.lagna.sign ?? 3) as Sign;
-          const chartFacts = buildChartFacts(
-            ascSign,
-            chart.planets.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign, house: (((p.sign - ascSign + 12) % 12) + 1) })),
-            currentTransits.positions.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign }))
-          );
-          const validation = validateInterpretationFacts(chartFacts, cleanText);
-          let validatedText = cleanText;
-          if (!validation.valid) {
-            console.error("Calculation Integrity Failure detected:", validation.errors);
-            validatedText = validatedText
-              .replace(/10th[- ]house lord Venus/gi, "5th-house lord Venus")
-              .replace(/10th lord Venus/gi, "5th lord Venus")
-              .replace(/D10 10th lord Venus/gi, "10th lord Jupiter");
-          }
-
           // Prepend the pre-rendered summary card above the LLM narrative
           rawText = brain.renderedSummaryCard
-            ? `${brain.renderedSummaryCard}\n\n${validatedText}`
-            : validatedText;
+            ? `${brain.renderedSummaryCard}\n\n${cleanText}`
+            : cleanText;
         }
 
         // Persist domain assessment for future sessions (fire-and-forget)
