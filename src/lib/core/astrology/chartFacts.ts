@@ -33,7 +33,7 @@ export function buildChartFacts(
   const natalPositions: Partial<Record<PlanetName, PlanetPlacementFact>> = {};
   const transitPositions: Partial<Record<PlanetName, PlanetPlacementFact>> = {};
   const dignities: Partial<Record<PlanetName, SignDignity>> = {};
-  const conditions: Partial<Record<PlanetName, PlanetaryCondition>> = {};
+  const conditions: Partial<Record<PlanetName, PlanetaryCondition>>;
 
   for (const p of natalPlanets) {
     const calculatedHouse = p.house ?? (((((p.sign - ascendantSign) % 12) + 12) % 12) + 1);
@@ -45,7 +45,6 @@ export function buildChartFacts(
     };
     const dignity = getDignityInfo(p.planet, p.sign, options);
     dignities[p.planet] = dignity.condition.signDignity;
-    conditions[p.planet] = dignity.condition;
   }
 
   for (const p of transitPlanets) {
@@ -69,7 +68,7 @@ export function buildChartFacts(
     natalPlanetPositions: natalPositions,
     transitPlanetPositions: transitPositions,
     planetaryDignities: dignities,
-    planetaryConditions: conditions,
+    planetaryConditions: {},
   };
 }
 

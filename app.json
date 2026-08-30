@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "cc163a53-a05f-4c05-a7f2-949ab601c8a9"
+      }
+    },
+    "android": {
+      "package": "com.rahult1902.divyadrishti"
+    }
+  }
+}
