@@ -320,13 +320,11 @@ DeepInsight JSON Context:
 ${JSON.stringify(insight, null, 2)}`;
       } // end health/generic branch
 
-      // Token budget — match the prompt's requested output length.
-      // The new Groq model has a conservative default; without an explicit cap it
-      // cuts responses short. These values mirror what the prompts actually ask for.
+      // Token budget — same as astrology/chat; new Groq model truncates without this.
       const maxTokens =
         domain === "health"
-          ? (timeframe === "today" ? 600 : 900)          // health: today vs week/month
-          : (timeframe === "this-year" ? 1800 : 1200);   // career/finance: year vs monthly
+          ? (timeframe === "today" ? 600 : 900)
+          : (timeframe === "this-year" ? 1800 : 1200);
 
       try {
         const { text } = await callAI({ prompt, temperature: 0.8, maxTokens });
