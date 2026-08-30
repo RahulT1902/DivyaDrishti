@@ -110,6 +110,7 @@ export function interpretChartTransit(
   const supportingFactors: TransitFactor[] = [];
   const cautionFactors: TransitFactor[] = [];
 
+  // Dignity impact on baseline score
   const isDignityStrong = dignityInfo.condition.signDignity === "own" || dignityInfo.condition.signDignity === "exalted";
   const isDignityWeak = dignityInfo.condition.signDignity === "debilitated";
 
@@ -127,6 +128,9 @@ export function interpretChartTransit(
 
   // ── 1. PRIMARY Themes (House + Lordship + Dignity) ──────────────────────────
   const primaryThemes: TransitTheme[] = [];
+
+  // Lordship + House synthesis
+  const lordshipHouseStr = housesRuled.map(h => `${h}th lord`).join(" & ");
   const sourceLabel = `${transitHouse}th House Transit + ${dignityInfo.condition.signDignity.toUpperCase()} dignity (${transitingPlanet} rules ${housesRuled.join("&")}th houses)`;
 
   if (transitHouse === 11) {
@@ -153,6 +157,7 @@ export function interpretChartTransit(
       { topic: "Foundational Security", description: `Building a stable environment and consolidating core personal assets.`, source: sourceLabel }
     );
   } else {
+    // General house primary themes
     houseMeta.primary.forEach(item => {
       primaryThemes.push({
         topic: item.charAt(0).toUpperCase() + item.slice(1),
@@ -174,6 +179,9 @@ export function interpretChartTransit(
 
   // ── 3. CONDITIONAL Themes (Requires Explicit Astrological Causal Support) ─────
   const conditionalThemes: TransitTheme[] = [];
+
+  // Communication negative warning causal check:
+  // ONLY IF 3rd house is transited OR 3rd house/Mercury is explicitly afflicted
   if (transitHouse === 3 || options.thirdHouseAfflicted) {
     conditionalThemes.push({
       topic: "Communication Focus",
@@ -185,6 +193,7 @@ export function interpretChartTransit(
     reasoningTrace.push("5. Communication warning SUPPRESSED — no 3rd house/Mercury affliction present.");
   }
 
+  // Relationship friction causal check:
   if (transitHouse === 7 || options.seventhHouseAfflicted) {
     conditionalThemes.push({
       topic: "Relational Dynamics",
@@ -228,6 +237,7 @@ export function interpretChartTransit(
     reasoningTrace.push(`6. Dasha interaction: ${md}/${ad} (${alignment})`);
   }
 
+  // Confidence & Verdict
   const confidence = isDignityStrong ? "high" : isDignityWeak ? "medium" : "high";
   const overallVerdict =
     isDignityStrong && (transitHouse === 11 || transitHouse === 10 || transitHouse === 1) ? "Highly Supportive"

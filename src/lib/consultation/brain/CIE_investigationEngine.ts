@@ -178,12 +178,41 @@ function collectD1Evidence(
     }
   }
 
-  // 2. Lords of top 2 key houses — good or bad placement
-  for (const houseNum of houses.slice(0, 2)) {
+  // 2. Lords of top key houses — good or bad placement
+  for (const houseNum of houses.slice(0, 3)) {
     const lordRec = d1.lords.find(l => l.house === houseNum);
     if (!lordRec) continue;
 
     const placed = lordRec.lordPlacedInHouse;
+    const lordName = lordRec.lord;
+
+    if (houseNum === 6) {
+      // 6th lord is a contextual signal (service, competition, workload, problem-solving, overcoming opposition)
+      const isExalted = lordRec.isExalted;
+      const isDebilitated = lordRec.isDebilitated;
+      const isOwnSign = lordRec.isInOwnHouse;
+
+      let direction: EvidenceItem["direction"] = "neutral";
+      let weight = 30;
+
+      if (isExalted || isOwnSign) {
+        direction = "supporting";
+        weight = 45;
+      } else if (isDebilitated || [8, 12].includes(placed)) {
+        direction = "challenging";
+        weight = 45;
+      }
+
+      items.push({
+        label: `D1 6th lord (${lordName})`,
+        finding: `6th lord ${lordName} is in house ${placed} — connects employment/service, competition, responsibilities and problem-solving with house ${placed} matters; its career effect depends on ${lordName}'s overall condition`,
+        weight,
+        direction,
+        source: "D1",
+      });
+      continue;
+    }
+
     const goodHouses = [1, 2, 4, 5, 7, 9, 10, 11];
     const badHouses  = [6, 8, 12];
     const isGood     = lordRec.isExalted || lordRec.isInOwnHouse || goodHouses.includes(placed);
@@ -196,8 +225,8 @@ function collectD1Evidence(
     const weight = lordRec.isExalted || lordRec.isDebilitated ? 70 : 45;
 
     items.push({
-      label: `${houseNum}th lord (${lordRec.lord})`,
-      finding: `Lord of ${domain} house ${houseNum} (${lordRec.lord}) is ${dignityNote} — ${direction === "supporting" ? "strengthens" : "creates friction in"} ${domain} outcomes`,
+      label: `D1 ${houseNum}th lord (${lordName})`,
+      finding: `D1 ${houseNum}th lord (${lordName}) is ${dignityNote} — ${direction === "supporting" ? "supports" : "creates friction in"} ${domain} outcomes`,
       weight,
       direction,
       source: "D1",
@@ -248,8 +277,8 @@ function collectDivisionalEvidence(
       const dignityNote = lordRec.isExalted ? "exalted" : lordRec.isInOwnHouse ? "in own sign" : lordRec.isDebilitated ? "debilitated" : `in house ${placed}`;
       const direction: EvidenceItem["direction"] = isGood && !lordRec.isDebilitated ? "supporting" : "challenging";
       items.push({
-        label: `${chart} house ${primaryHouse} ruler (${lordRec.lord})`,
-        finding: `${chart} divisional house ${primaryHouse} ruler ${lordRec.lord} is ${dignityNote} in ${chart} — ${direction === "supporting" ? "solid foundation" : "friction"} in ${domain} (Note: ${chart} divisional ruler, distinct from Natal D1 10th lord)`,
+        label: `${chart} ${primaryHouse}th lord (${lordRec.lord})`,
+        finding: `${chart} ${primaryHouse}th lord ${lordRec.lord} is ${dignityNote} in ${chart} — ${direction === "supporting" ? "supports" : "creates friction in"} ${domain} outcomes`,
         weight: lordRec.isExalted || lordRec.isDebilitated ? 70 : 50,
         direction,
         source: chart,
@@ -687,7 +716,7 @@ export function renderInvestigationReport(report: InvestigationReport, question:
   const { overallScore, probability, timeline, confidence } = report.conclusion;
   lines.push(
     ``,
-    `INVESTIGATION SCORE: ${overallScore}/100  |  CONFIDENCE: ${confidence.toUpperCase()}  |  PROBABILITY: ${probability}%`,
+    `SIGNAL STRENGTH: ${overallScore}/100  |  CALCULATION CONFIDENCE: ${confidence.toUpperCase()}  |  PROBABILITY: ${probability}%`,
   );
   if (timeline) {
     lines.push(`TIMING WINDOW: ${timeline}`);
@@ -735,10 +764,10 @@ export function renderInvestigationTrailForUser(report: InvestigationReport): st
   }
 
   const { overallScore, confidence, timeline } = report.conclusion;
-  const confidenceLabel = confidence === "high" ? "High confidence"
-    : confidence === "medium" ? "Medium confidence"
-    : "Low confidence — limited chart data";
-  lines.push(`Score: ${overallScore}/100 · ${confidenceLabel}${timeline ? ` · Timing: ${timeline}` : ""}`);
+  const confidenceLabel = confidence === "high" ? "Calculation confidence: High"
+    : confidence === "medium" ? "Calculation confidence: Medium"
+    : "Calculation confidence: Low — limited chart data";
+  lines.push(`Signal: ${overallScore}/100 · ${confidenceLabel}${timeline ? ` · Timing: ${timeline}` : ""}`);
 
   return lines.join("\n");
 }
