@@ -415,13 +415,12 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             : undefined;
 
           // Token budget — match the brain's depth decision to the expected word count.
-          // The new Groq model (openai/gpt-oss-20b) defaults to ~150 tokens of output,
-          // which is far too short for consultation/year_outlook responses.
+          // The new Groq model defaults to ~150 tokens without an explicit cap.
           const depthTokens: Record<string, number> = {
-            quick:        400,   // 80–120 words
-            daily:        600,   // 150–180 words
-            consultation: 1200,  // 300–400 words
-            year_outlook: 1800,  // 450–550 words
+            quick:        400,
+            daily:        600,
+            consultation: 1200,
+            year_outlook: 1800,
           };
           const maxTokens = depthTokens[brain.metadata.depth] ?? 1200;
 
