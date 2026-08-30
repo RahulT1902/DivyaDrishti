@@ -14,7 +14,7 @@
 //   Reasoning Synthesis → InvestigationReport → renderInvestigationReport →
 //   prepended to system prompt (before DIAGNOSIS block)
 
-import type { AstrologyContext, DashaInfo, PlanetName, ChartType, DivisionalChart } from "../../core/types";
+import type { AstrologyContext, DashaInfo, PlanetName, Sign, ChartType, DivisionalChart } from "../../core/types";
 import type { ChartData } from "./DIE_domainInterpreter";
 import { interpretChartTransit, type TransitInterpretationAudit } from "../../core/transit-engine/chartTransitInterpreter";
 
