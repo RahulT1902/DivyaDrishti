@@ -346,6 +346,7 @@ export interface PunditBrainOutput {
   clarification:       ClarificationNeeded | null;
   renderedSummaryCard: string;   // pre-rendered markdown — prepended in route.ts
   investigationTrail?: string;   // user-facing "Why did Pundit say this?" text
+  investigationReport?: any;     // InvestigationReport object
   metadata: {
     domain:     string;
     tone:       PunditTone;

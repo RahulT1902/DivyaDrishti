@@ -581,6 +581,7 @@ export async function assemblePunditBrain(
     clarification:       null,
     renderedSummaryCard,
     investigationTrail:  renderInvestigationTrailForUser(investigationReport),
+    investigationReport,
     metadata: {
       domain,
       tone:       personality.tone,

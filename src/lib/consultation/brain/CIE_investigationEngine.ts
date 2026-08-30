@@ -70,11 +70,44 @@ export const CHART_INTELLIGENCE_MATRIX: Record<string, InvestigationRequirements
 // ── Evidence types ────────────────────────────────────────────────────────────
 
 export interface EvidenceItem {
-  label:     string;
-  finding:   string;
-  weight:    number;    // 0–100; higher = more decisive
-  direction: "supporting" | "challenging" | "neutral";
-  source:    "D1" | "D9" | "D10" | "D2" | "Dasha" | "Transit" | "Yoga" | "Inference" | "Profile";
+  id:           string;
+  label:        string;
+  finding:      string;
+  weight:       number;    // 0–100; higher = more decisive
+  direction:    "supporting" | "challenging" | "neutral";
+  source:       "D1" | "D9" | "D10" | "D2" | "Dasha" | "Transit" | "Yoga" | "Inference" | "Profile";
+  temporalRole: "background" | "medium_term" | "short_term";
+  factIds:      string[];  // Root fact IDs e.g. ["D1:houseLord:10:Jupiter", "D1:placement:Jupiter:5"]
+}
+
+export interface ScoreBreakdownItem {
+  id:           string;
+  factor:       string;
+  category:
+    | "D1_Foundation"
+    | "Dasha_Background"
+    | "Transit_Trigger"
+    | "D10_Confirmation"
+    | "Yoga_Promise";
+  direction:    "supporting" | "challenging" | "neutral";
+  points:       number;    // Signed delta e.g. +12, -7
+  rationale:    string;
+  evidenceIds:  string[];
+  temporalRole: "background" | "medium_term" | "short_term";
+  provenance: {
+    source:  "D1" | "Dasha" | "Transit" | "D10" | "Yoga";
+    factIds: string[];
+  };
+}
+
+export interface ScoreExplanation {
+  baseline:           number;  // Always 50
+  netEvidenceDelta:   number;  // Sum of breakdown points
+  rawSignalScore:     number;  // baseline + netEvidenceDelta
+  signalStrength:     number;  // Clamped 0-100
+  rawD10Delta:        number;  // Unbounded D10 sum
+  boundedD10Delta:    number;  // Capped at net ±15 max
+  breakdown:          ScoreBreakdownItem[];
 }
 
 export interface ReasoningStep {
@@ -83,17 +116,18 @@ export interface ReasoningStep {
 }
 
 export interface InvestigationReport {
-  domain:         string;
-  chartsExamined: string[];
-  evidence:       EvidenceItem[];
-  reasoning:      ReasoningStep[];
+  domain:           string;
+  chartsExamined:   string[];
+  evidence:         EvidenceItem[];
+  reasoning:        ReasoningStep[];
   conclusion: {
-    overallScore: number;   // 0–100 Signal Strength
-    timeline:     string | null;
-    keyPlanet:    PlanetName | null;
-    confidence:   "high" | "medium" | "low"; // Calculation Confidence
+    overallScore:   number;   // 0–100 Signal Strength
+    timeline:       string | null;
+    keyPlanet:      PlanetName | null;
+    confidence:     "high" | "medium" | "low"; // Calculation Confidence
   };
-  transitAudit?: TransitInterpretationAudit;
+  scoreExplanation?: ScoreExplanation;
+  transitAudit?:     TransitInterpretationAudit;
 }
 
 // ── Planet → Domain role descriptions ────────────────────────────────────────
@@ -173,7 +207,16 @@ function collectD1Evidence(
         ? `${planet}${dignityPart} in ${house}th house — ${role} under pressure`
         : `${planet} in ${house}th house — ${role} is moderate`;
 
-      items.push({ label: `D1 House ${house}`, finding, weight: Math.abs(strength - 50) + 20, direction, source: "D1" });
+      items.push({
+        id:           `ev_D1_h${house}_${planet}`,
+        label:        `D1 House ${house}`,
+        finding,
+        weight:       Math.abs(strength - 50) + 20,
+        direction,
+        source:       "D1",
+        temporalRole: "background",
+        factIds:      [`D1:placement:${planet}:${house}`, `D1:planetDignity:${planet}`],
+      });
     }
   }
 
@@ -203,11 +246,14 @@ function collectD1Evidence(
       }
 
       items.push({
-        label: `D1 6th lord (${lordName})`,
-        finding: `6th lord ${lordName} is in house ${placed} — connects employment/service, competition, responsibilities and problem-solving with house ${placed} matters; its career effect depends on ${lordName}'s overall condition`,
+        id:           `ev_D1_lord_6_${lordName}`,
+        label:        `D1 6th lord (${lordName})`,
+        finding:      `6th lord ${lordName} is in house ${placed} — connects employment/service, competition, responsibilities and problem-solving with house ${placed} matters; its career effect depends on ${lordName}'s overall condition`,
         weight,
         direction,
-        source: "D1",
+        source:       "D1",
+        temporalRole: "background",
+        factIds:      [`D1:houseLord:6:${lordName}`, `D1:lordPlacement:${lordName}:${placed}`],
       });
       continue;
     }
@@ -224,11 +270,14 @@ function collectD1Evidence(
     const weight = lordRec.isExalted || lordRec.isDebilitated ? 70 : 45;
 
     items.push({
-      label: `D1 ${houseNum}th lord (${lordName})`,
-      finding: `D1 ${houseNum}th lord (${lordName}) is ${dignityNote} — ${direction === "supporting" ? "supports" : "creates friction in"} ${domain} outcomes`,
+      id:           `ev_D1_lord_${houseNum}_${lordName}`,
+      label:        `D1 ${houseNum}th lord (${lordName})`,
+      finding:      `D1 ${houseNum}th lord (${lordName}) is ${dignityNote} — ${direction === "supporting" ? "supports" : "creates friction in"} ${domain} outcomes`,
       weight,
       direction,
-      source: "D1",
+      source:       "D1",
+      temporalRole: "background",
+      factIds:      [`D1:houseLord:${houseNum}:${lordName}`, `D1:lordPlacement:${lordName}:${placed}`],
     });
   }
 
@@ -257,11 +306,14 @@ function collectDivisionalEvidence(
       const direction: EvidenceItem["direction"] = strength >= 60 ? "supporting" : strength < 40 ? "challenging" : "neutral";
 
       items.push({
-        label: `${chart} ${primaryHouse}th house`,
-        finding: `${planet} in ${primaryHouse}th house of ${chart} — ${strength >= 65 ? "strong" : strength >= 45 ? "moderate" : "weak"} position in ${domain} divisional chart`,
-        weight: Math.abs(strength - 50) + 30,
+        id:           `ev_${chart}_${primaryHouse}_${planet}`,
+        label:        `${chart} ${primaryHouse}th house`,
+        finding:      `${planet} in ${primaryHouse}th house of ${chart} — ${strength >= 65 ? "strong" : strength >= 45 ? "moderate" : "weak"} position in ${domain} divisional chart`,
+        weight:       Math.abs(strength - 50) + 30,
         direction,
-        source: chart,
+        source:       chart,
+        temporalRole: "background",
+        factIds:      [`${chart}:placement:${planet}:${primaryHouse}`],
       });
     }
   }
@@ -276,11 +328,14 @@ function collectDivisionalEvidence(
       const dignityNote = lordRec.isExalted ? "exalted" : lordRec.isInOwnHouse ? "in own sign" : lordRec.isDebilitated ? "debilitated" : `in house ${placed}`;
       const direction: EvidenceItem["direction"] = isGood && !lordRec.isDebilitated ? "supporting" : "challenging";
       items.push({
-        label: `${chart} ${primaryHouse}th lord (${lordRec.lord})`,
-        finding: `${chart} ${primaryHouse}th lord ${lordRec.lord} is ${dignityNote} in ${chart} — ${direction === "supporting" ? "supports" : "creates friction in"} ${domain} outcomes`,
-        weight: lordRec.isExalted || lordRec.isDebilitated ? 70 : 50,
+        id:           `ev_${chart}_lord_${primaryHouse}_${lordRec.lord}`,
+        label:        `${chart} ${primaryHouse}th lord (${lordRec.lord})`,
+        finding:      `${chart} ${primaryHouse}th lord ${lordRec.lord} is ${dignityNote} in ${chart} — ${direction === "supporting" ? "supports" : "creates friction in"} ${domain} outcomes`,
+        weight:       lordRec.isExalted || lordRec.isDebilitated ? 70 : 50,
         direction,
-        source: chart,
+        source:       chart,
+        temporalRole: "background",
+        factIds:      [`${chart}:houseLord:${primaryHouse}:${lordRec.lord}`],
       });
     }
   }
@@ -306,11 +361,14 @@ function collectPlanetStrengthEvidence(
         ? `${planet} is strong (${Math.round(s)}/100) — ${role} is elevated`
         : `${planet} is weakened (${Math.round(s)}/100) — ${role} may be compromised`;
       items.push({
-        label: `${planet} strength`,
+        id:           `ev_D1_strength_${planet}`,
+        label:        `${planet} strength`,
         finding,
-        weight: Math.abs(s - 50) + 10,
-        direction: s >= 65 ? "supporting" : "challenging",
-        source: "D1",
+        weight:       Math.abs(s - 50) + 10,
+        direction:    s >= 65 ? "supporting" : "challenging",
+        source:       "D1",
+        temporalRole: "background",
+        factIds:      [`D1:planetStrength:${planet}`],
       });
     }
   }
@@ -333,13 +391,16 @@ function collectDashaEvidence(
   const mahaBad  = malefics.includes(dasha.mahadasha);
   if (mahaGood || mahaBad) {
     items.push({
-      label: `Mahadasha (${dasha.mahadasha})`,
-      finding: mahaGood
+      id:           `ev_Dasha_Maha_${dasha.mahadasha}`,
+      label:        `Mahadasha (${dasha.mahadasha})`,
+      finding:      mahaGood
         ? `${dasha.mahadasha} mahadasha is favorable for ${domain} — the major period supports this area`
         : `${dasha.mahadasha} mahadasha creates friction for ${domain} — the major period is challenging`,
-      weight: 70,
-      direction: mahaGood ? "supporting" : "challenging",
-      source: "Dasha",
+      weight:       70,
+      direction:    mahaGood ? "supporting" : "challenging",
+      source:       "Dasha",
+      temporalRole: "background",
+      factIds:      [`Dasha:mahadasha:${dasha.mahadasha}`],
     });
   }
 
@@ -347,13 +408,16 @@ function collectDashaEvidence(
   const antarBad  = malefics.includes(dasha.antardasha);
   if (antarGood || antarBad) {
     items.push({
-      label: `Antardasha (${dasha.antardasha})`,
-      finding: antarGood
+      id:           `ev_Dasha_Antar_${dasha.antardasha}`,
+      label:        `Antardasha (${dasha.antardasha})`,
+      finding:      antarGood
         ? `${dasha.antardasha} antardasha supports ${domain} — sub-period timing is favorable`
         : `${dasha.antardasha} antardasha adds friction for ${domain} — sub-period creates resistance`,
-      weight: 55,
-      direction: antarGood ? "supporting" : "challenging",
-      source: "Dasha",
+      weight:       55,
+      direction:    antarGood ? "supporting" : "challenging",
+      source:       "Dasha",
+      temporalRole: "medium_term",
+      factIds:      [`Dasha:antardasha:${dasha.antardasha}`],
     });
   }
 
@@ -372,11 +436,14 @@ function collectTransitEvidence(
     .slice(0, 3)
     .filter(t => Math.abs(t.scoreDelta) >= 8)
     .map(t => ({
-      label:     `Transit ${t.planet}`,
-      finding:   `${t.planet} transit ${t.scoreDelta > 0 ? "supporting" : "challenging"} ${domain} area (${t.scoreDelta > 0 ? "+" : ""}${t.scoreDelta} shift in ${domain} sensitivity)`,
-      weight:    Math.min(60, Math.abs(t.scoreDelta) * 2),
-      direction: t.scoreDelta > 10 ? "supporting" : t.scoreDelta < -10 ? "challenging" : "neutral" as const,
-      source:    "Transit" as const,
+      id:           `ev_Transit_${t.planet}`,
+      label:        `Transit ${t.planet}`,
+      finding:      `${t.planet} transit ${t.scoreDelta > 0 ? "supporting" : "challenging"} ${domain} area (${t.scoreDelta > 0 ? "+" : ""}${t.scoreDelta} shift in ${domain} sensitivity)`,
+      weight:       Math.min(60, Math.abs(t.scoreDelta) * 2),
+      direction:    t.scoreDelta > 10 ? "supporting" : t.scoreDelta < -10 ? "challenging" : ("neutral" as const),
+      source:       "Transit" as const,
+      temporalRole: ["Moon", "Mercury", "Venus", "Sun", "Mars"].includes(t.planet) ? ("short_term" as const) : ("medium_term" as const),
+      factIds:      [`Transit:house:${t.planet}:${t.natalHouse}`, `Transit:planet:${t.planet}`],
     }));
 }
 
@@ -395,13 +462,16 @@ function collectYogaEvidence(
       const isActive       = activation?.status === "Active" || activation?.status === "Peak";
 
       return {
-        label:     yoga.name,
-        finding:   isActive
+        id:           `ev_Yoga_${yoga.id}`,
+        label:        yoga.name,
+        finding:      isActive
           ? `${yoga.name} yoga is active (${Math.round(activationScore)}% activation) — ${yoga.description}`
           : `${yoga.name} yoga is present in natal chart (${Math.round(yoga.birthStrength)}% strength, dormant this period)`,
-        weight:    isActive ? 65 : 30,
-        direction: isActive ? "supporting" as const : "neutral" as const,
-        source:    "Yoga" as const,
+        weight:       isActive ? 65 : 30,
+        direction:    isActive ? ("supporting" as const) : ("neutral" as const),
+        source:       "Yoga" as const,
+        temporalRole: "background" as const,
+        factIds:      [`Yoga:natal:${yoga.id}`],
       };
     });
 }
@@ -416,12 +486,15 @@ function collectInferenceEvidence(
     .filter(inf => inf.domain === domainKey && inf.confidence > 62)
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, 3)
-    .map(inf => ({
-      label:     "Chart rule",
-      finding:   `${inf.statement} (${Math.round(inf.confidence)}% confidence)`,
-      weight:    Math.round(inf.confidence * 0.65),
-      direction: inf.direction === "Positive" ? "supporting" as const : inf.direction === "Negative" ? "challenging" as const : "neutral" as const,
-      source:    "Inference" as const,
+    .map((inf, idx) => ({
+      id:           `ev_Inference_${idx}`,
+      label:        "Chart rule",
+      finding:      `${inf.statement} (${Math.round(inf.confidence)}% confidence)`,
+      weight:       Math.round(inf.confidence * 0.65),
+      direction:    inf.direction === "Positive" ? ("supporting" as const) : inf.direction === "Negative" ? ("challenging" as const) : ("neutral" as const),
+      source:       "Inference" as const,
+      temporalRole: "background" as const,
+      factIds:      [`Inference:${domain}:${idx}`],
     }));
 }
 
@@ -434,25 +507,31 @@ function collectHealthProfileEvidence(chartData: ChartData): EvidenceItem[] {
   if (hf.primaryFocus) {
     const score = hf.primaryFocus.score;
     items.push({
-      label:     `Primary sensitivity (${hf.primaryFocus.displayName})`,
-      finding:   score >= 65
+      id:           `ev_Profile_Primary_${hf.primaryFocus.displayName}`,
+      label:        `Primary sensitivity (${hf.primaryFocus.displayName})`,
+      finding:      score >= 65
         ? `${hf.primaryFocus.displayName} is under significant stress (${score}/100) — primary area to watch`
         : score >= 52
         ? `${hf.primaryFocus.displayName} is mildly sensitive (${score}/100) — worth monitoring`
         : `${hf.primaryFocus.displayName} is stable (${score}/100) — no concern`,
-      weight:    score >= 65 ? 75 : score >= 52 ? 50 : 20,
-      direction: score >= 65 ? "challenging" : score >= 52 ? "neutral" : "supporting",
-      source:    "Profile",
+      weight:       score >= 65 ? 75 : score >= 52 ? 50 : 20,
+      direction:    score >= 65 ? "challenging" : score >= 52 ? "neutral" : "supporting",
+      source:       "Profile",
+      temporalRole: "background",
+      factIds:      [`Profile:health:${hf.primaryFocus.displayName}`],
     });
   }
 
   if (hf.secondaryFocus) {
     items.push({
-      label:     `Secondary sensitivity (${hf.secondaryFocus.displayName})`,
-      finding:   `${hf.secondaryFocus.displayName} is also active (${hf.secondaryFocus.score}/100) — secondary area`,
-      weight:    45,
-      direction: "challenging",
-      source:    "Profile",
+      id:           `ev_Profile_Secondary_${hf.secondaryFocus.displayName}`,
+      label:        `Secondary sensitivity (${hf.secondaryFocus.displayName})`,
+      finding:      `${hf.secondaryFocus.displayName} is also active (${hf.secondaryFocus.score}/100) — secondary area`,
+      weight:       45,
+      direction:    "challenging",
+      source:       "Profile",
+      temporalRole: "background",
+      factIds:      [`Profile:health:${hf.secondaryFocus.displayName}`],
     });
   }
 
@@ -542,28 +621,83 @@ export function runInvestigation(
     ...(domain === "health" ? collectHealthProfileEvidence(chartData) : []),
   ];
 
-  // De-duplicate by finding (keep highest weight)
-  const seen = new Map<string, EvidenceItem>();
+  // Provenance-based Deduplication (group by primary factId to prevent double-counting)
+  const seenFacts = new Map<string, EvidenceItem>();
   for (const item of raw) {
-    const key = item.finding.slice(0, 60);
-    const existing = seen.get(key);
+    const primaryFactId = item.factIds[0] ?? item.finding.slice(0, 60);
+    const existing = seenFacts.get(primaryFactId);
     if (!existing || item.weight > existing.weight) {
-      seen.set(key, item);
+      seenFacts.set(primaryFactId, item);
     }
   }
 
-  // Sort by weight and take top 8
-  const evidence = [...seen.values()]
+  // Sort deduplicated evidence by weight and take top 8
+  const evidence = [...seenFacts.values()]
     .sort((a, b) => b.weight - a.weight)
     .slice(0, 8);
 
-  // Score synthesis
-  const supportingWeight  = evidence.filter(e => e.direction === "supporting").reduce((s, e) => s + e.weight, 0);
-  const challengingWeight = evidence.filter(e => e.direction === "challenging").reduce((s, e) => s + e.weight, 0);
-  const totalWeight       = evidence.reduce((s, e) => s + e.weight, 0) || 1;
+  // Formulate auditable ScoreBreakdownItems
+  const rawBreakdown: ScoreBreakdownItem[] = [];
+  let rawD10Delta = 0;
 
-  const rawScore    = 50 + ((supportingWeight - challengingWeight) / totalWeight) * 42;
-  const overallScore = Math.round(Math.max(10, Math.min(95, rawScore)));
+  for (const item of evidence) {
+    const category: ScoreBreakdownItem["category"] =
+      item.source === "D1" || item.source === "Inference" || item.source === "Profile" ? "D1_Foundation"
+      : item.source === "Dasha" ? "Dasha_Background"
+      : item.source === "Transit" ? "Transit_Trigger"
+      : item.source === "Yoga" ? "Yoga_Promise"
+      : "D10_Confirmation";
+
+    let rawPoints = item.direction === "supporting" ? Math.round((item.weight / 100) * 16)
+      : item.direction === "challenging" ? -Math.round((item.weight / 100) * 16)
+      : 0;
+
+    if (category === "D10_Confirmation") {
+      rawD10Delta += rawPoints;
+    }
+
+    rawBreakdown.push({
+      id: `sb_${item.id}`,
+      factor: item.label,
+      category,
+      direction: item.direction,
+      points: rawPoints,
+      rationale: item.finding,
+      evidenceIds: [item.id],
+      temporalRole: item.temporalRole,
+      provenance: {
+        source: item.source === "D9" || item.source === "D10" || item.source === "D2" ? (item.source as any) : (item.source as any),
+        factIds: item.factIds,
+      },
+    });
+  }
+
+  // Net D10 Aggregate Capping: ABS(total D10 contribution) <= 15
+  const boundedD10Delta = Math.max(-15, Math.min(15, rawD10Delta));
+  const d10Ratio = rawD10Delta !== 0 ? boundedD10Delta / rawD10Delta : 1;
+
+  const breakdown: ScoreBreakdownItem[] = rawBreakdown.map(item => {
+    if (item.category === "D10_Confirmation") {
+      return { ...item, points: Math.round(item.points * d10Ratio) };
+    }
+    return item;
+  });
+
+  const netEvidenceDelta = breakdown.reduce((sum, item) => sum + item.points, 0);
+  const baseline = 50;
+  const rawSignalScore = baseline + netEvidenceDelta;
+  const signalStrength = Math.max(0, Math.min(100, Math.round(rawSignalScore)));
+  const overallScore = signalStrength;
+
+  const scoreExplanation: ScoreExplanation = {
+    baseline,
+    netEvidenceDelta,
+    rawSignalScore,
+    signalStrength,
+    rawD10Delta,
+    boundedD10Delta,
+    breakdown,
+  };
 
   // Timeline — only when there's active transit or favorable dasha
   const hasActiveTransit = evidence.some(e => e.source === "Transit" && e.direction === "supporting");
@@ -635,6 +769,7 @@ export function runInvestigation(
     evidence,
     reasoning,
     conclusion: { overallScore, timeline, keyPlanet, confidence },
+    scoreExplanation,
     transitAudit,
   };
 }
@@ -656,12 +791,27 @@ export function renderInvestigationReport(report: InvestigationReport, question:
   for (const item of report.evidence) {
     const icon = item.direction === "supporting" ? "✓" : item.direction === "challenging" ? "✗" : "○";
     const tag  = item.direction === "supporting" ? "SUPPORTS" : item.direction === "challenging" ? "FRICTION" : "NOTE";
-    lines.push(`  ${icon} [${tag}] ${item.finding}`);
+    lines.push(`  ${icon} [${tag}] ${item.finding} (Fact provenance: ${item.factIds.join(", ")})`);
   }
 
   if (report.reasoning.length > 0) {
     lines.push(``, `ENGINE REASONING:`);
     report.reasoning.forEach(r => lines.push(`  ${r.step}. ${r.claim}`));
+  }
+
+  if (report.scoreExplanation) {
+    const exp = report.scoreExplanation;
+    lines.push(
+      ``,
+      `━━━ AUDITABLE SCORE BREAKDOWN (0-100 SIGNAL STRENGTH) ━━━`,
+      `NEUTRAL BASELINE: ${exp.baseline}`,
+      `NET EVIDENCE DELTA: ${exp.netEvidenceDelta > 0 ? "+" : ""}${exp.netEvidenceDelta} (Sum of validated evidence items)`,
+      `RAW D10 DELTA: ${exp.rawD10Delta > 0 ? "+" : ""}${exp.rawD10Delta} | BOUNDED D10 DELTA: ${exp.boundedD10Delta > 0 ? "+" : ""}${exp.boundedD10Delta} (Capped at ±15 max)`
+    );
+    exp.breakdown.forEach(b => {
+      const pStr = b.points > 0 ? `+${b.points}` : `${b.points}`;
+      lines.push(`  • [${b.category}] ${b.factor}: ${pStr} pts — ${b.rationale}`);
+    });
   }
 
   if (report.transitAudit) {
@@ -759,10 +909,12 @@ export function renderInvestigationTrailForUser(report: InvestigationReport): st
   }
 
   const { overallScore, confidence, timeline } = report.conclusion;
+  const exp = report.scoreExplanation;
+  const netDeltaStr = exp ? ` (Base: 50 · Net Evidence: ${exp.netEvidenceDelta > 0 ? "+" : ""}${exp.netEvidenceDelta})` : "";
   const confidenceLabel = confidence === "high" ? "Calculation confidence: High"
     : confidence === "medium" ? "Calculation confidence: Medium"
     : "Calculation confidence: Low — limited chart data";
-  lines.push(`Signal: ${overallScore}/100 · ${confidenceLabel}${timeline ? ` · Timing: ${timeline}` : ""}`);
+  lines.push(`Signal: ${overallScore}/100${netDeltaStr} · ${confidenceLabel}${timeline ? ` · Timing: ${timeline}` : ""}`);
 
   return lines.join("\n");
 }

@@ -128,3 +128,69 @@ export function validateInterpretationFacts(
     errors,
   };
 }
+
+export function validateInterpretationSynthesis(
+  report: { conclusion: { overallScore: number }; evidence?: Array<{ source: string; direction: string; weight: number }> },
+  textToValidate: string
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  const score = report.conclusion.overallScore;
+
+  // 1. CERTAINTY Class: FORBIDDEN for any prediction regardless of score
+  const CERTAINTY_PATTERNS = [
+    /\bguaranteed\b/i,
+    /\binevitable\b/i,
+    /\bcertain(?:ly)?\b/i,
+    /\bdefinitely\b/i,
+    /\bwithout a doubt\b/i,
+    /\b100% (?:certain|sure|guaranteed)\b/i,
+  ];
+  for (const pattern of CERTAINTY_PATTERNS) {
+    if (pattern.test(textToValidate)) {
+      errors.push(
+        `Synthesis Integrity Failure: Text uses prohibited CERTAINTY phrasing matching '${pattern}'. Astrological readings must remain probabilistic.`
+      );
+    }
+  }
+
+  // 2. VERY_STRONG Class: Allowed ONLY if Signal Strength >= 72 and Dasha is not challenging
+  const dashaChallenging = (report.evidence ?? []).some(e => e.source === "Dasha" && e.direction === "challenging");
+  const VERY_STRONG_PATTERNS = [
+    /\bexplosive growth\b/i,
+    /\bmassive breakthrough\b/i,
+    /\bexceptional success\b/i,
+    /\bpowerfully indicated\b/i,
+    /\bunprecedented surge\b/i,
+  ];
+  if (score < 72 || dashaChallenging) {
+    for (const pattern of VERY_STRONG_PATTERNS) {
+      if (pattern.test(textToValidate)) {
+        errors.push(
+          `Synthesis Integrity Failure: Text uses VERY_STRONG claim matching '${pattern}', but Signal Strength is ${score}/100 (requires >=72) or Dasha creates friction.`
+        );
+      }
+    }
+  }
+
+  // 3. STRONG Class: Allowed ONLY if Signal Strength >= 60
+  const STRONG_PATTERNS = [
+    /\bstrongly supports\b/i,
+    /\bhighly favorable\b/i,
+    /\bstrong potential\b/i,
+    /\bmajor advancement\b/i,
+  ];
+  if (score < 60) {
+    for (const pattern of STRONG_PATTERNS) {
+      if (pattern.test(textToValidate)) {
+        errors.push(
+          `Synthesis Integrity Failure: Text uses STRONG claim matching '${pattern}', but Signal Strength is ${score}/100 (requires >=60).`
+        );
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}

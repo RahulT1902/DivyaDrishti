@@ -28,7 +28,7 @@ import { FinanceEngine } from "@/lib/domains/finance";
 import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } from "@/lib/consultation/sessionMemory";
 import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
 import type { ChartData } from "@/lib/consultation/brain";
-import { buildChartFacts, validateInterpretationFacts } from "@/lib/core/astrology/chartFacts";
+import { buildChartFacts, validateInterpretationFacts, validateInterpretationSynthesis } from "@/lib/core/astrology/chartFacts";
 
 export async function POST(req: NextRequest) {
   try {
@@ -438,17 +438,21 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             .replace(/\n{3,}/g, "\n\n")
             .trim();
 
-          // Calculation Integrity Validation Gate (Hard Gate)
+          // Calculation & Synthesis Integrity Validation Gate (Hard Gate)
           const ascSign = (chart.lagna.sign ?? 3) as Sign;
           const chartFacts = buildChartFacts(
             ascSign,
             chart.planets.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign, house: (((p.sign - ascSign + 12) % 12) + 1) })),
             currentTransits.positions.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign }))
           );
-          const validation = validateInterpretationFacts(chartFacts, cleanText);
+          const factValidation = validateInterpretationFacts(chartFacts, cleanText);
+          const synthValidation = validateInterpretationSynthesis(
+            { conclusion: { overallScore: brain.investigationReport?.conclusion.overallScore ?? 50 }, evidence: brain.investigationReport?.evidence },
+            cleanText
+          );
           let validatedText = cleanText;
-          if (!validation.valid) {
-            console.error("Calculation Integrity Hard Gate Triggered:", validation.errors);
+          if (!factValidation.valid || !synthValidation.valid) {
+            console.error("Calculation/Synthesis Integrity Hard Gate Triggered:", [...factValidation.errors, ...synthValidation.errors]);
             validatedText = `Based on your ${chartFacts.ascendantSignName} Ascendant chart, D1 10th lord ${chartFacts.houseLords[10]} governs your career house 10. Timing and planetary sub-periods support steady, methodical progress.`;
           }
 

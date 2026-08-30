@@ -13,10 +13,10 @@ function assert(condition: boolean, message: string) {
   }
 }
 
-const geminiSuite: ChartSuite = {
+const geminiSuite: any = {
   D1: {
-    metadata: { chartType: "D1", name: "Rasi Chart", source: "Calculated" },
-    ascendant: { sign: 3, signName: "Gemini", degree: 15, nakshatra: "Ardra", lord: "Mercury" },
+    chartType: "D1",
+    ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" },
     houses: [
       { number: 1, sign: 3, signName: "Gemini", lord: "Mercury", planets: [] },
       { number: 2, sign: 4, signName: "Cancer", lord: "Moon", planets: [] },
@@ -32,37 +32,41 @@ const geminiSuite: ChartSuite = {
       { number: 12, sign: 2, signName: "Taurus", lord: "Venus", planets: [] },
     ],
     planets: [
-      { name: "Jupiter", sign: 7, signName: "Libra", house: 5, longitude: 195, latitude: 0, speed: 0.1, isRetrograde: false, isCombust: false, nakshatra: "Swati", lord: "Venus" },
-      { name: "Mars", sign: 6, signName: "Virgo", house: 4, longitude: 165, latitude: 0, speed: 0.5, isRetrograde: false, isCombust: false, nakshatra: "Hasta", lord: "Mercury" },
-      { name: "Saturn", sign: 6, signName: "Virgo", house: 4, longitude: 170, latitude: 0, speed: 0.05, isRetrograde: false, isCombust: false, nakshatra: "Hasta", lord: "Mercury" },
+      { planet: "Jupiter", sign: 7, signName: "Libra", house: 5, longitude: 195, latitude: 0, speed: 0.1, isRetrograde: false, isCombust: false, nakshatra: "Swati", lord: "Venus" },
+      { planet: "Mars", sign: 6, signName: "Virgo", house: 4, longitude: 165, latitude: 0, speed: 0.5, isRetrograde: false, isCombust: false, nakshatra: "Hasta", lord: "Mercury" },
+      { planet: "Saturn", sign: 6, signName: "Virgo", house: 4, longitude: 170, latitude: 0, speed: 0.05, isRetrograde: false, isCombust: false, nakshatra: "Hasta", lord: "Mercury" },
     ],
     lords: [
-      { house: 1, lord: "Mercury", lordPlacedInHouse: 4, isInOwnHouse: false, isExalted: false, isDebilitated: false, aspectsOnHouse: [] },
-      { house: 5, lord: "Venus", lordPlacedInHouse: 4, isInOwnHouse: false, isExalted: false, isDebilitated: true, aspectsOnHouse: [] },
-      { house: 6, lord: "Mars", lordPlacedInHouse: 4, isInOwnHouse: false, isExalted: false, isDebilitated: false, aspectsOnHouse: [] },
-      { house: 10, lord: "Jupiter", lordPlacedInHouse: 5, isInOwnHouse: false, isExalted: false, isDebilitated: false, aspectsOnHouse: [] },
+      { house: 1, lord: "Mercury", lordPlacedInHouse: 4, isInOwnHouse: false, isExalted: false, isDebilitated: false, lordPlacedInSign: 6 },
+      { house: 5, lord: "Venus", lordPlacedInHouse: 4, isInOwnHouse: false, isExalted: false, isDebilitated: true, lordPlacedInSign: 6 },
+      { house: 6, lord: "Mars", lordPlacedInHouse: 4, isInOwnHouse: false, isExalted: false, isDebilitated: false, lordPlacedInSign: 6 },
+      { house: 10, lord: "Jupiter", lordPlacedInHouse: 5, isInOwnHouse: false, isExalted: false, isDebilitated: false, lordPlacedInSign: 7 },
     ],
     aspects: [],
     conjunctions: [],
     yogas: [],
     strengths: [],
   },
-  D9: { metadata: { chartType: "D9", name: "Navamsa", source: "Calculated" }, ascendant: { sign: 3, signName: "Gemini", degree: 15, nakshatra: "Ardra", lord: "Mercury" }, houses: [], planets: [], lords: [] },
+  D9: { chartType: "D9", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
   D10: {
-    metadata: { chartType: "D10", name: "Dasamsa", source: "Calculated" },
-    ascendant: { sign: 4, signName: "Cancer", degree: 15, nakshatra: "Pushya", lord: "Moon" },
+    chartType: "D10",
+    ascendant: { sign: 4, signName: "Cancer", degreeInSign: 15, nakshatra: "Pushya", lord: "Moon" },
     houses: [
       { number: 10, sign: 1, signName: "Aries", lord: "Mars", planets: ["Sun"] }
     ],
     planets: [],
     lords: [
-      { house: 10, lord: "Mars", lordPlacedInHouse: 10, isInOwnHouse: true, isExalted: false, isDebilitated: false, aspectsOnHouse: [] }
+      { house: 10, lord: "Mars", lordPlacedInHouse: 10, isInOwnHouse: true, isExalted: false, isDebilitated: false, lordPlacedInSign: 1 }
     ],
+    aspects: [],
+    conjunctions: [],
+    yogas: [],
+    strengths: [],
   },
-  D2: { metadata: { chartType: "D2", name: "Hora", source: "Placeholder" }, ascendant: { sign: 3, signName: "Gemini", degree: 0, nakshatra: "", lord: "Mercury" }, houses: [], planets: [], lords: [] },
+  D2: { chartType: "D2", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 0, nakshatra: "", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
 };
 
-const geminiContext = new AstrologyContextBuilder().build(geminiSuite, {});
+const geminiContext = new AstrologyContextBuilder().build(geminiSuite as ChartSuite, {});
 
 const geminiChartFacts = buildChartFacts(
   3,

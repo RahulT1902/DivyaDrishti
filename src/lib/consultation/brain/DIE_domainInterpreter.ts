@@ -24,6 +24,21 @@ import { renderInvestigationReport } from "./CIE_investigationEngine";
 
 // ── Chart-specific data bundle (passed from route.ts into the brain) ──────────
 
+export interface DomainPrimaryTargets {
+  primaryHouses: number[];
+  primaryLordHouse: number;
+}
+
+export const DOMAIN_PRIMARY_TARGETS: Record<string, DomainPrimaryTargets> = {
+  career: { primaryHouses: [10, 6, 2, 11], primaryLordHouse: 10 },
+  health: { primaryHouses: [1, 6, 8, 12], primaryLordHouse: 1 },
+  finance: { primaryHouses: [2, 11, 5, 9], primaryLordHouse: 2 },
+  relationship: { primaryHouses: [7, 4, 2, 11], primaryLordHouse: 7 },
+  education: { primaryHouses: [4, 5, 9], primaryLordHouse: 4 },
+  spirituality: { primaryHouses: [9, 12, 5], primaryLordHouse: 9 },
+  general: { primaryHouses: [1, 10], primaryLordHouse: 10 },
+};
+
 export interface ChartData {
   bodyRiskProfile?:   BodyRiskProfile | null;
   healthFindings?:    HealthFindings | null;
