@@ -50,4 +50,8 @@ example
 
 # generated native folders
 /ios
-/android
+.cxx/
+build/
+*.apk
+!release.apk
+

@@ -182,39 +182,95 @@ export default function OnboardingForm() {
               />
             </div>
 
-            {/* Birth Date — 3 dropdowns */}
+            {/* Birth Date — Calendar Picker + Dropdowns */}
             <div className="space-y-3">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-black ml-1">
-                Date of Birth
-              </label>
-              <div className="flex gap-3">
-                <Select value={dateState.day} onChange={v => setDateState(s => ({ ...s, day: v }))} placeholder="Day">
-                  {days.map(d => <option key={d} value={String(d)}>{d}</option>)}
-                </Select>
-                <Select value={dateState.month} onChange={v => setDateState(s => ({ ...s, month: v, day: "" }))} placeholder="Month">
-                  {MONTHS.map((m, i) => <option key={i} value={String(i + 1)}>{m}</option>)}
-                </Select>
-                <Select value={dateState.year} onChange={v => setDateState(s => ({ ...s, year: v, day: "" }))} placeholder="Year">
-                  {YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
-                </Select>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-black ml-1">
+                  Date of Birth
+                </label>
+                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Calendar Option Available</span>
               </div>
-              {/* Hidden field for the actual date value */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="date"
+                  value={toISODate(dateState)}
+                  onChange={e => {
+                    if (e.target.value) {
+                      const [y, m, d] = e.target.value.split("-");
+                      setDateState({ year: y, month: String(parseInt(m, 10)), day: String(parseInt(d, 10)) });
+                    }
+                  }}
+                  className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/80 outline-none text-white text-sm cursor-pointer"
+                />
+                <div className="flex gap-2 flex-1">
+                  <Select value={dateState.day} onChange={v => setDateState(s => ({ ...s, day: v }))} placeholder="Day">
+                    {days.map(d => <option key={d} value={String(d)}>{d}</option>)}
+                  </Select>
+                  <Select value={dateState.month} onChange={v => setDateState(s => ({ ...s, month: v, day: "" }))} placeholder="Month">
+                    {MONTHS.map((m, i) => <option key={i} value={String(i + 1)}>{m}</option>)}
+                  </Select>
+                  <Select value={dateState.year} onChange={v => setDateState(s => ({ ...s, year: v, day: "" }))} placeholder="Year">
+                    {YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                  </Select>
+                </div>
+              </div>
               <input type="hidden" name="date" value={toISODate(dateState)} />
             </div>
 
-            {/* Birth Time — Hour + Minute dropdowns */}
+            {/* Birth Time — 12-Hour AM / PM Format Selector */}
             <div className="space-y-3">
               <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-black ml-1">
-                Birth Time <span className="text-zinc-600 normal-case font-normal">(24-hour, approximate is fine)</span>
+                Birth Time <span className="text-amber-400 font-bold">(12-Hour AM / PM Format)</span>
               </label>
               <div className="flex gap-3 items-center">
-                <Select value={timeState.hour} onChange={v => setTimeState(s => ({ ...s, hour: v }))} placeholder="Hour">
-                  {HOURS.map(h => <option key={h} value={String(h)}>{String(h).padStart(2, "0")}:00</option>)}
+                <Select
+                  value={timeState.hour ? (parseInt(timeState.hour, 10) % 12 === 0 ? "12" : String(parseInt(timeState.hour, 10) % 12).padStart(2, "0")) : ""}
+                  onChange={v => {
+                    const currentAmpm = (parseInt(timeState.hour || "7", 10) >= 12) ? "PM" : "AM";
+                    let h24 = parseInt(v, 10);
+                    if (currentAmpm === "PM" && h24 < 12) h24 += 12;
+                    if (currentAmpm === "AM" && h24 === 12) h24 = 0;
+                    setTimeState(s => ({ ...s, hour: String(h24) }));
+                  }}
+                  placeholder="Hour (1-12)"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                    <option key={h} value={String(h).padStart(2, "0")}>{String(h).padStart(2, "0")}</option>
+                  ))}
                 </Select>
+
                 <span className="text-zinc-600 font-bold text-lg flex-shrink-0">:</span>
+
                 <Select value={timeState.minute} onChange={v => setTimeState(s => ({ ...s, minute: v }))} placeholder="Min">
                   {MINUTES.map(m => <option key={m} value={String(m)}>{String(m).padStart(2, "0")}</option>)}
                 </Select>
+
+                {/* AM / PM Toggle */}
+                <div className="flex rounded-xl bg-zinc-900/60 p-1 border border-zinc-800 flex-shrink-0">
+                  {(["AM", "PM"] as const).map(ap => {
+                    const currentAmpm = (parseInt(timeState.hour || "7", 10) >= 12) ? "PM" : "AM";
+                    const active = currentAmpm === ap;
+                    return (
+                      <button
+                        key={ap}
+                        type="button"
+                        onClick={() => {
+                          let h12 = parseInt(timeState.hour || "7", 10) % 12;
+                          if (h12 === 0) h12 = 12;
+                          let h24 = h12;
+                          if (ap === "PM" && h24 < 12) h24 += 12;
+                          if (ap === "AM" && h24 === 12) h24 = 0;
+                          setTimeState(s => ({ ...s, hour: String(h24) }));
+                        }}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                          active ? "bg-amber-600 text-white shadow-sm" : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {ap}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               <input type="hidden" name="time" value={toHHMM(timeState)} />
             </div>

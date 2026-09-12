@@ -9,15 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Eye, EyeOff, Lock, Mail, User, Settings, Check, X } from 'lucide-react-native';
 import { api, getApiUrl, setApiUrl } from '@/services/api';
+import BirthDetailsPicker, { BirthDetailsData } from '@/components/BirthDetailsPicker';
 import { Spacing } from '@/constants/theme';
-
-const { width } = Dimensions.get('window');
 
 type AuthMode = 'signin' | 'signup';
 
@@ -30,6 +28,15 @@ export default function LoginScreen() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [birthDetails, setBirthDetails] = useState<BirthDetailsData>({
+    date: '1995-08-15',
+    time: '19:30',
+    city: 'New Delhi, India',
+    latitude: 28.6139,
+    longitude: 77.2090,
+    timezone: 'Asia/Kolkata',
+  });
 
   const [showSettings, setShowSettings] = useState(false);
   const [apiUrl, setApiUrlState] = useState('');
@@ -52,7 +59,6 @@ export default function LoginScreen() {
     }
   };
 
-
   const resolvePostAuthRoute = async (userEmail: string) => {
     try {
       const data = await api.get('/api/user', { email: userEmail });
@@ -63,7 +69,6 @@ export default function LoginScreen() {
       }
     } catch (err: any) {
       console.error('Error checking user profile:', err);
-      // If server error, fallback to onboarding to be safe
       router.replace('/onboarding');
     }
   };
@@ -73,25 +78,49 @@ export default function LoginScreen() {
     const cleanEmail = email.trim().toLowerCase();
     
     if (!cleanEmail || !password || (mode === 'signup' && !name.trim())) {
-      setError('Please fill in all fields.');
+      setError('Please fill in all required fields.');
       return;
     }
 
     setLoading(true);
     try {
       if (mode === 'signup') {
+        // Step 1: Create Account
         const signupRes = await api.post('/api/auth/signup', {
           name: name.trim(),
           email: cleanEmail,
           password,
         });
+
         if (!signupRes.success) {
           setError(signupRes.error || 'Could not create account.');
           setLoading(false);
           return;
         }
+
+        // Store Token immediately
+        if (signupRes.token) {
+          await AsyncStorage.setItem('divya:token', signupRes.token);
+        }
+        await AsyncStorage.setItem('divya:loggedIn', 'true');
+        await AsyncStorage.setItem('divya:userEmail', cleanEmail);
+
+        // Step 2: Save Birth Details
+        await api.post('/api/user', {
+          email: cleanEmail,
+          name: name.trim(),
+          date: birthDetails.date,
+          time: birthDetails.time,
+          latitude: birthDetails.latitude,
+          longitude: birthDetails.longitude,
+          timezone: birthDetails.timezone,
+        });
+
+        router.replace('/(tabs)/dashboard');
+        return;
       }
 
+      // Mode === 'signin'
       const loginRes = await api.post('/api/auth/login', {
         email: cleanEmail,
         password,
@@ -103,7 +132,6 @@ export default function LoginScreen() {
         return;
       }
 
-      // Store auth state — JWT token takes precedence for subsequent API calls
       await AsyncStorage.setItem('divya:loggedIn', 'true');
       await AsyncStorage.setItem('divya:userEmail', cleanEmail);
       if (loginRes.token) {
@@ -153,7 +181,7 @@ export default function LoginScreen() {
                     style={styles.input}
                     value={apiUrl}
                     onChangeText={setApiUrlState}
-                    placeholder="http://192.168.1.8:3001"
+                    placeholder="https://divya-drishti-eight.vercel.app"
                     placeholderTextColor="#C4B5A5"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -259,6 +287,17 @@ export default function LoginScreen() {
                   </View>
                 </View>
 
+                {/* Registration Birth Details (Calendar option & AM/PM Time selector) */}
+                {mode === 'signup' && (
+                  <View style={styles.birthDetailsBox}>
+                    <Text style={styles.birthDetailsTitle}>Birth Chart Details</Text>
+                    <BirthDetailsPicker
+                      value={birthDetails}
+                      onChange={setBirthDetails}
+                    />
+                  </View>
+                )}
+
                 {error ? (
                   <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
@@ -274,7 +313,7 @@ export default function LoginScreen() {
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <Text style={styles.submitButtonText}>
-                      {mode === 'signup' ? 'Create Account & Begin' : 'Sign In'}
+                      {mode === 'signup' ? 'Create Account & Calculate Chart' : 'Sign In'}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -318,7 +357,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 125,
-    backgroundColor: 'rgba(251, 191, 36, 0.15)', // amber-200/15
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
     zIndex: -1,
   },
   blurCircle2: {
@@ -328,19 +367,19 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: 'rgba(249, 115, 22, 0.12)', // orange-200/12
+    backgroundColor: 'rgba(249, 115, 22, 0.12)',
     zIndex: -1,
   },
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.five,
+    marginBottom: Spacing.four,
     marginTop: Spacing.three,
   },
   logoContainer: {
     width: 60,
     height: 60,
     borderRadius: 20,
-    backgroundColor: '#D97706', // amber-600
+    backgroundColor: '#D97706',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.three,
@@ -358,12 +397,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#451A03', // amber-950
+    color: '#451A03',
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
   },
   subtitle: {
     fontSize: 14,
-    color: '#78350F', // amber-900
+    color: '#78350F',
     opacity: 0.6,
     marginTop: Spacing.one,
   },
@@ -450,6 +489,19 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 6,
+  },
+  birthDetailsBox: {
+    marginTop: 8,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#EFE8D9',
+    gap: 12,
+  },
+  birthDetailsTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#451A03',
+    marginBottom: 4,
   },
   errorContainer: {
     backgroundColor: '#FFF1F2',
