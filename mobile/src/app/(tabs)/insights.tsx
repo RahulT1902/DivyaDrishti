@@ -21,9 +21,9 @@ import {
   Star,
   BookOpen,
 } from 'lucide-react-native';
-import { api } from '@/services/api';
-import { Spacing } from '@/constants/theme';
-import { useLanguage } from '@/context/LanguageContext';
+import { api } from '../../services/api';
+import { Spacing } from '../../constants/theme';
+import { useLanguage } from '../../context/LanguageContext';
 
 type SubTab = 'dasha' | 'timeline' | 'radar' | 'journal';
 

@@ -13,9 +13,9 @@ import {
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Eye, EyeOff, Lock, Mail, User, Settings, Check, X } from 'lucide-react-native';
-import { api, getApiUrl, setApiUrl } from '@/services/api';
-import BirthDetailsPicker, { BirthDetailsData } from '@/components/BirthDetailsPicker';
-import { Spacing } from '@/constants/theme';
+import { api, getApiUrl, setApiUrl } from '../services/api';
+import BirthDetailsPicker, { BirthDetailsData } from '../components/BirthDetailsPicker';
+import { Spacing } from '../constants/theme';
 
 type AuthMode = 'signin' | 'signup';
 

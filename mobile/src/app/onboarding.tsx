@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '@/services/api';
-import BirthDetailsPicker, { BirthDetailsData } from '@/components/BirthDetailsPicker';
-import { Spacing } from '@/constants/theme';
+import { api } from '../services/api';
+import BirthDetailsPicker, { BirthDetailsData } from '../components/BirthDetailsPicker';
+import { Spacing } from '../constants/theme';
 
 export default function OnboardingScreen() {
   const router = useRouter();

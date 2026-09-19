@@ -2,7 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { LayoutDashboard, Sparkles, TrendingUp, Orbit, LogOut } from 'lucide-react-native';
 import { Platform, TouchableOpacity, Text, View, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 function HeaderRight() {
   const { isHindi, toggleLanguage } = useLanguage();
