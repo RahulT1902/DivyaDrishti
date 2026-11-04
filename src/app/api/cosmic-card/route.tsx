@@ -38,17 +38,6 @@ export async function GET(req: NextRequest) {
     // Elegant fallback content if daily brief has not been generated yet today
     const headline = dailyInsight?.summary || "Quiet alignment brings clarity to action.";
     const tone = dailyInsight?.emotionalTone || "Reflective & Grounded";
-    
-    let dashaText = "Saturn Mahadasha";
-    if (user.birthDetails) {
-      const birthYear = user.birthDetails.dateOfBirth.getFullYear();
-      const currentYear = new Date().getFullYear();
-      if (currentYear - birthYear < 30) {
-        dashaText = "Jupiter Mahadasha • Mercury Antar";
-      } else {
-        dashaText = "Saturn Mahadasha • Venus Antar";
-      }
-    }
 
     const dateFormatted = new Date().toLocaleDateString("en-IN", {
       day: "2-digit",
@@ -191,15 +180,6 @@ export async function GET(req: NextRequest) {
                 }}
               >
                 {tone}
-              </span>
-              <span
-                style={{
-                  fontSize: "11px",
-                  letterSpacing: "0.15em",
-                  color: "rgba(165, 180, 252, 0.6)",
-                }}
-              >
-                {dashaText}
               </span>
             </div>
           </div>

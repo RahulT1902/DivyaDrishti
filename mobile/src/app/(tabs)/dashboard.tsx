@@ -20,7 +20,6 @@ import {
   Orbit,
   BookOpen,
   Zap,
-  ShieldCheck,
   ChevronRight,
   AlertTriangle,
 } from 'lucide-react-native';
@@ -124,12 +123,6 @@ export default function DashboardScreen() {
             <Text style={styles.greetingText}>
               {isHindi ? 'नमस्ते,' : 'Namaste,'} {userName} 🙏
             </Text>
-            <View style={styles.badgeRow}>
-              <ShieldCheck size={13} color="#059669" />
-              <Text style={styles.badgeText}>
-                {isHindi ? 'जन्म विवरण सत्यापित (100% शुद्ध)' : 'Birth Integrity Verified (100% Pure)'}
-              </Text>
-            </View>
           </View>
         </View>
 
@@ -366,19 +359,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#3F2D1D',
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 6,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#059669',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   hubSection: {
     gap: Spacing.two,
