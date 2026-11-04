@@ -1,3 +1,6 @@
+// AI calls go to Gemini first (~11-14s); keep well above it, within Vercel Hobby limits.
+export const maxDuration = 60;
+
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";

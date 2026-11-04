@@ -1,3 +1,6 @@
+// AI calls go to Gemini first (~11-14s); keep well above it, within Vercel Hobby limits.
+export const maxDuration = 60;
+
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth/getUser";

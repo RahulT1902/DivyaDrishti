@@ -2,9 +2,13 @@
  * DivyaDrishti AI Provider
  *
  * Provider Resolution Order:
- *  1. DeepSeek (PRIMARY)  — uses DEEPSEEK_API_KEY + @ai-sdk/openai (OpenAI-compat)
+ *  1. Gemini   (PRIMARY)  — uses GEMINI_API_KEY   + @ai-sdk/google
  *  2. Groq     (FALLBACK) — uses GROQ_API_KEY     + @ai-sdk/openai (OpenAI-compat)
- *  3. Gemini   (RESERVE)  — uses GEMINI_API_KEY   + @ai-sdk/google
+ *  3. DeepSeek (RESERVE)  — uses DEEPSEEK_API_KEY + @ai-sdk/openai (OpenAI-compat)
+ *
+ * Gemini is primary because, on the Pundit prompt, it met the target length
+ * and followed the narrator rules more closely than Groq's gpt-oss-20b; it is
+ * slower (~11–14s vs ~3–4s), which is why Groq stays as the fast fallback.
  *
  * Usage:
  *   import { callAI } from "@/lib/ai/provider";
@@ -34,9 +38,9 @@ const hasDeepSeek =
 export type AIProvider = "gemini" | "groq" | "deepseek" | "none";
 
 export function getActiveProvider(): AIProvider {
-  if (hasDeepSeek) return "deepseek";
-  if (hasGroq)     return "groq";
   if (hasGemini)   return "gemini";
+  if (hasGroq)     return "groq";
+  if (hasDeepSeek) return "deepseek";
   return "none";
 }
 
@@ -113,70 +117,48 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
     ? { messages }
     : { prompt };
 
-  // ── 1. DeepSeek (primary) ─────────────────────────────────────────────
-  if (hasDeepSeek) {
+  // Ordered Gemini → Groq → DeepSeek. Each provider that has a key is tried
+  // until one returns non-empty text.
+  const attempts: Array<{ provider: Exclude<AIProvider, "none">; label: string; enabled: boolean; model: () => any; headroom: number }> = [
+    {
+      provider: "gemini", label: "Gemini", enabled: hasGemini, headroom: REASONING_HEADROOM,
+      model: () => createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY })("gemini-3.6-flash"),
+    },
+    {
+      provider: "groq", label: "Groq", enabled: hasGroq, headroom: REASONING_HEADROOM,
+      model: () => createOpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY }).chat("openai/gpt-oss-20b"),
+    },
+    {
+      provider: "deepseek", label: "DeepSeek", enabled: hasDeepSeek, headroom: 0,
+      model: () => createOpenAI({ baseURL: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY }).chat("deepseek-chat"),
+    },
+  ];
+
+  const enabled = attempts.filter(a => a.enabled);
+  if (enabled.length === 0) {
+    throw new Error(
+      "No AI provider configured. Set GEMINI_API_KEY, GROQ_API_KEY (free), or DEEPSEEK_API_KEY in your .env file."
+    );
+  }
+
+  for (const [i, a] of enabled.entries()) {
     try {
-      const client = createOpenAI({
-        baseURL: "https://api.deepseek.com/v1",
-        apiKey: process.env.DEEPSEEK_API_KEY,
-      });
       const { text, finishReason } = await generateText({
-        model: client.chat("deepseek-chat"),
+        model: a.model(),
         system, ...turnPayload, temperature,
-        ...outputBudget(maxTokens),
+        ...outputBudget(maxTokens, a.headroom),
       } as any);
-      console.log("[AI] DeepSeek: OK");
-      return { text: requireText("DeepSeek", text, finishReason), provider: "deepseek", usedFallback: false };
+      const checked = requireText(a.label, text, finishReason);
+      console.log(`[AI] ${a.label}: OK`);
+      return { text: checked, provider: a.provider, usedFallback: i > 0 };
     } catch (e: any) {
       const msg = e?.message || "unknown";
-      errors.push(`DeepSeek: ${msg}`);
-      console.warn("[AI] DeepSeek failed:", msg);
+      errors.push(`${a.label}: ${msg}`);
+      console.warn(`[AI] ${a.label} failed:`, msg);
     }
   }
 
-  // ── 2. Groq (fallback) ────────────────────────────────────────────────
-  if (hasGroq) {
-    try {
-      const client = createOpenAI({
-        baseURL: "https://api.groq.com/openai/v1",
-        apiKey: process.env.GROQ_API_KEY,
-      });
-      const { text, finishReason } = await generateText({
-        model: client.chat("openai/gpt-oss-20b"),
-        system, ...turnPayload, temperature,
-        ...outputBudget(maxTokens, REASONING_HEADROOM),
-      } as any);
-      console.log("[AI] Groq: OK");
-      return { text: requireText("Groq", text, finishReason), provider: "groq", usedFallback: true };
-    } catch (e: any) {
-      const msg = e?.message || "unknown";
-      errors.push(`Groq: ${msg}`);
-      console.warn("[AI] Groq failed:", msg);
-    }
-  }
-
-  // ── 3. Gemini (reserve) ───────────────────────────────────────────────
-  if (hasGemini) {
-    try {
-      const client = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
-      const { text, finishReason } = await generateText({
-        model: client("gemini-3.6-flash"),
-        system, ...turnPayload, temperature,
-        ...outputBudget(maxTokens, REASONING_HEADROOM),
-      } as any);
-      console.log("[AI] Gemini: OK");
-      return { text: requireText("Gemini", text, finishReason), provider: "gemini", usedFallback: true };
-    } catch (e: any) {
-      const msg = e?.message || "unknown";
-      errors.push(`Gemini: ${msg}`);
-      console.error("[AI] Gemini failed:", msg);
-      throw new Error(`All AI providers failed. ${errors.join(" | ")}`);
-    }
-  }
-
-  throw new Error(
-    "No AI provider configured. Set GROQ_API_KEY (free), GEMINI_API_KEY, or DEEPSEEK_API_KEY in your .env file."
-  );
+  throw new Error(`All AI providers failed. ${errors.join(" | ")}`);
 }
 
 export function hasAnyProvider(): boolean {
