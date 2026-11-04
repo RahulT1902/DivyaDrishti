@@ -105,9 +105,12 @@ export default function InsightsScreen() {
         api.get('/api/life-insights', { email }),
       ]);
       if (chartRes.success && chartRes.data) setChartData(chartRes.data);
-      if (insightsRes.success && insightsRes.data) setInsightsPayload(insightsRes.data);
-      else setError(insightsRes.error?.message || 'Failed to load insights.');
-      setError(null);
+      if (insightsRes.success && insightsRes.data) {
+        setInsightsPayload(insightsRes.data);
+        setError(null);
+      } else {
+        setError(insightsRes.error?.message || 'Failed to load insights.');
+      }
     } catch (err: any) {
       setError('Connection failed. Check your server.');
     } finally {

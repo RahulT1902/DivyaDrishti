@@ -62,6 +62,9 @@ export default function LoginScreen() {
   const resolvePostAuthRoute = async (userEmail: string) => {
     try {
       const data = await api.get('/api/user', { email: userEmail });
+      if (data?.user?.name) {
+        await AsyncStorage.setItem('divya:userName', data.user.name);
+      }
       if (data?.success && data?.user?.birthDetails) {
         router.replace('/(tabs)/dashboard');
       } else {
@@ -105,16 +108,26 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('divya:loggedIn', 'true');
         await AsyncStorage.setItem('divya:userEmail', cleanEmail);
 
-        // Step 2: Save Birth Details
-        await api.post('/api/user', {
-          email: cleanEmail,
-          name: name.trim(),
-          date: birthDetails.date,
-          time: birthDetails.time,
-          latitude: birthDetails.latitude,
-          longitude: birthDetails.longitude,
-          timezone: birthDetails.timezone,
-        });
+        await AsyncStorage.setItem('divya:userName', name.trim());
+
+        // Step 2: Save Birth Details. The account already exists at this point,
+        // so if this fails send the user to onboarding to retry rather than to
+        // a dashboard that has no chart to load.
+        try {
+          const saveRes = await api.post('/api/user', {
+            name: name.trim(),
+            date: birthDetails.date,
+            time: birthDetails.time,
+            latitude: birthDetails.latitude,
+            longitude: birthDetails.longitude,
+            timezone: birthDetails.timezone,
+          });
+          if (!saveRes?.success) throw new Error(saveRes?.error);
+        } catch (saveErr) {
+          console.error('Birth details save failed after signup:', saveErr);
+          router.replace('/onboarding');
+          return;
+        }
 
         router.replace('/(tabs)/dashboard');
         return;

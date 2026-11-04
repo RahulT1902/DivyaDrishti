@@ -16,6 +16,9 @@ export default function IndexScreen() {
 
         if (loggedIn === 'true' && email && token) {
           const userRes = await api.get('/api/user', { email });
+          if (userRes?.user?.name) {
+            await AsyncStorage.setItem('divya:userName', userRes.user.name);
+          }
           if (userRes?.success && userRes?.user?.birthDetails) {
             router.replace('/(tabs)/dashboard');
             return;
