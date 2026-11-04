@@ -15,7 +15,7 @@ function assert(condition: boolean, message: string) {
 
 const geminiSuite: any = {
   D1: {
-    chartType: "D1",
+    chartType: "D1", metadata: { varga: 1, purpose: "Overall life", accuracyWeight: 1, source: "Computed" },
     ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" },
     houses: [
       { number: 1, sign: 3, signName: "Gemini", lord: "Mercury", planets: [] },
@@ -47,9 +47,9 @@ const geminiSuite: any = {
     yogas: [],
     strengths: [],
   },
-  D9: { chartType: "D9", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
+  D9: { chartType: "D9", metadata: { varga: 9, purpose: "Marriage and dharma", accuracyWeight: 0, source: "Placeholder" }, ascendant: { sign: 3, signName: "Gemini", degreeInSign: 15, nakshatra: "Ardra", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
   D10: {
-    chartType: "D10",
+    chartType: "D10", metadata: { varga: 10, purpose: "Career", accuracyWeight: 1, source: "Computed" },
     ascendant: { sign: 4, signName: "Cancer", degreeInSign: 15, nakshatra: "Pushya", lord: "Moon" },
     houses: [
       { number: 10, sign: 1, signName: "Aries", lord: "Mars", planets: ["Sun"] }
@@ -63,7 +63,7 @@ const geminiSuite: any = {
     yogas: [],
     strengths: [],
   },
-  D2: { chartType: "D2", ascendant: { sign: 3, signName: "Gemini", degreeInSign: 0, nakshatra: "", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
+  D2: { chartType: "D2", metadata: { varga: 2, purpose: "Wealth", accuracyWeight: 0, source: "Placeholder" }, ascendant: { sign: 3, signName: "Gemini", degreeInSign: 0, nakshatra: "", lord: "Mercury" }, houses: [], planets: [], lords: [], aspects: [], conjunctions: [], yogas: [], strengths: [] },
 };
 
 const geminiContext = new AstrologyContextBuilder().build(geminiSuite as ChartSuite, {});

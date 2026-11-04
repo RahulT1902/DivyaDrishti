@@ -1,0 +1,164 @@
+/**
+ * ChatPundit Gold Standard v1.0 — response rubric.
+ * Spec: docs/CHATPUNDIT_GOLD_STANDARD_v1.md
+ *
+ * Deterministic checks of one Pundit answer against the standard's five
+ * acceptance questions and its hard rules. Pass it the LLM narrative only
+ * (no summary card, no server-written basis paragraph), otherwise the
+ * templated parts satisfy the dasha/lordship checks on the model's behalf.
+ *
+ * These are text-level heuristics: they show whether the required reasoning
+ * is present and whether forbidden patterns appear, not whether the
+ * astrology is wise. Read the answers alongside the score.
+ */
+
+import {
+  validateInterpretationFacts,
+  validateInterpretationSynthesis,
+  type ChartFacts,
+} from "@/lib/core/astrology/chartFacts";
+
+export const GOLD_STANDARD_VERSION = "1.0";
+
+export interface RubricCheck {
+  id: string;
+  /** Which acceptance question (Q1–Q5) or hard rule (R1–R3) this belongs to. */
+  criterion: string;
+  label: string;
+  passed: boolean;
+  detail: string;
+}
+
+export interface RubricResult {
+  version: string;
+  domain: string;
+  score: number;      // passed / total, 0–1
+  passed: number;
+  total: number;
+  checks: RubricCheck[];
+}
+
+// Chart factors the standard requires for each domain (§2). Health only for
+// now — other domains get their own factor sets when they migrate.
+const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
+  health: [
+    { id: "ascendant", pattern: /\b(?:ascendant|lagna)\b/i },
+    { id: "6th house", pattern: /\b(?:6th|sixth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:6th|sixth)\b/i },
+    { id: "8th house", pattern: /\b(?:8th|eighth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:8th|eighth)\b/i },
+    { id: "12th house", pattern: /\b(?:12th|twelfth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:12th|twelfth)\b/i },
+    { id: "Moon", pattern: /\bMoon\b/ },
+  ],
+};
+
+const PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+const PLANET_RE = new RegExp(`\\b(?:${PLANETS.join("|")})\\b`);
+const sentencesOf = (t: string) => t.split(/(?<=[.!?])\s+|\n+/).filter(s => s.trim());
+
+export function scoreConsultation(opts: {
+  narrative: string;
+  domain: string;
+  chartFacts: ChartFacts;
+  dasha: { mahadasha: string; antardasha: string };
+  /** Integrity-gate synthesis score, as used by the chat route. */
+  overallScore?: number;
+}): RubricResult {
+  const { narrative, domain, chartFacts, dasha } = opts;
+  const factors = DOMAIN_FACTORS[domain];
+  if (!factors) {
+    throw new Error(`Gold Standard rubric has no factor set for domain "${domain}" yet (health migrates first).`);
+  }
+
+  const text = narrative.split(/\n\s*Overall Summary/i)[0];
+  const sentences = sentencesOf(text);
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim()).length;
+  const checks: RubricCheck[] = [];
+  const add = (c: RubricCheck) => checks.push(c);
+
+  // Q1 — what is the indication? A full consultation needs room for A–J.
+  add({
+    id: "structure", criterion: "Q1", label: "Full consultation (≥4 paragraphs, ≥250 words)",
+    passed: paragraphs >= 4 && words >= 250,
+    detail: `${paragraphs} paragraphs, ${words} words`,
+  });
+
+  // Q2 — which planetary combinations support it? Dasha, natal, transits.
+  const mdNamed = new RegExp(`\\b${dasha.mahadasha}\\b[^.]*\\b(?:maha)?dasha\\b|\\b(?:maha)?dasha\\b[^.]*\\b${dasha.mahadasha}\\b`, "i").test(text);
+  const adNamed = new RegExp(`\\b${dasha.antardasha}\\b`, "i").test(text) && /\b(?:antar|sub-?period|bhukti)/i.test(text);
+  add({
+    id: "dasha", criterion: "Q2", label: "Names the active Mahadasha and Antardasha",
+    passed: mdNamed && adNamed,
+    detail: `Mahadasha ${dasha.mahadasha}: ${mdNamed ? "yes" : "no"}; Antardasha ${dasha.antardasha}: ${adNamed ? "yes" : "no"}`,
+  });
+
+  const found = factors.filter(f => f.pattern.test(text)).map(f => f.id);
+  add({
+    id: "multi-factor", criterion: "Q2", label: "Uses ≥3 of the domain's natal factors",
+    passed: found.length >= 3,
+    detail: `found ${found.length}/${factors.length}: ${found.join(", ") || "none"}`,
+  });
+
+  const transitSentence = sentences.find(s => /\btransit/i.test(s) && PLANET_RE.test(s));
+  add({
+    id: "transit", criterion: "Q2", label: "Explains a current transit by planet",
+    passed: !!transitSentence,
+    detail: transitSentence ? `"${transitSentence.trim().slice(0, 90)}"` : "no sentence names a transiting planet",
+  });
+
+  // Q3 — what contradicts or mitigates it? A balancing factor tied to the chart.
+  const MITIGATION = /\b(?:however|but|on the other hand|offsets?|mitigat\w*|protect\w*|balanc\w*|soften\w*|counter\w*|eases?|cushion\w*)\b/i;
+  const mitigation = sentences.find(s => MITIGATION.test(s) && (PLANET_RE.test(s) || /\bhouse\b/i.test(s)));
+  add({
+    id: "mitigation", criterion: "Q3", label: "Names a contradicting or protective chart factor",
+    passed: !!mitigation,
+    detail: mitigation ? `"${mitigation.trim().slice(0, 90)}"` : "no balancing factor tied to a planet or house",
+  });
+
+  // Q4 — when is it relevant? No arbitrary durations (§8).
+  const DURATION = /\b\d+\s*(?:–|-|to)\s*\d+\s*(?:days?|weeks?|months?)\b|\b(?:in|within|for) (?:a few|\d+) (?:days?|weeks?)\b/i;
+  const GROUNDED = /\b(?:dasha|antardasha|transit\w*|until|while|as long as)\b/i;
+  const arbitrary = sentences.filter(s => DURATION.test(s) && !GROUNDED.test(s));
+  add({
+    id: "timing", criterion: "Q4", label: "Timing tied to dasha/transits, no arbitrary durations",
+    passed: arbitrary.length === 0,
+    detail: arbitrary.length ? `ungrounded: "${arbitrary[0].trim().slice(0, 90)}"` : "no ungrounded durations",
+  });
+
+  // Q5 — how confident? Qualitative evidence strength (§7).
+  const confidence = /\b(?:evidence|indications?|signals?|support)\b[^.]{0,40}\b(?:strong|moderate|weak|insufficient|mixed|limited)\b|\b(?:strong|moderate|weak|insufficient|mixed|limited)\b[^.]{0,20}\b(?:evidence|indications?|confidence|support)\b|\bconfiden(?:t|ce)\b/i;
+  const confidenceSentence = sentences.find(s => confidence.test(s));
+  add({
+    id: "confidence", criterion: "Q5", label: "States qualitative evidence strength",
+    passed: !!confidenceSentence,
+    detail: confidenceSentence ? `"${confidenceSentence.trim().slice(0, 90)}"` : "no strength/confidence statement",
+  });
+
+  // R1 — no manufactured numeric probabilities (§7).
+  const pct = text.match(/\b\d{1,3}\s?%/);
+  add({
+    id: "no-percent", criterion: "R1", label: "No numeric probabilities",
+    passed: !pct, detail: pct ? `found "${pct[0]}"` : "none",
+  });
+
+  // R2 — medical safety (§10).
+  if (domain === "health") {
+    const safety = /\b(?:doctor|physician|medical (?:advice|care|professional|attention)|not a (?:medical )?diagnosis|healthcare provider|consult a)\b/i.test(text);
+    add({
+      id: "medical-safety", criterion: "R2", label: "Says astrology doesn't replace medical care",
+      passed: safety, detail: safety ? "present" : "missing",
+    });
+  }
+
+  // R3 — chart facts correct (the chat route's integrity gate).
+  const gate = [
+    ...validateInterpretationFacts(chartFacts, text).errors,
+    ...validateInterpretationSynthesis({ conclusion: { overallScore: opts.overallScore ?? 50 } }, text).errors,
+  ];
+  add({
+    id: "integrity", criterion: "R3", label: "No wrong lordships/placements or certainty claims",
+    passed: gate.length === 0, detail: gate.length ? gate[0].slice(0, 110) : "clean",
+  });
+
+  const passed = checks.filter(c => c.passed).length;
+  return { version: GOLD_STANDARD_VERSION, domain, score: passed / checks.length, passed, total: checks.length, checks };
+}

@@ -9,6 +9,7 @@
     "start": "next start -p 3001",
     "lint": "eslint",
     "regression": "tsx scripts/regression.ts",
+    "benchmark:pundit": "tsx --env-file=.env scripts/pundit-benchmark.ts",
     "validate": "tsx scripts/validate.ts"
   },
   "dependencies": {

@@ -11,7 +11,7 @@ import { calculateCurrentTransits } from "@/lib/astrology/transit";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
 import { extractIntent } from "@/lib/intelligence/intentExtractor";
 import { buildSuccessResponse, buildErrorResponse } from "@/lib/utils/apiResponse";
-import { callAI, hasAnyProvider } from "@/lib/ai/provider";
+import { hasAnyProvider } from "@/lib/ai/provider";
 import { computeBodyRiskProfile, getTopRisks, type BodyRiskProfile } from "@/lib/intelligence/health/bodyRiskProfile";
 import { buildHealthFindings, type HealthFindings } from "@/lib/intelligence/health/healthFindingsEngine";
 import { buildFollowUp } from "@/lib/intelligence/domainPromptEngine";
@@ -31,8 +31,8 @@ import { FinanceEngine } from "@/lib/domains/finance";
 import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } from "@/lib/consultation/sessionMemory";
 import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
 import type { ChartData } from "@/lib/consultation/brain";
-import { buildChartFacts, validateInterpretationFacts, validateInterpretationSynthesis } from "@/lib/core/astrology/chartFacts";
-import { buildAstrologicalBasis, insertAstrologicalBasis } from "@/lib/consultation/astrologicalBasis";
+import { buildChartFacts } from "@/lib/core/astrology/chartFacts";
+import { generatePunditAnswer } from "@/lib/consultation/punditAnswer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -380,7 +380,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
 
       try {
         // ── Pundit Brain (10-layer reasoning engine) ──────────────────────────
-        // Layers 1–9 run here; Layer 10 (LLM) is the callAI below.
+        // Layers 1–9 run here; Layer 10 (LLM) is generatePunditAnswer below.
         // The symbolic pipeline output (symbolicCtx) feeds Layer 4 (Diagnostic Engine).
         // The brain returns a fully structured systemPrompt so the LLM only narrates.
         const chartData: ChartData = {
@@ -410,114 +410,23 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         if (brain.clarification) {
           rawText = brain.clarification.question;
         } else {
-          // Pass conversation history as messages so follow-up questions have context.
-          // When messages is set, the AI SDK uses it over prompt.
-          const chatMessages = history.length > 0
-            ? [
-                ...history.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
-                { role: "user" as const, content: brain.userPrompt },
-              ]
-            : undefined;
-
-          // Token budget — match the brain's depth decision to the expected word count.
-          // The new Groq model (openai/gpt-oss-20b) defaults to ~150 tokens of output,
-          // which is far too short for consultation/year_outlook responses.
-          const depthTokens: Record<string, number> = {
-            quick:        400,   // 80–120 words
-            daily:        600,   // 150–180 words
-            consultation: 1200,  // 300–400 words
-            year_outlook: 1800,  // 450–550 words
-          };
-          const maxTokens = depthTokens[brain.metadata.depth] ?? 1200;
-
-          const { text } = await callAI(
-            chatMessages
-              ? { system: brain.systemPrompt, messages: chatMessages, temperature: brain.temperature, maxTokens }
-              : { system: brain.systemPrompt, prompt: brain.userPrompt, temperature: brain.temperature, maxTokens }
-          );
-
-          // Strip emoji and collapse stray blank lines
-          const clean = (t: string) => t
-            .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
-            .replace(/\n{3,}/g, "\n\n")
-            .trim();
-          const cleanText = clean(text);
-
-          // Calculation & Synthesis Integrity Validation Gate (Hard Gate)
+          // Narration, integrity gate, basis paragraph and summary card —
+          // shared with the Gold Standard benchmark (scripts/pundit-benchmark.ts).
           const ascSign = (chart.lagna.sign ?? 3) as Sign;
           const chartFacts = buildChartFacts(
             ascSign,
             chart.planets.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign, house: (((p.sign - ascSign + 12) % 12) + 1) })),
             currentTransits.positions.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign }))
           );
-          const synthReport = {
-            conclusion: { overallScore: brain.investigationReport?.conclusion.overallScore ?? 50 },
-            evidence: brain.investigationReport?.evidence,
-          };
-          const gateErrors = (t: string) => [
-            ...validateInterpretationFacts(chartFacts, t).errors,
-            ...validateInterpretationSynthesis(synthReport, t).errors,
-          ];
-
-          // A failed draft is never replaced wholesale (that used to swap a
-          // whole health answer for a one-line career sentence). Instead:
-          // 1) one rewrite with the exact errors, 2) if that still fails, drop
-          // only the offending sentences.
-          let validatedText = cleanText;
-          let errors = gateErrors(cleanText);
-          if (errors.length > 0) {
-            console.error("Calculation/Synthesis Integrity Hard Gate Triggered (draft 1):", errors);
-            try {
-              const retryMessages = [
-                ...(chatMessages ?? [{ role: "user" as const, content: brain.userPrompt }]),
-                { role: "assistant" as const, content: cleanText },
-                {
-                  role: "user" as const,
-                  content:
-                    "Rewrite your full answer, keeping its length and detail, but fix these problems:\n" +
-                    errors.map(e => `- ${e}`).join("\n") +
-                    "\nUse only the chart facts you were given and never phrase a prediction as certain or guaranteed.",
-                },
-              ];
-              const { text: retryText } = await callAI({
-                system: brain.systemPrompt, messages: retryMessages, temperature: brain.temperature, maxTokens,
-              });
-              validatedText = clean(retryText);
-              errors = gateErrors(validatedText);
-            } catch (retryErr) {
-              console.error("Hard Gate rewrite failed:", retryErr);
-            }
-          }
-          if (errors.length > 0) {
-            console.error("Calculation/Synthesis Integrity Hard Gate Triggered (after rewrite):", errors);
-            validatedText = validatedText
-              .split("\n")
-              .map(line => line
-                .split(/(?<=[.!?])\s+/)
-                .filter(sentence => gateErrors(sentence).length === 0)
-                .join(" "))
-              .join("\n")
-              .replace(/\n{3,}/g, "\n\n")
-              .trim();
-          }
-          // Never send a card with no answer under it, whatever path got here.
-          if (!validatedText.trim()) {
-            validatedText = "I couldn't put together a reliable written reading for this question just now. The summary above is drawn from your chart; please ask again in a moment.";
-          }
-
-          // Deterministic "why" paragraph from computed chart facts (first
-          // answer in a thread only, so follow-ups don't repeat it).
-          if (!richIntent.isFollowUp) {
-            validatedText = insertAstrologicalBasis(
-              validatedText,
-              buildAstrologicalBasis(chartFacts, targetDomain, dashaInfo),
-            );
-          }
-
-          // Prepend the pre-rendered summary card above the LLM narrative
-          rawText = brain.renderedSummaryCard
-            ? `${brain.renderedSummaryCard}\n\n${validatedText}`
-            : validatedText;
+          const answer = await generatePunditAnswer({
+            brain,
+            history,
+            chartFacts,
+            domain: targetDomain,
+            dasha: dashaInfo,
+            isFollowUp: richIntent.isFollowUp,
+          });
+          rawText = answer.text;
         }
 
         // Persist domain assessment for future sessions (fire-and-forget)
