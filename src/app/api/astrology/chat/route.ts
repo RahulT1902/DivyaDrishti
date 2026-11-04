@@ -496,9 +496,10 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
               .join("\n")
               .replace(/\n{3,}/g, "\n\n")
               .trim();
-            if (!validatedText) {
-              validatedText = "I couldn't put together a reliable written reading for this question just now. The summary above is drawn from your chart; please ask again in a moment.";
-            }
+          }
+          // Never send a card with no answer under it, whatever path got here.
+          if (!validatedText.trim()) {
+            validatedText = "I couldn't put together a reliable written reading for this question just now. The summary above is drawn from your chart; please ask again in a moment.";
           }
 
           // Deterministic "why" paragraph from computed chart facts (first

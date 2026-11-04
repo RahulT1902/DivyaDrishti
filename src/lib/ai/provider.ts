@@ -85,6 +85,24 @@ interface CallAIResult {
   usedFallback: boolean;
 }
 
+// gpt-oss and Gemini Flash "think" before answering, and that thinking is
+// counted against the output budget. Without headroom the budget can run out
+// mid-thought and return empty text (finishReason "length").
+const REASONING_HEADROOM = 2000;
+
+/**
+ * AI SDK v6 calls the option `maxOutputTokens`; the old `maxTokens` was being
+ * silently ignored (hidden by an `as any`), so no length budget ever applied.
+ */
+const outputBudget = (maxTokens: number | undefined, headroom = 0) =>
+  maxTokens ? { maxOutputTokens: maxTokens + headroom } : {};
+
+/** An empty reply is a failure, so the next provider gets a chance. */
+function requireText(provider: string, text: string, finishReason: string): string {
+  if (!text.trim()) throw new Error(`${provider} returned empty text (finish: ${finishReason})`);
+  return text;
+}
+
 export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
   const { prompt, system, temperature = 0.7, maxTokens, messages } = options;
   const errors: string[] = [];
@@ -102,13 +120,13 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
         baseURL: "https://api.deepseek.com/v1",
         apiKey: process.env.DEEPSEEK_API_KEY,
       });
-      const { text } = await generateText({
+      const { text, finishReason } = await generateText({
         model: client.chat("deepseek-chat"),
         system, ...turnPayload, temperature,
-        ...(maxTokens ? { maxTokens } : {}),
+        ...outputBudget(maxTokens),
       } as any);
       console.log("[AI] DeepSeek: OK");
-      return { text, provider: "deepseek", usedFallback: false };
+      return { text: requireText("DeepSeek", text, finishReason), provider: "deepseek", usedFallback: false };
     } catch (e: any) {
       const msg = e?.message || "unknown";
       errors.push(`DeepSeek: ${msg}`);
@@ -123,13 +141,13 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
         baseURL: "https://api.groq.com/openai/v1",
         apiKey: process.env.GROQ_API_KEY,
       });
-      const { text } = await generateText({
+      const { text, finishReason } = await generateText({
         model: client.chat("openai/gpt-oss-20b"),
         system, ...turnPayload, temperature,
-        ...(maxTokens ? { maxTokens } : {}),
+        ...outputBudget(maxTokens, REASONING_HEADROOM),
       } as any);
       console.log("[AI] Groq: OK");
-      return { text, provider: "groq", usedFallback: true };
+      return { text: requireText("Groq", text, finishReason), provider: "groq", usedFallback: true };
     } catch (e: any) {
       const msg = e?.message || "unknown";
       errors.push(`Groq: ${msg}`);
@@ -141,13 +159,13 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
   if (hasGemini) {
     try {
       const client = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
-      const { text } = await generateText({
+      const { text, finishReason } = await generateText({
         model: client("gemini-3.6-flash"),
         system, ...turnPayload, temperature,
-        ...(maxTokens ? { maxTokens } : {}),
+        ...outputBudget(maxTokens, REASONING_HEADROOM),
       } as any);
       console.log("[AI] Gemini: OK");
-      return { text, provider: "gemini", usedFallback: true };
+      return { text: requireText("Gemini", text, finishReason), provider: "gemini", usedFallback: true };
     } catch (e: any) {
       const msg = e?.message || "unknown";
       errors.push(`Gemini: ${msg}`);
