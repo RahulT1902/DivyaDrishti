@@ -262,6 +262,21 @@ const STRONG_DISPLAY: Record<string, string> = {
 
 // ── Health interpreter ────────────────────────────────────────────────────────
 
+// Illness probability from a system's sensitivity score — functional states
+// (energy, sleep, mental) carry lower illness risk. Applied per system so the
+// summary card's secondary line reflects that system's own score.
+const FUNCTIONAL_SYSTEMS = ["energyStamina", "mentalWellness", "sleep", "recovery"];
+
+function illnessProbabilityFor(system: string, score: number): number {
+  if (FUNCTIONAL_SYSTEMS.includes(system)) {
+    return Math.max(5, Math.round((score - 25) * 0.35));
+  }
+  if (score < 52) return 10;
+  if (score < 65) return 10 + Math.round((score - 52) * 2);
+  if (score < 78) return 36 + Math.round((score - 65) * 2.5);
+  return Math.min(75, 68 + Math.round((score - 78) * 0.8));
+}
+
 function interpretHealth(
   diagnosis: AstrologicalDiagnosis,
   profile:   BodyRiskProfile | null,
@@ -314,17 +329,8 @@ function interpretHealth(
     : [];
   const bodyParts = [...new Set([...primaryParts, ...secondaryParts])].slice(0, 5);
 
-  // Illness probability — functional states (energy, sleep, mental) have lower illness risk
-  const isFunctional = ["energyStamina", "mentalWellness", "sleep", "recovery"].includes(findings.primaryFocus.system);
-  let illnessProbability: number;
-  if (isFunctional) {
-    illnessProbability = Math.max(5, Math.round((primaryScore - 25) * 0.35));
-  } else {
-    if (primaryScore < 52) illnessProbability = 10;
-    else if (primaryScore < 65) illnessProbability = 10 + Math.round((primaryScore - 52) * 2);
-    else if (primaryScore < 78) illnessProbability = 36 + Math.round((primaryScore - 65) * 2.5);
-    else illnessProbability = Math.min(75, 68 + Math.round((primaryScore - 78) * 0.8));
-  }
+  const isFunctional = FUNCTIONAL_SYSTEMS.includes(findings.primaryFocus.system);
+  const illnessProbability = illnessProbabilityFor(findings.primaryFocus.system, primaryScore);
 
   const severity: HealthBrief["severity"] =
     primaryScore < 52 ? null
@@ -384,7 +390,11 @@ function interpretHealth(
 
   // Build ranked system list for multi-system awareness
   const rankedSystems: HealthSystemScore[] | null = findings.rankedSystems.length > 0
-    ? findings.rankedSystems.map(f => ({ name: f.displayName, score: f.score }))
+    ? findings.rankedSystems.map(f => ({
+        name: f.displayName,
+        score: f.score,
+        illnessProbability: illnessProbabilityFor(f.system, f.score),
+      }))
     : null;
 
   return {

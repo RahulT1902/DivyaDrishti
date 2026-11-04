@@ -221,6 +221,7 @@ export interface AnswerPlan {
 export interface HealthSystemScore {
   name:  string;   // display name e.g. "Respiratory System"
   score: number;   // 0–100 sensitivity score
+  illnessProbability: number;  // same mapping as HealthBrief.illnessProbability, for this system
 }
 
 export interface HealthBrief {

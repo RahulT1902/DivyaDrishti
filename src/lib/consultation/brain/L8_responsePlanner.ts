@@ -354,7 +354,14 @@ function buildSummaryCard(
     const h         = consultationBrief.domainBrief;
     const primary   = h.rankedSystems?.[0];
     const secondary = h.rankedSystems?.[1];
-    const isSecondaryClose = !!(primary && secondary && secondary.score >= primary.score - 12);
+    // A secondary watch area is shown only if its own likelihood is at least
+    // "Low — stay mindful" (>= 40%); otherwise the card would list it as a
+    // watch area and call it "Looking clear" on the next line.
+    const isSecondaryClose = !!(
+      primary && secondary &&
+      secondary.score >= primary.score - 12 &&
+      secondary.illnessProbability >= 40
+    );
 
     const HEALTH_PHASE: Record<string, string> = {
       "Healthy":             "Stable",
@@ -388,8 +395,10 @@ function buildSummaryCard(
       return "Looking clear";
     };
     const shortName = (name: string) => name.split(/[\s&]/)[0].trim();
+    // The secondary line uses the secondary system's own probability. It used
+    // to be primary × 0.7, which could call a listed watch area "Looking clear".
     const likelihoodVal = isSecondaryClose && secondary
-      ? `${shortName(h.primarySystem)}: ${likelihoodText(h.illnessProbability)}  ·  ${shortName(secondary.name)}: ${likelihoodText(Math.round(h.illnessProbability * 0.7))}`
+      ? `${shortName(h.primarySystem)}: ${likelihoodText(h.illnessProbability)}  ·  ${shortName(secondary.name)}: ${likelihoodText(secondary.illnessProbability)}`
       : likelihoodText(h.illnessProbability);
     stats.push({ label: "Likelihood", value: likelihoodVal });
 
