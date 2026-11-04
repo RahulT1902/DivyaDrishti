@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth/getUser";
+import { validateBirthInput } from "@/lib/utils/birthInput";
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,6 +70,11 @@ export async function POST(req: NextRequest) {
     const date = new Date(dateStr);
     const parsedLat = parseFloat(latitude);
     const parsedLng = parseFloat(longitude);
+
+    const invalid = validateBirthInput(dateStr, time, parsedLat, parsedLng);
+    if (invalid) {
+      return NextResponse.json({ success: false, error: invalid }, { status: 400 });
+    }
 
     await prisma.$connect();
 

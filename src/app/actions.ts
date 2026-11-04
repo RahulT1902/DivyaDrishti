@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth/jwt";
+import { validateBirthInput } from "@/lib/utils/birthInput";
 
 export async function registerUser(formData: FormData) {
   try {
@@ -18,6 +19,9 @@ export async function registerUser(formData: FormData) {
     const latitude = parseFloat(formData.get("latitude") as string);
     const longitude = parseFloat(formData.get("longitude") as string);
     const timezone = (formData.get("timezone") as string) || "Asia/Kolkata";
+
+    const invalid = validateBirthInput(dateStr, time, latitude, longitude);
+    if (invalid) return { success: false, error: invalid };
 
     // Ensure connection is active (helps wake up Neon if it's sleeping)
     await prisma.$connect();

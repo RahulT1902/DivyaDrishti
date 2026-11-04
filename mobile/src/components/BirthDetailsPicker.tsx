@@ -68,18 +68,26 @@ const ALL_CITIES: CityOption[] = [
     .filter(c => !POPULAR_CITIES.some(p => p.lat === c.lat && p.lng === c.lng)),
 ];
 
-const formatCoords = (lat: number, lng: number) =>
+/** Parse "YYYY-MM-DD" by its parts. new Date("YYYY-MM-DD") is read as UTC
+ *  midnight, which is the previous day in timezones west of UTC. */
+const parseYMD = (s: string): { y: number; m: number; d: number } | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+  if (!match) return null;
+  return { y: Number(match[1]), m: Number(match[2]), d: Number(match[3]) };
+};
+
+const formatCoords =(lat: number, lng: number) =>
   `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(2)}°${lng >= 0 ? 'E' : 'W'}`;
 
 export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPickerProps) {
   // Calendar Modal State
   const [showCalendar, setShowCalendar] = useState(false);
   
-  // Parse initial or current date
-  const initialDateObj = value.date ? new Date(value.date) : new Date(1995, 7, 15);
-  const [calYear, setCalYear] = useState(initialDateObj.getFullYear());
-  const [calMonth, setCalMonth] = useState(initialDateObj.getMonth()); // 0-indexed
-  const [selectedDay, setSelectedDay] = useState(initialDateObj.getDate());
+  // The selected date always comes from value.date; calYear/calMonth are only
+  // the month being viewed, so browsing months can't change the chosen day.
+  const selected = parseYMD(value.date);
+  const [calYear, setCalYear] = useState(selected?.y ?? 1995);
+  const [calMonth, setCalMonth] = useState(selected ? selected.m - 1 : 7); // 0-indexed
 
   // Time State: 12-hour format with AM / PM
   // Initial parsing of 24-hr time (HH:mm)
@@ -101,6 +109,8 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
   const [hour12, setHour12] = useState(initialTime.hour12);
   const [minute, setMinute] = useState(initialTime.minute);
   const [ampm, setAmpm] = useState<'AM' | 'PM'>(initialTime.ampm as 'AM' | 'PM');
+  // What's in the minute box while typing; `minute` holds the last valid value.
+  const [minuteText, setMinuteText] = useState(initialTime.minute);
 
   // Location State
   const [cityName, setCityName] = useState(value.city || 'New Delhi, India');
@@ -116,12 +126,24 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
 
+  const today = new Date();
+  const isFutureDay = (y: number, m0: number, d: number) =>
+    new Date(y, m0, d) > new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const isViewingCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth();
+
+  const openCalendar = () => {
+    if (selected) {
+      setCalYear(selected.y);
+      setCalMonth(selected.m - 1);
+    }
+    setShowCalendar(true);
+  };
+
   const handleSelectDay = (dayNum: number) => {
-    setSelectedDay(dayNum);
+    if (isFutureDay(calYear, calMonth, dayNum)) return;
     const mm = (calMonth + 1).toString().padStart(2, '0');
     const dd = dayNum.toString().padStart(2, '0');
-    const dateStr = `${calYear}-${mm}-${dd}`;
-    onChange({ ...value, date: dateStr });
+    onChange({ ...value, date: `${calYear}-${mm}-${dd}` });
     setShowCalendar(false);
   };
 
@@ -135,11 +157,20 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
   };
 
   const handleNextMonth = () => {
+    if (isViewingCurrentMonth) return;
     if (calMonth === 11) {
       setCalMonth(0);
       setCalYear(calYear + 1);
     } else {
       setCalMonth(calMonth + 1);
+    }
+  };
+
+  const handleSelectYear = (y: number) => {
+    setCalYear(y);
+    // Jumping to the current year from a later month would show future days.
+    if (y === today.getFullYear() && calMonth > today.getMonth()) {
+      setCalMonth(today.getMonth());
     }
   };
 
@@ -156,6 +187,19 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
     const time24 = `${h24.toString().padStart(2, '0')}:${min.padStart(2, '0')}`;
     onChange({ ...value, time: time24 });
   };
+
+  // Birth time needs minute precision (divisional charts shift within minutes),
+  // so minutes are typed rather than picked from 5-minute steps.
+  const handleMinuteText = (text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 2);
+    setMinuteText(digits);
+    const n = parseInt(digits, 10);
+    if (digits && n >= 0 && n <= 59) {
+      updateTime(hour12, n.toString().padStart(2, '0'), ampm);
+    }
+  };
+
+  const handleMinuteBlur = () => setMinuteText(minute);
 
   const handleSelectCity = (c: CityOption) => {
     setCityName(c.city);
@@ -188,7 +232,7 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
 
         <TouchableOpacity
           style={styles.calendarTrigger}
-          onPress={() => setShowCalendar(true)}
+          onPress={openCalendar}
           activeOpacity={0.8}
         >
           <View style={styles.triggerLeft}>
@@ -214,7 +258,7 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.timeScroll}
+            style={[styles.timeScroll, { flex: 1 }]}
             contentContainerStyle={styles.timeScrollContent}
           >
             {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(h => (
@@ -232,25 +276,19 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
 
           <Text style={styles.colonText}>:</Text>
 
-          {/* Minute Selector */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.timeScroll}
-            contentContainerStyle={styles.timeScrollContent}
-          >
-            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
-              <TouchableOpacity
-                key={m}
-                onPress={() => updateTime(hour12, m, ampm)}
-                style={[styles.timeChip, minute === m && styles.activeChip]}
-              >
-                <Text style={[styles.timeChipText, minute === m && styles.activeChipText]}>
-                  {m}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {/* Minute Input (00–59) */}
+          <TextInput
+            style={styles.minuteInput}
+            value={minuteText}
+            onChangeText={handleMinuteText}
+            onBlur={handleMinuteBlur}
+            keyboardType="number-pad"
+            maxLength={2}
+            placeholder="mm"
+            placeholderTextColor="#C4B5A5"
+            selectTextOnFocus
+            accessibilityLabel="Birth minute"
+          />
 
           {/* AM / PM Toggle Buttons */}
           <View style={styles.ampmToggle}>
@@ -318,7 +356,11 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
                 </Text>
               </View>
 
-              <TouchableOpacity onPress={handleNextMonth} style={styles.navArrow}>
+              <TouchableOpacity
+                onPress={handleNextMonth}
+                disabled={isViewingCurrentMonth}
+                style={[styles.navArrow, isViewingCurrentMonth && styles.dayCellDisabled]}
+              >
                 <ChevronRight size={20} color="#78350F" />
               </TouchableOpacity>
             </View>
@@ -333,7 +375,7 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
               {YEARS_LIST.map(y => (
                 <TouchableOpacity
                   key={y}
-                  onPress={() => setCalYear(y)}
+                  onPress={() => handleSelectYear(y)}
                   style={[styles.yearChip, calYear === y && styles.activeYearChip]}
                 >
                   <Text style={[styles.yearChipText, calYear === y && styles.activeYearChipText]}>
@@ -360,13 +402,16 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
               {/* Days 1 to N */}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const dayNum = i + 1;
-                const isSelected = selectedDay === dayNum;
+                const isSelected =
+                  selected?.y === calYear && selected?.m === calMonth + 1 && selected?.d === dayNum;
+                const isFuture = isFutureDay(calYear, calMonth, dayNum);
 
                 return (
                   <TouchableOpacity
                     key={dayNum}
                     onPress={() => handleSelectDay(dayNum)}
-                    style={[styles.dayCell, isSelected && styles.dayCellSelected]}
+                    disabled={isFuture}
+                    style={[styles.dayCell, isSelected && styles.dayCellSelected, isFuture && styles.dayCellDisabled]}
                   >
                     <Text style={[styles.dayCellText, isSelected && styles.dayCellTextSelected]}>
                       {dayNum}
@@ -376,13 +421,15 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
               })}
             </View>
 
+            {/* Tapping a day already saves it; this just closes on the saved date. */}
             <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={() => handleSelectDay(selectedDay)}
+              style={[styles.confirmButton, !selected && styles.dayCellDisabled]}
+              onPress={() => setShowCalendar(false)}
+              disabled={!selected}
             >
               <Check size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
               <Text style={styles.confirmButtonText}>
-                Confirm Date ({selectedDay} {MONTH_NAMES[calMonth]} {calYear})
+                {selected ? `Confirm Date (${formatDateDisplay()})` : 'Tap a day to select'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -548,6 +595,19 @@ const styles = StyleSheet.create({
   },
   activeChipText: {
     color: '#FFFFFF',
+  },
+  minuteInput: {
+    width: 44,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#D97706',
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  dayCellDisabled: {
+    opacity: 0.25,
   },
   colonText: {
     fontSize: 16,
