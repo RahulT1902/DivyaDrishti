@@ -29,6 +29,7 @@ import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } f
 import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
 import type { ChartData } from "@/lib/consultation/brain";
 import { buildChartFacts, validateInterpretationFacts, validateInterpretationSynthesis } from "@/lib/core/astrology/chartFacts";
+import { buildAstrologicalBasis, insertAstrologicalBasis } from "@/lib/consultation/astrologicalBasis";
 
 export async function POST(req: NextRequest) {
   try {
@@ -498,6 +499,15 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             if (!validatedText) {
               validatedText = "I couldn't put together a reliable written reading for this question just now. The summary above is drawn from your chart; please ask again in a moment.";
             }
+          }
+
+          // Deterministic "why" paragraph from computed chart facts (first
+          // answer in a thread only, so follow-ups don't repeat it).
+          if (!richIntent.isFollowUp) {
+            validatedText = insertAstrologicalBasis(
+              validatedText,
+              buildAstrologicalBasis(chartFacts, targetDomain, dashaInfo),
+            );
           }
 
           // Prepend the pre-rendered summary card above the LLM narrative

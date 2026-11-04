@@ -385,7 +385,7 @@ function interpretHealth(
     mentalNote
       ? "What actually catches my attention more than physical health is mental load — stress is the real risk today"
       : strongAreas.length >= 2
-      ? `What's worth noting is how strong your ${strongAreas[0]?.toLowerCase()} and ${strongAreas[1]?.toLowerCase()} are — most people in this dasha phase show weakness there`
+      ? `What's worth noting is how strong your ${strongAreas[0]?.toLowerCase()} and ${strongAreas[1]?.toLowerCase()} are in your chart right now`
       : null;
 
   // Build ranked system list for multi-system awareness
