@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const emailParam = searchParams.get("email") || "";
-    const emailHeader = req.headers.get("x-user-email") || "";
-    const userEmail = (emailParam || emailHeader).trim().toLowerCase();
+    const userEmail = getAuthUser(req)?.email ?? "";
 
     if (!userEmail) {
       return new NextResponse(
         `<html><body style="font-family: sans-serif; padding: 20px; color: #7f1d1d;">
-          <h3>Error: Authentication email is required.</h3>
-          <p>Please supply '?email=user@domain.com' as a query parameter.</p>
+          <h3>Error: Authentication required.</h3>
          </body></html>`,
-        { status: 400, headers: { "Content-Type": "text/html; charset=utf-8" } }
+        { status: 401, headers: { "Content-Type": "text/html; charset=utf-8" } }
       );
     }
 

@@ -1,16 +1,16 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth/getUser";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const email = (searchParams.get("email") || "").trim().toLowerCase();
+    const email = getAuthUser(req)?.email ?? "";
 
     if (!email) {
-      return new Response("Email required", { status: 400 });
+      return new Response("Authentication required.", { status: 401 });
     }
 
     // ── 1. Fetch User Context & Birth Details ────────────────────────────────

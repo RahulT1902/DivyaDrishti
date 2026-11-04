@@ -1,22 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, BrainCircuit, XCircle, Share2, Compass, Eye, Download, X } from "lucide-react";
 import { DailyBriefing } from "@/lib/guidance/guidanceCompressor";
 import { useLanguage } from "@/context/LanguageContext";
+import { authFetch } from "@/lib/auth/webFetch";
 
 interface Props {
   briefing: DailyBriefing;
   userName?: string;
-  userEmail: string;
+  /** No longer used: the card is fetched with the session token. */
+  userEmail?: string;
   themeMode?: "morning" | "evening";
 }
 
-export default function MorningBriefCard({ briefing, userName, userEmail, themeMode }: Props) {
+export default function MorningBriefCard({ briefing, userName, themeMode }: Props) {
   const { isHindi, t } = useLanguage();
   const [showModal, setShowModal] = useState(false);
+  const [cardUrl, setCardUrl] = useState<string | null>(null);
+  const [cardError, setCardError] = useState(false);
   const isMorning = themeMode === "morning";
+
+  // The card endpoint needs a Bearer token, which <img src> can't send, so the
+  // image is fetched with authFetch and shown through a blob URL.
+  useEffect(() => {
+    if (!showModal) return;
+    let objectUrl: string | null = null;
+    let cancelled = false;
+    authFetch("/api/cosmic-card")
+      .then(res => (res.ok ? res.blob() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then(blob => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setCardUrl(objectUrl);
+      })
+      .catch(() => { if (!cancelled) setCardError(true); });
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setCardUrl(null);
+      setCardError(false);
+    };
+  }, [showModal]);
   const isDark = false;
 
   // Localized translator functions for dynamic strings to ensure native emotional flow
@@ -265,19 +291,27 @@ export default function MorningBriefCard({ briefing, userName, userEmail, themeM
 
                 {/* Editorial Card Preview */}
                 <div className="relative aspect-square max-w-[360px] mx-auto rounded-2xl overflow-hidden border border-[#F1E7D0] shadow-2xl bg-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/api/cosmic-card?email=${encodeURIComponent(userEmail)}`}
-                    alt="Today's Cosmic Card"
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                  />
+                  {cardUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={cardUrl}
+                      alt="Today's Cosmic Card"
+                      className="w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-amber-800/60 font-serif">
+                      {cardError
+                        ? t("Could not load your card. Please try again.", "आपका पत्र लोड नहीं हो सका। कृपया पुनः प्रयास करें।")
+                        : t("Preparing your card...", "आपका पत्र तैयार हो रहा है...")}
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-center gap-3 pt-2">
+                <div className={`flex justify-center gap-3 pt-2 ${cardUrl ? "" : "pointer-events-none opacity-50"}`}>
                   <a
-                    href={`/api/cosmic-card?email=${encodeURIComponent(userEmail)}`}
+                    href={cardUrl ?? undefined}
                     target="_blank"
                     rel="noreferrer"
                     className={`flex items-center gap-2 px-5 py-2.5 bg-white border border-[#F1E7D0] text-[#3F2D1D] text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-[#EADFC7]/50 transition-all shadow-sm ${isHindi ? "tracking-wider" : ""}`}
@@ -286,7 +320,7 @@ export default function MorningBriefCard({ briefing, userName, userEmail, themeM
                     {t("Open Original", "मूल पत्र खोलें")}
                   </a>
                   <a
-                    href={`/api/cosmic-card?email=${encodeURIComponent(userEmail)}`}
+                    href={cardUrl ?? undefined}
                     download={`CosmicCard-${new Date().toISOString().split("T")[0]}.png`}
                     className={`flex items-center gap-2 px-5 py-2.5 bg-[#3F2D1D] border border-[#3F2D1D] text-[#F8F5EF] text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-[#3F2D1D]/90 transition-all shadow-sm ${isHindi ? "tracking-wider" : ""}`}
                   >
