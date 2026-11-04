@@ -73,6 +73,8 @@ export function buildChartFacts(
   };
 }
 
+const TRANSIT_CONTEXT = /\btransit(?:ing|s)?\b|\bgochar\b|\bcurrently\b|\bright now\b|\bthis (?:week|month|year)\b|\bis moving\b/i;
+
 export function validateInterpretationFacts(
   chartFacts: ChartFacts,
   textToValidate: string
@@ -106,18 +108,27 @@ export function validateInterpretationFacts(
     }
   }
 
-  // Placement Mismatch Validation
-  for (const planet of ALL_PLANETS) {
-    const natalFact = chartFacts.natalPlanetPositions[planet];
-    if (natalFact) {
+  // Placement Mismatch Validation — checked per sentence. A sentence about a
+  // transit ("transiting Saturn is in house 11") is checked against the
+  // transit position, not the natal one; otherwise every correct transit
+  // statement failed the gate.
+  const sentences = textToValidate.split(/(?<=[.!?])\s+|\n+/);
+  for (const sentence of sentences) {
+    const explicitlyNatal = /\bnatal\b|\bbirth chart\b|\bat birth\b/i.test(sentence);
+    const aboutTransit = !explicitlyNatal && TRANSIT_CONTEXT.test(sentence);
+    const positions = aboutTransit ? chartFacts.transitPlanetPositions : chartFacts.natalPlanetPositions;
+    const label = aboutTransit ? "transit" : "natal";
+
+    for (const planet of ALL_PLANETS) {
+      const fact = positions[planet];
+      if (!fact) continue;
       for (let wrongHouse = 1; wrongHouse <= 12; wrongHouse++) {
-        if (wrongHouse !== natalFact.house) {
-          const placementPattern = new RegExp(`\\b${planet} (?:is )?in (?:natal )?house ${wrongHouse}\\b`, "i");
-          if (placementPattern.test(textToValidate)) {
-            errors.push(
-              `Placement Integrity Failure: Text asserts '${planet}' is in natal house ${wrongHouse}, but authoritative chart facts place '${planet}' in house ${natalFact.house}.`
-            );
-          }
+        if (wrongHouse === fact.house) continue;
+        const placementPattern = new RegExp(`\\b${planet} (?:is )?in (?:natal )?house ${wrongHouse}\\b`, "i");
+        if (placementPattern.test(sentence)) {
+          errors.push(
+            `Placement Integrity Failure: Text asserts '${planet}' is in ${label} house ${wrongHouse}, but authoritative chart facts place '${planet}' in house ${fact.house}.`
+          );
         }
       }
     }
@@ -136,11 +147,17 @@ export function validateInterpretationSynthesis(
   const errors: string[] = [];
   const score = report.conclusion.overallScore;
 
-  // 1. CERTAINTY Class: FORBIDDEN for any prediction regardless of score
+  // 1. CERTAINTY Class: FORBIDDEN for any prediction regardless of score.
+  // Bare "certain" is the ordinary adjective ("avoid certain foods") and was
+  // rejecting normal answers, so only certainty *claims* are matched.
   const CERTAINTY_PATTERNS = [
     /\bguaranteed\b/i,
     /\binevitable\b/i,
-    /\bcertain(?:ly)?\b/i,
+    /\b(?:is|are|be|seems|looks) (?:almost |absolutely )?certain\b/i,
+    /\bfor certain\b/i,
+    /\bcertain to\b/i,
+    /\bcertainly (?:will|happen|occur|come|succeed)\b/i,
+    /\bwill certainly\b/i,
     /\bdefinitely\b/i,
     /\bwithout a doubt\b/i,
     /\b100% (?:certain|sure|guaranteed)\b/i,

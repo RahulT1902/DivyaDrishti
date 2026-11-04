@@ -30,7 +30,8 @@ import type { StoredDomainMemory } from "../sessionMemory";
 // ── Depth decision ────────────────────────────────────────────────────────────
 
 function selectDepth(intent: IntentAnalysis, userState: UserState): ResponseDepth {
-  if (intent.isFollowUp || intent.type === "FollowUp") return "quick";
+  // Follow-ups still get a real explanation (150–180 words), not a 2-line reply.
+  if (intent.isFollowUp || intent.type === "FollowUp") return "daily";
 
   // Year-level questions → full annual reading
   const tf = intent.timeframe ?? "";
@@ -43,8 +44,11 @@ function selectDepth(intent: IntentAnalysis, userState: UserState): ResponseDept
   if (intent.emotionalTone === "low" || intent.emotionalTone === "worried") return "consultation";
   if (intent.type === "Forecast" && tf === "") return "consultation";
 
-  // Today / tomorrow / simple daily check
-  return "daily";
+  // Today / tomorrow → focused daily reading
+  if (tf === "today" || tf === "tomorrow") return "daily";
+
+  // Open questions ("How's my health?") deserve the full consultation.
+  return "consultation";
 }
 
 function depthToLength(depth: ResponseDepth): string {

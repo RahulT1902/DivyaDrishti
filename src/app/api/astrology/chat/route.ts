@@ -433,10 +433,11 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
           );
 
           // Strip emoji and collapse stray blank lines
-          const cleanText = text
+          const clean = (t: string) => t
             .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
             .replace(/\n{3,}/g, "\n\n")
             .trim();
+          const cleanText = clean(text);
 
           // Calculation & Synthesis Integrity Validation Gate (Hard Gate)
           const ascSign = (chart.lagna.sign ?? 3) as Sign;
@@ -445,15 +446,58 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             chart.planets.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign, house: (((p.sign - ascSign + 12) % 12) + 1) })),
             currentTransits.positions.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign }))
           );
-          const factValidation = validateInterpretationFacts(chartFacts, cleanText);
-          const synthValidation = validateInterpretationSynthesis(
-            { conclusion: { overallScore: brain.investigationReport?.conclusion.overallScore ?? 50 }, evidence: brain.investigationReport?.evidence },
-            cleanText
-          );
+          const synthReport = {
+            conclusion: { overallScore: brain.investigationReport?.conclusion.overallScore ?? 50 },
+            evidence: brain.investigationReport?.evidence,
+          };
+          const gateErrors = (t: string) => [
+            ...validateInterpretationFacts(chartFacts, t).errors,
+            ...validateInterpretationSynthesis(synthReport, t).errors,
+          ];
+
+          // A failed draft is never replaced wholesale (that used to swap a
+          // whole health answer for a one-line career sentence). Instead:
+          // 1) one rewrite with the exact errors, 2) if that still fails, drop
+          // only the offending sentences.
           let validatedText = cleanText;
-          if (!factValidation.valid || !synthValidation.valid) {
-            console.error("Calculation/Synthesis Integrity Hard Gate Triggered:", [...factValidation.errors, ...synthValidation.errors]);
-            validatedText = `Based on your ${chartFacts.ascendantSignName} Ascendant chart, D1 10th lord ${chartFacts.houseLords[10]} governs your career house 10. Timing and planetary sub-periods support steady, methodical progress.`;
+          let errors = gateErrors(cleanText);
+          if (errors.length > 0) {
+            console.error("Calculation/Synthesis Integrity Hard Gate Triggered (draft 1):", errors);
+            try {
+              const retryMessages = [
+                ...(chatMessages ?? [{ role: "user" as const, content: brain.userPrompt }]),
+                { role: "assistant" as const, content: cleanText },
+                {
+                  role: "user" as const,
+                  content:
+                    "Rewrite your full answer, keeping its length and detail, but fix these problems:\n" +
+                    errors.map(e => `- ${e}`).join("\n") +
+                    "\nUse only the chart facts you were given and never phrase a prediction as certain or guaranteed.",
+                },
+              ];
+              const { text: retryText } = await callAI({
+                system: brain.systemPrompt, messages: retryMessages, temperature: brain.temperature, maxTokens,
+              });
+              validatedText = clean(retryText);
+              errors = gateErrors(validatedText);
+            } catch (retryErr) {
+              console.error("Hard Gate rewrite failed:", retryErr);
+            }
+          }
+          if (errors.length > 0) {
+            console.error("Calculation/Synthesis Integrity Hard Gate Triggered (after rewrite):", errors);
+            validatedText = validatedText
+              .split("\n")
+              .map(line => line
+                .split(/(?<=[.!?])\s+/)
+                .filter(sentence => gateErrors(sentence).length === 0)
+                .join(" "))
+              .join("\n")
+              .replace(/\n{3,}/g, "\n\n")
+              .trim();
+            if (!validatedText) {
+              validatedText = "I couldn't put together a reliable written reading for this question just now. The summary above is drawn from your chart; please ask again in a moment.";
+            }
           }
 
           // Prepend the pre-rendered summary card above the LLM narrative
