@@ -59,9 +59,9 @@ export default function OnboardingRitual() {
   const handleSubmit = async () => {
     setLoading(true);
     const formData = new FormData();
-    const email = typeof window !== "undefined" ? window.localStorage.getItem("divya:userEmail") : null;
+    const token = typeof window !== "undefined" ? window.localStorage.getItem("divya:token") : null;
     formData.append("name", data.name);
-    if (email) formData.append("email", email);
+    if (token) formData.append("token", token);
     formData.append("date", dateValue);
     formData.append("time", timeValue);
     formData.append("latitude",  data.city.lat.toString());

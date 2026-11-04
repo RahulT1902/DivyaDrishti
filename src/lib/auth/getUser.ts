@@ -9,32 +9,14 @@ export interface AuthUser {
 /**
  * Extract and validate the authenticated user from a request.
  *
- * Resolution order:
- * 1. `Authorization: Bearer <jwt>` header  ← preferred, cryptographically verified
- * 2. `x-user-email` header                 ← legacy fallback during migration
- * 3. `email` query param                   ← legacy fallback during migration
- *
- * The fallbacks remain until all clients send JWTs; remove them after that.
+ * Only a cryptographically verified `Authorization: Bearer <jwt>` header is
+ * accepted. The legacy `x-user-email` header and `email` query param were
+ * removed: they let anyone act as any user just by knowing their email.
  */
 export function getAuthUser(req: NextRequest): AuthUser | null {
-  // 1. JWT bearer token
   const auth = req.headers.get("authorization") ?? "";
-  if (auth.startsWith("Bearer ")) {
-    const verified = verifyToken(auth.slice(7));
-    if (verified) return verified;
-    // Token present but invalid — reject immediately (don't fall through)
-    return null;
-  }
-
-  // 2. Legacy email header
-  const headerEmail = (req.headers.get("x-user-email") ?? "").trim().toLowerCase();
-  if (headerEmail) return { userId: "", email: headerEmail };
-
-  // 3. Legacy query param
-  const paramEmail = (req.nextUrl.searchParams.get("email") ?? "").trim().toLowerCase();
-  if (paramEmail) return { userId: "", email: paramEmail };
-
-  return null;
+  if (!auth.startsWith("Bearer ")) return null;
+  return verifyToken(auth.slice(7));
 }
 
 /**

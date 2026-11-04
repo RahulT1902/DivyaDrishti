@@ -52,7 +52,7 @@ export default function ReflectionLogger() {
       const email = localStorage.getItem("divya:userEmail");
       if (!email) throw new Error("No user email found");
 
-      const res = await fetch("/api/reflections", {
+      const res = await authFetch("/api/reflections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

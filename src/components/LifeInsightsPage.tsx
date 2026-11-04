@@ -86,7 +86,7 @@ export default function LifeInsightsPage({ user }: UserProps) {
     fetchPayload();
     
     // Log page visit analytics
-    fetch("/api/life-insights", {
+    authFetch("/api/life-insights", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -101,7 +101,7 @@ export default function LifeInsightsPage({ user }: UserProps) {
   const handleFeedback = async (periodId: string, eventName: string, theme: string, start: string, end: string, feedback: string) => {
     setSubmittingFeedback(`${periodId}-${eventName}`);
     try {
-      const res = await fetch("/api/life-insights", {
+      const res = await authFetch("/api/life-insights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,7 +148,7 @@ export default function LifeInsightsPage({ user }: UserProps) {
 
   const handleJournalUpdate = async (journalId: string, newStatus: string) => {
     try {
-      const res = await fetch("/api/life-insights", {
+      const res = await authFetch("/api/life-insights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -361,7 +361,7 @@ export default function LifeInsightsPage({ user }: UserProps) {
               onClick={() => {
                 setActiveSubTab(tabId);
                 // Log category analytics click
-                fetch("/api/life-insights", {
+                authFetch("/api/life-insights", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({

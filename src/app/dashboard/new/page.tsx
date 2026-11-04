@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardHub from "@/components/DashboardHub";
 import { Loader } from "lucide-react";
+import { authFetch } from "@/lib/auth/webFetch";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/user");
+        const res = await authFetch("/api/user");
         const data = await res.json();
         if (data.success && data.user) {
           setUser(data.user);

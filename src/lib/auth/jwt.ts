@@ -1,8 +1,18 @@
 import { createHmac } from "crypto";
 
-const SECRET =
-  process.env.JWT_SECRET ||
-  "divyadrishti-dev-secret-change-before-production";
+const DEV_SECRET = "divyadrishti-dev-secret-change-before-production";
+
+// Read lazily so `next build` (which runs with NODE_ENV=production) doesn't
+// need the secret; the first sign/verify at runtime fails loudly instead of
+// silently using a secret that is public in the repo.
+function getSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET is not set. Refusing to sign or verify tokens with the dev secret.");
+  }
+  return DEV_SECRET;
+}
 
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -22,7 +32,7 @@ function fromB64url(str: string): string {
 }
 
 function sign(data: string): string {
-  return createHmac("sha256", SECRET).update(data).digest("base64url");
+  return createHmac("sha256", getSecret()).update(data).digest("base64url");
 }
 
 export function signToken(userId: string, email: string): string {

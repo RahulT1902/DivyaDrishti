@@ -54,10 +54,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const email = getAuthUser(req)?.email || (body.email ?? "");
+    const email = getAuthUser(req)?.email ?? "";
 
     if (!email) {
-      return NextResponse.json({ success: false, error: "Missing email" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Authentication required." }, { status: 401 });
     }
 
     const { energy, stress, notes, source } = body;

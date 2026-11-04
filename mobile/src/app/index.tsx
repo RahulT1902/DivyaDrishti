@@ -12,8 +12,9 @@ export default function IndexScreen() {
       try {
         const loggedIn = await AsyncStorage.getItem('divya:loggedIn');
         const email = await AsyncStorage.getItem('divya:userEmail');
+        const token = await AsyncStorage.getItem('divya:token');
 
-        if (loggedIn === 'true' && email) {
+        if (loggedIn === 'true' && email && token) {
           const userRes = await api.get('/api/user', { email });
           if (userRes?.success && userRes?.user?.birthDetails) {
             router.replace('/(tabs)/dashboard');

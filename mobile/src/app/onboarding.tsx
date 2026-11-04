@@ -47,13 +47,8 @@ export default function OnboardingScreen() {
 
     setLoading(true);
     try {
-      const email = await AsyncStorage.getItem('divya:userEmail');
-      const token = await AsyncStorage.getItem('divya:token');
-
-      // Call API to save birth details
+      // Name is omitted so the server keeps the one given at signup.
       const response = await api.post('/api/user', {
-        email,
-        name: 'User',
         date: birthDetails.date,
         time: birthDetails.time,
         latitude: birthDetails.latitude,

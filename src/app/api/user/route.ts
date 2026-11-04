@@ -7,11 +7,15 @@ import { getAuthUser } from "@/lib/auth/getUser";
 export async function GET(req: NextRequest) {
   try {
     const authUser = getAuthUser(req);
-    const email = authUser?.email ?? "";
+    if (!authUser?.email) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required." },
+        { status: 401 }
+      );
+    }
 
-    const user = await prisma.user.findFirst({
-      where: email ? { email } : undefined,
-      orderBy: email ? undefined : { createdAt: "desc" },
+    const user = await prisma.user.findUnique({
+      where: { email: authUser.email },
       include: { birthDetails: true },
     });
 
@@ -46,18 +50,18 @@ export async function POST(req: NextRequest) {
     const authUser = getAuthUser(req);
     const body = await req.json();
     const { name, date: dateStr, time, latitude, longitude, timezone } = body;
-    const email = authUser?.email || (body.email || "").trim().toLowerCase();
+    const email = authUser?.email ?? "";
 
     if (!email) {
       return NextResponse.json(
-        { success: false, error: "Email is required" },
-        { status: 400 }
+        { success: false, error: "Authentication required." },
+        { status: 401 }
       );
     }
 
-    if (!name || !dateStr || !time || latitude === undefined || longitude === undefined) {
+    if (!dateStr || !time || latitude === undefined || longitude === undefined) {
       return NextResponse.json(
-        { success: false, error: "All profile and birth details are required" },
+        { success: false, error: "All birth details are required" },
         { status: 400 }
       );
     }
@@ -83,7 +87,9 @@ export async function POST(req: NextRequest) {
     await prisma.user.update({
       where: { id: existing.id },
       data: {
-        name: name.trim(),
+        // Name is optional so a birth-details-only save (onboarding) keeps the
+        // name given at signup instead of overwriting it.
+        ...(typeof name === "string" && name.trim() ? { name: name.trim() } : {}),
         birthDetails: existing.birthDetails
           ? {
               update: {

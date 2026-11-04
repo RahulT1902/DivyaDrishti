@@ -1,8 +1,8 @@
 import { Tabs, useRouter } from 'expo-router';
 import { LayoutDashboard, Sparkles, TrendingUp, Orbit, LogOut } from 'lucide-react-native';
 import { Platform, TouchableOpacity, Text, View, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../../context/LanguageContext';
+import { clearSession } from '../../services/api';
 
 function HeaderRight() {
   const { isHindi, toggleLanguage } = useLanguage();
@@ -18,7 +18,7 @@ function HeaderRight() {
           text: isHindi ? 'लॉग आउट' : 'Log Out',
           style: 'destructive',
           onPress: async () => {
-            await AsyncStorage.multiRemove(['divya:loggedIn', 'divya:userEmail', 'divya:token']);
+            await clearSession();
             router.replace('/login');
           },
         },

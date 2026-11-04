@@ -1,11 +1,18 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { verifyToken } from "@/lib/auth/jwt";
 
 export async function registerUser(formData: FormData) {
   try {
-    const name = formData.get("name") as string;
-    const email = (formData.get("email") as string | null)?.trim().toLowerCase() || "";
+    // Server actions are public endpoints: identity must come from a verified
+    // token, never from a client-supplied email.
+    const authUser = verifyToken((formData.get("token") as string | null) ?? "");
+    if (!authUser) {
+      return { success: false, error: "Your session has expired. Please sign in again." };
+    }
+
+    const name = ((formData.get("name") as string | null) ?? "").trim();
     const dateStr = formData.get("date") as string;
     const time = formData.get("time") as string;
     const latitude = parseFloat(formData.get("latitude") as string);
@@ -18,55 +25,40 @@ export async function registerUser(formData: FormData) {
     // Combine date and time if needed, but schema simple for now
     const date = new Date(dateStr);
 
-    const targetEmail = email || `${Date.now()}@local.dev`;
     const existing = await prisma.user.findUnique({
-      where: { email: targetEmail },
+      where: { email: authUser.email },
       include: { birthDetails: true },
     });
 
-    if (existing) {
-      await prisma.user.update({
-        where: { id: existing.id },
-        data: {
-          name,
-          birthDetails: existing.birthDetails
-            ? {
-                update: {
-                  dateOfBirth: date,
-                  timeOfBirth: time,
-                  latitude,
-                  longitude,
-                  timezone,
-                },
-              }
-            : {
-                create: {
-                  dateOfBirth: date,
-                  timeOfBirth: time,
-                  latitude,
-                  longitude,
-                  timezone,
-                },
-              },
-        },
-      });
-    } else {
-      await prisma.user.create({
-        data: {
-          name,
-          email: targetEmail,
-          birthDetails: {
-            create: {
-              dateOfBirth: date,
-              timeOfBirth: time,
-              latitude,
-              longitude,
-              timezone,
-            },
-          },
-        },
-      });
+    if (!existing) {
+      return { success: false, error: "Account not found. Please sign up again." };
     }
+
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        ...(name ? { name } : {}),
+        birthDetails: existing.birthDetails
+          ? {
+              update: {
+                dateOfBirth: date,
+                timeOfBirth: time,
+                latitude,
+                longitude,
+                timezone,
+              },
+            }
+          : {
+              create: {
+                dateOfBirth: date,
+                timeOfBirth: time,
+                latitude,
+                longitude,
+                timezone,
+              },
+            },
+      },
+    });
 
     return { success: true };
   } catch (error) {

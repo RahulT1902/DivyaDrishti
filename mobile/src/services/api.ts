@@ -1,5 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { router } from 'expo-router';
+
+const SESSION_KEYS = ['divya:loggedIn', 'divya:userEmail', 'divya:userName', 'divya:token'];
+
+/** Remove the stored session and every cached response (they hold the user's chart). */
+export const clearSession = async (): Promise<void> => {
+  await AsyncStorage.multiRemove(SESSION_KEYS);
+  await invalidateCache('');
+};
 
 let dynamicBaseUrl = '';
 
@@ -154,14 +163,9 @@ export const api = {
       headers.set('Content-Type', 'application/json');
     }
 
-    // Inject auth: prefer JWT bearer token; fall back to email header for
-    // requests made before the user has logged in with the new flow.
     const token = await AsyncStorage.getItem('divya:token');
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
-    } else {
-      const email = await AsyncStorage.getItem('divya:userEmail');
-      if (email) headers.set('x-user-email', email);
     }
 
     // ── Cache-first: return stale data immediately, then revalidate ──
@@ -201,6 +205,14 @@ export const api = {
     cacheTtl: number,
   ) {
     const response = await fetch(urlString, { ...fetchOptions, headers });
+
+    // Missing/expired token: drop the session and send the user to login.
+    // /api/auth/* returns 401 for a wrong password, which must stay on screen.
+    if (response.status === 401 && !new URL(urlString).pathname.startsWith('/api/auth/')) {
+      await clearSession();
+      router.replace('/login');
+      throw new Error('Your session has expired. Please sign in again.');
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

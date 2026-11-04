@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Calendar, Clock, MapPin, ChevronLeft, ChevronRight, Check, X } from 'lucide-react-native';
+import { cities as INDIAN_CITIES } from '../constants/cities';
 
 export interface BirthDetailsData {
   date: string; // YYYY-MM-DD
@@ -35,7 +36,14 @@ const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS_LIST = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i);
 
-const POPULAR_CITIES = [
+interface CityOption {
+  city: string;
+  lat: number;
+  lng: number;
+  tz: string;
+}
+
+const POPULAR_CITIES: CityOption[] = [
   { city: 'New Delhi, India', lat: 28.6139, lng: 77.2090, tz: 'Asia/Kolkata' },
   { city: 'Mumbai, India', lat: 19.0760, lng: 72.8777, tz: 'Asia/Kolkata' },
   { city: 'Bengaluru, India', lat: 12.9716, lng: 77.5946, tz: 'Asia/Kolkata' },
@@ -49,6 +57,19 @@ const POPULAR_CITIES = [
   { city: 'New York, USA', lat: 40.7128, lng: -74.0060, tz: 'America/New_York' },
   { city: 'Dubai, UAE', lat: 25.2048, lng: 55.2708, tz: 'Asia/Dubai' },
 ];
+
+// Every selectable city has known coordinates. Typed text only filters this
+// list — it is never saved on its own, so a chart can't be cast for a city
+// name paired with another city's coordinates.
+const ALL_CITIES: CityOption[] = [
+  ...POPULAR_CITIES,
+  ...INDIAN_CITIES
+    .map(c => ({ city: `${c.name}, ${c.state}`, lat: c.lat, lng: c.lng, tz: c.timezone }))
+    .filter(c => !POPULAR_CITIES.some(p => p.lat === c.lat && p.lng === c.lng)),
+];
+
+const formatCoords = (lat: number, lng: number) =>
+  `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(2)}°${lng >= 0 ? 'E' : 'W'}`;
 
 export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPickerProps) {
   // Calendar Modal State
@@ -83,7 +104,13 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
 
   // Location State
   const [cityName, setCityName] = useState(value.city || 'New Delhi, India');
+  const [cityQuery, setCityQuery] = useState('');
   const [showCityPicker, setShowCityPicker] = useState(false);
+
+  const trimmedQuery = cityQuery.trim().toLowerCase();
+  const visibleCities = trimmedQuery
+    ? ALL_CITIES.filter(c => c.city.toLowerCase().includes(trimmedQuery)).slice(0, 50)
+    : POPULAR_CITIES;
 
   // ── Date calculation helpers ────────────────────────────────────────────────
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
@@ -130,8 +157,9 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
     onChange({ ...value, time: time24 });
   };
 
-  const handleSelectCity = (c: typeof POPULAR_CITIES[0]) => {
+  const handleSelectCity = (c: CityOption) => {
     setCityName(c.city);
+    setCityQuery('');
     onChange({
       ...value,
       city: c.city,
@@ -381,40 +409,43 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
               <MapPin size={18} color="#B45309" style={{ marginRight: 8 }} />
               <TextInput
                 style={styles.citySearchInput}
-                placeholder="Type your birth city..."
+                placeholder="Search your birth city..."
                 placeholderTextColor="#C4B5A5"
-                value={cityName}
-                onChangeText={(text) => {
-                  setCityName(text);
-                  onChange({ ...value, city: text });
-                }}
+                value={cityQuery}
+                onChangeText={setCityQuery}
+                autoCorrect={false}
               />
             </View>
 
-            <Text style={styles.citySectionHeader}>Popular Locations</Text>
-            
-            <ScrollView style={{ flex: 1 }}>
-              {POPULAR_CITIES.map((item, idx) => (
+            <Text style={styles.citySectionHeader}>
+              {trimmedQuery ? 'Matching Cities — tap to select' : 'Popular Locations'}
+            </Text>
+
+            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+              {visibleCities.map(item => (
                 <TouchableOpacity
-                  key={idx}
+                  key={item.city}
                   style={styles.cityRow}
                   onPress={() => handleSelectCity(item)}
                 >
                   <MapPin size={16} color="#D97706" style={{ marginRight: 10 }} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cityNameText}>{item.city}</Text>
-                    <Text style={styles.cityCoordsText}>
-                      {item.lat.toFixed(2)}°N, {item.lng.toFixed(2)}°E
-                    </Text>
+                    <Text style={styles.cityCoordsText}>{formatCoords(item.lat, item.lng)}</Text>
                   </View>
                   {cityName === item.city && <Check size={18} color="#D97706" />}
                 </TouchableOpacity>
               ))}
+              {trimmedQuery && visibleCities.length === 0 && (
+                <Text style={styles.cityCoordsText}>
+                  No match. Pick the nearest listed city — the chart needs exact coordinates.
+                </Text>
+              )}
             </ScrollView>
 
             <TouchableOpacity
               style={[styles.confirmButton, { marginTop: 12 }]}
-              onPress={() => setShowCityPicker(false)}
+              onPress={() => { setCityQuery(''); setShowCityPicker(false); }}
             >
               <Text style={styles.confirmButtonText}>Done</Text>
             </TouchableOpacity>

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const userEmail = getAuthUser(req)?.email ?? "";
 
     if (!userEmail) {
-      return buildErrorResponse("DATA_MALFORMATION", "User email is required.", 400);
+      return buildErrorResponse("AUTH_REQUIRED", "Authentication required.", 401);
     }
 
     // 1. Fetch User and Birth Profile
@@ -69,15 +69,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { action, email } = body;
-
+    const email = getAuthUser(req)?.email ?? "";
     if (!email) {
-      return buildErrorResponse("DATA_MALFORMATION", "Email is required.", 400);
+      return buildErrorResponse("AUTH_REQUIRED", "Authentication required.", 401);
     }
 
+    const body = await req.json();
+    const { action } = body;
+
     const user = await prisma.user.findFirst({
-      where: { email: email.trim().toLowerCase() }
+      where: { email }
     });
 
     if (!user) {

@@ -86,6 +86,7 @@ export default function OnboardingForm() {
 
     formData.set("date", dateValue);
     formData.set("time", timeValue);
+    formData.set("token", window.localStorage.getItem("divya:token") ?? "");
     setError(null);
 
     startTransition(async () => {

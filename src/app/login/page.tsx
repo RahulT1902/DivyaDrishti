@@ -18,16 +18,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.localStorage.getItem("divya:loggedIn") === "true") {
+    if (typeof window !== "undefined" && window.localStorage.getItem("divya:loggedIn") === "true" && window.localStorage.getItem("divya:token")) {
       router.replace("/dashboard");
     }
   }, [router]);
 
-  const resolvePostAuthRoute = async (userEmail: string) => {
+  const resolvePostAuthRoute = async () => {
     const token = typeof window !== "undefined" ? window.localStorage.getItem("divya:token") : null;
-    const headers: Record<string, string> = token
-      ? { "Authorization": `Bearer ${token}` }
-      : { "x-user-email": userEmail };
+    const headers: Record<string, string> = token ? { "Authorization": `Bearer ${token}` } : {};
     const res = await fetch("/api/user", {
       cache: "no-store",
       headers,
@@ -62,7 +60,7 @@ export default function LoginPage() {
         window.localStorage.setItem("divya:loggedIn", "true");
         window.localStorage.setItem("divya:userEmail", cleanEmail);
         if (sd.token) window.localStorage.setItem("divya:token", sd.token);
-        await resolvePostAuthRoute(cleanEmail);
+        await resolvePostAuthRoute();
         return;
       }
       const r = await fetch("/api/auth/login", {
@@ -75,7 +73,7 @@ export default function LoginPage() {
       window.localStorage.setItem("divya:loggedIn", "true");
       window.localStorage.setItem("divya:userEmail", cleanEmail);
       if (d.token) window.localStorage.setItem("divya:token", d.token);
-      await resolvePostAuthRoute(cleanEmail);
+      await resolvePostAuthRoute();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

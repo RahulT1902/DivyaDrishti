@@ -125,7 +125,7 @@ export default function ReflectionCard({ userEmail, themeMode }: Props) {
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/reflections", {
+      const res = await authFetch("/api/reflections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
