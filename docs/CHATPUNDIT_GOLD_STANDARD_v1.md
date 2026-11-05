@@ -184,13 +184,25 @@ Unlike `npm run validate`, it calls the AI provider: scores vary between runs an
 
 ## Results
 
-| Date | Label | Prompt state | Average | Notes |
-|---|---|---|---|---|
-| 2026-11-04 | baseline | Before Gold Standard changes (Gemini primary, length fixes, basis paragraph) | **43%** | All 6 answers fail `dasha`, `multi-factor`, `transit`, `confidence`, `medical-safety`; "today" answers also fail `structure` |
+| Date | Label | Prompt state | Average at run time | Rescored with final rubric | Notes |
+|---|---|---|---|---|---|
+| 2026-11-04 | baseline | Before Gold Standard changes (Gemini primary, length fixes, basis paragraph) | 43% | **37%** | All 6 fail `dasha`, `multi-factor`, `transit`, `confidence`, `medical-safety`; "today" answers also fail `structure` |
+| 2026-11-05 | phase2 | Gold Standard health prompt + evidence block + card changes | 90% | 93% | "Today" answers skip the 6th/8th/12th lords; safety line not recognised in model wording |
+| 2026-11-05 | phase2b | + three natal factors required for "today"; safety pattern widened; ★ kept | 98% | **100%** | Model wrote the safety line itself in 6/6; no integrity-gate rewrites |
+
+The rubric was refined between runs (it now accepts "the major Rahu period" and similar wordings, and recognises "medical diagnosis" / "healthcare professional"), so all runs were rescored with the final version for a fair comparison.
+
+**Caveat:** the three health gold charts are one Leo-Ascendant chart plus two transit variants. 100% shows the method works on that chart, not across charts. The 20-real-chart review (roadmap step 3) is what tests breadth; more varied health gold charts should be added.
+
+Answers are now 450–600 words (open questions) or 300–400 words ("today") and take about 12–36 s with Gemini.
 
 ## Roadmap
 
 1. **Done:** standard, rubric, benchmark, baseline.
-2. **Health to standard:** A–J structure in the health prompt; pass CIE evidence through (6th, 8th, 12th lords, Moon, pratyantar, mitigating factors); summary card shows qualitative evidence strength and dasha/transit-based timing instead of "Likelihood" and "Timeline: 5–7 days"; medical-safety line.
-3. **Validate:** benchmark, `npm run validate`, 20 real charts, review, merge.
+2. **Done — health to standard** (behind chart facts, so only the chat route and benchmark use it; career and the annual report are byte-for-byte unchanged):
+   - Gold Standard health section in the system prompt (A–J structure, evidence hierarchy), replacing the narrator rules that hid dasha, houses and planets.
+   - `goldStandard/healthEvidence.ts`: authoritative evidence block — Ascendant, 6th, 8th, 12th lords with placement, dignity, occupants and Vedic aspects; Moon; dasha to pratyantar; transits from the Ascendant and the Moon; CIE supporting vs challenging factors (engine scores stripped); computed evidence strength.
+   - Health card: "Evidence Strength" and dasha-based "Timing" replace "Likelihood" and "Timeline: 5–7 days"; the brief's recovery line loses its day counts.
+   - Medical-safety line: asked for in the prompt and guaranteed by the server when missing.
+3. **Next — validate:** 20 real charts reviewed with the user, `npm run validate`, then merge.
 4. Next domains, one at a time, each with its own factor set in the rubric.

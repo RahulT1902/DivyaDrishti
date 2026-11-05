@@ -66,7 +66,9 @@ export function buildAstrologicalBasis(
 /** Insert the basis before the "Overall Summary" block when present, else append it. */
 export function insertAstrologicalBasis(answer: string, basis: string): string {
   if (!basis) return answer;
-  const match = answer.match(/\n+(?=\s*(?:Overall Summary|\w+ Summary for \d{4}))/);
+  // The summary block starts with its header, or — when the model skips the
+  // header — with its first "Overall <X>:" stat line.
+  const match = answer.match(/\n+(?=\s*(?:Overall Summary|\w+ Summary for \d{4}|Overall \w+:))/);
   if (match?.index !== undefined) {
     return `${answer.slice(0, match.index)}\n\n${basis}\n\n${answer.slice(match.index).trimStart()}`;
   }

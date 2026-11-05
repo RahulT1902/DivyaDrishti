@@ -1,0 +1,530 @@
+{
+  "version": "1.0",
+  "domain": "health",
+  "label": "phase2",
+  "average": 0.8999999999999999,
+  "results": [
+    {
+      "chart": "chart001",
+      "question": "How's my health?",
+      "depth": "consultation",
+      "score": {
+        "version": "1.0",
+        "domain": "health",
+        "score": 1,
+        "passed": 10,
+        "total": 10,
+        "checks": [
+          {
+            "id": "structure",
+            "criterion": "Q1",
+            "label": "Full consultation (≥4 paragraphs, ≥250 words)",
+            "passed": true,
+            "detail": "6 paragraphs, 441 words"
+          },
+          {
+            "id": "dasha",
+            "criterion": "Q2",
+            "label": "Names the active Mahadasha and Antardasha",
+            "passed": true,
+            "detail": "Mahadasha Rahu: yes; Antardasha Jupiter: yes"
+          },
+          {
+            "id": "multi-factor",
+            "criterion": "Q2",
+            "label": "Uses ≥3 of the domain's natal factors",
+            "passed": true,
+            "detail": "found 5/5: ascendant, 6th house, 8th house, 12th house, Moon"
+          },
+          {
+            "id": "transit",
+            "criterion": "Q2",
+            "label": "Explains a current transit by planet",
+            "passed": true,
+            "detail": "\"Currently, the transiting Sun moves through your third house in Libra in a weakened state,\""
+          },
+          {
+            "id": "mitigation",
+            "criterion": "Q3",
+            "label": "Names a contradicting or protective chart factor",
+            "passed": true,
+            "detail": "\"While Rahu can introduce temporary restlessness or minor friction in your overall physical\""
+          },
+          {
+            "id": "timing",
+            "criterion": "Q4",
+            "label": "Timing tied to dasha/transits, no arbitrary durations",
+            "passed": true,
+            "detail": "no ungrounded durations"
+          },
+          {
+            "id": "confidence",
+            "criterion": "Q5",
+            "label": "States qualitative evidence strength",
+            "passed": true,
+            "detail": "\"The astrological evidence supporting this health picture is strong, showing robust underly\""
+          },
+          {
+            "id": "no-percent",
+            "criterion": "R1",
+            "label": "No numeric probabilities",
+            "passed": true,
+            "detail": "none"
+          },
+          {
+            "id": "medical-safety",
+            "criterion": "R2",
+            "label": "Says astrology doesn't replace medical care",
+            "passed": true,
+            "detail": "present"
+          },
+          {
+            "id": "integrity",
+            "criterion": "R3",
+            "label": "No wrong lordships/placements or certainty claims",
+            "passed": true,
+            "detail": "clean"
+          }
+        ]
+      },
+      "draftErrors": [],
+      "safetyAddedByServer": false,
+      "answer": "Health  ★★★★☆\nMild Sensitivity\n\nGood News: Digestion looks strong this week\nPrimary Watch Area: nasal passages, skin, eyes\nEvidence Strength: Strong\nSensitivity: Very mild\nTiming: Rahu–Jupiter period until Apr 2028\n\nThere's a mild sensitivity around your nasal passages and skin — nothing serious, but worth being a little careful. You are currently moving through the major period of Rahu alongside the sub-period of Jupiter, running until April 2028. While Rahu can introduce temporary restlessness or minor friction in your overall physical well-being, Jupiter acts as a stabilizing guardian, balancing out that background pressure and keeping your overall framework steady.\n\nFor a Leo Ascendant, your Lagna lord is the Sun, placed in your first house in its own sign alongside Jupiter, which gives you an inherently strong physical core and solid constitutional vitality. Saturn rules your sixth house of daily health from your seventh house, keeping routine ailments manageable, while the exalted Moon ruling your twelfth house brings steady emotional resilience. Currently, the transiting Sun moves through your third house in Libra in a weakened state, while transiting Mars sits in your fifth house and transiting Saturn moves through your eighth house. This combination can temporarily trigger minor irritation in your upper airways, mild throat tickles, or skin sensitivities to dust, pollen, or harsh products. You might also notice your sleep quality or mental focus feeling slightly disrupted toward the evening.\n\nWhat actually caught my attention is how strong your digestion and immunity are in your chart right now. Even with the ambient sensitivities around your nose and skin, your internal physical recovery remains fast and robust. The presence of Adhiyoga in your chart—formed by benefics in key positions from your Moon—adds an extra layer of structural protection, ensuring that any temporary discomfort stays surface-level rather than taking deep root.\n\nYour energy levels are solid during the early part of the day, though a mild dip is natural in the mid-afternoon, making it wise to schedule demanding tasks before two o'clock. Since this phase is tied to your ongoing Rahu-Jupiter dasha period through April 2028 and current planetary movements, these minor physical signals are brief seasonal passes rather than long-term concerns.\n\nTo keep things simple and smooth, stay well-hydrated, avoid overexertion, and maintain your regular daily routine. Steer clear of known allergens like dust, pollen, or strong perfumes today, and opt for soft cotton clothing to protect sensitive skin. Incorporating the quiet chanting of Om Chandraya Namah can help soothe the Moon's governance over fluid balance, sensitivities, and your internal peace.\n\nThe astrological evidence supporting this health picture is strong, showing robust underlying vitality paired with minor, manageable sensitivities. Please remember that astrology outlines underlying energetic tendencies rather than providing a formal medical diagnosis, so if any symptom persists or concerns you, consulting a qualified medical professional is always the right step.\n\nThe astrological basis: You are in Rahu Mahadasha with Jupiter Antardasha, running until April 2028. In your Leo Ascendant chart, the 6th house of health and illness is ruled by Saturn, placed in your 7th house in Aquarius; the 1st house of body and vitality is ruled by Sun, placed in your 1st house in Leo. Currently transiting: Saturn in your 8th house (Pisces) and Jupiter in your 1st house (Leo). Today's Moon is in Leo, your 1st house.\n\nOverall Summary\nOverall Health:  (Stable)\nPrimary Watch Area: nasal passages and skin\nSecondary Watch Area: throat and upper airways\nEnergy Levels: steady morning stamina with a mild mid-afternoon dip\nRecovery Potential: Strong\nRisk of Major Illness: Low\nBest Approach: avoid known allergens and maintain a steady routine"
+    },
+    {
+      "chart": "chart001",
+      "question": "How's my health today?",
+      "depth": "daily",
+      "score": {
+        "version": "1.0",
+        "domain": "health",
+        "score": 0.9,
+        "passed": 9,
+        "total": 10,
+        "checks": [
+          {
+            "id": "structure",
+            "criterion": "Q1",
+            "label": "Full consultation (≥4 paragraphs, ≥250 words)",
+            "passed": true,
+            "detail": "6 paragraphs, 441 words"
+          },
+          {
+            "id": "dasha",
+            "criterion": "Q2",
+            "label": "Names the active Mahadasha and Antardasha",
+            "passed": false,
+            "detail": "Mahadasha Rahu: no; Antardasha Jupiter: yes"
+          },
+          {
+            "id": "multi-factor",
+            "criterion": "Q2",
+            "label": "Uses ≥3 of the domain's natal factors",
+            "passed": true,
+            "detail": "found 3/5: ascendant, 12th house, Moon"
+          },
+          {
+            "id": "transit",
+            "criterion": "Q2",
+            "label": "Explains a current transit by planet",
+            "passed": true,
+            "detail": "\"The Moon governs fluid balance, cold sensitivity, and bodily reactions, and today its tran\""
+          },
+          {
+            "id": "mitigation",
+            "criterion": "Q3",
+            "label": "Names a contradicting or protective chart factor",
+            "passed": true,
+            "detail": "\"While the overarching Rahu period introduces occasional background friction, Jupiter's sup\""
+          },
+          {
+            "id": "timing",
+            "criterion": "Q4",
+            "label": "Timing tied to dasha/transits, no arbitrary durations",
+            "passed": true,
+            "detail": "no ungrounded durations"
+          },
+          {
+            "id": "confidence",
+            "criterion": "Q5",
+            "label": "States qualitative evidence strength",
+            "passed": true,
+            "detail": "\"The astrological evidence behind this daily assessment is strong.\""
+          },
+          {
+            "id": "no-percent",
+            "criterion": "R1",
+            "label": "No numeric probabilities",
+            "passed": true,
+            "detail": "none"
+          },
+          {
+            "id": "medical-safety",
+            "criterion": "R2",
+            "label": "Says astrology doesn't replace medical care",
+            "passed": true,
+            "detail": "present"
+          },
+          {
+            "id": "integrity",
+            "criterion": "R3",
+            "label": "No wrong lordships/placements or certainty claims",
+            "passed": true,
+            "detail": "clean"
+          }
+        ]
+      },
+      "draftErrors": [],
+      "safetyAddedByServer": true,
+      "answer": "Health Today  ★★★★☆\nMild Sensitivity\n\nGood News: Digestion looks strong this week\nPrimary Watch Area: nasal passages, skin, eyes\nEvidence Strength: Strong\nSensitivity: Very mild\nTiming: Rahu–Jupiter period until Apr 2028\n\nThere's a mild sensitivity around your nasal passages and skin — nothing serious, but worth being a little careful. As a Leo Ascendant, your constitutional baseline is inherently strong because your Lagna lord, the Sun, is well-placed in its own sign in the 1st house alongside Jupiter. Currently, you are traversing the major period of Rahu alongside the sub-period of Jupiter, running until April 2028. While the overarching Rahu period introduces occasional background friction, Jupiter's supportive sub-period acts as a protective shield, maintaining robust vitality and helping your body bounce back quickly from temporary disruptions.\n\nThe specific focus today comes from your Moon, which is exalted in Taurus in the 10th house ruling your 12th house of sleep and recovery. The Moon governs fluid balance, cold sensitivity, and bodily reactions, and today its transit through your 1st house in Leo temporarily amplifies these qualities. Combined with transiting Mars in your 5th house and Sun transiting Libra in your 3rd, you might notice minor nasal congestion, mild throat irritation, or slight skin sensitivity to synthetic fabrics or harsh products. Your morning energy will feel quite reasonable and clear, though a mild dip is likely around mid-afternoon, so planning demanding tasks before two o'clock is a wise move.\n\nWhat's worth noting is how strong your digestion and immunity are in your chart right now. Even with the mild allergen sensitivity at play, your digestive system and physical immunity remain completely unaffected and remarkably stable. The active presence of Adhiyoga in your natal configuration provides an enduring layer of health protection, ensuring that any temporary discomfort stays surface-level rather than taking root in deeper tissues.\n\nWhile allergy and respiratory sensitivities are present today, serious illness is very unlikely. The timing of this slight imbalance is purely tied to the Moon's short-term movement across your chart, passing swiftly over the coming hours while your main dasha framework continues to offer steady constitutional strength. Rest assured that your physical recovery capacity is fast, meaning any small flare-up of sneezing, itching, or dryness should clear promptly without lingering.\n\nTo keep yourself comfortable today, stay hydrated, avoid unnecessary exposure to dust, pollen, or strong perfumes, and opt for breathable cotton clothing. A simple practice like chanting Om Chandraya Namah can help harmonize the Moon's fluid and sensitive influences today. The astrological evidence behind this daily assessment is strong. Please keep in mind that astrology outlines planetary tendencies and constitutional rhythms rather than providing a clinical medical diagnosis; if any physical symptom persists or causes\n\nAstrology can point to tendencies, but it is not a medical diagnosis. Please see a doctor for any symptom that persists or worries you.\n\nThe astrological basis: You are in Rahu Mahadasha with Jupiter Antardasha, running until April 2028. In your Leo Ascendant chart, the 6th house of health and illness is ruled by Saturn, placed in your 7th house in Aquarius; the 1st house of body and vitality is ruled by Sun, placed in your 1st house in Leo. Currently transiting: Saturn in your 8th house (Pisces) and Jupiter in your 1st house (Leo). Today's Moon is in Leo, your 1st house."
+    },
+    {
+      "chart": "chart001-transit-today",
+      "question": "How's my health?",
+      "depth": "consultation",
+      "score": {
+        "version": "1.0",
+        "domain": "health",
+        "score": 0.9,
+        "passed": 9,
+        "total": 10,
+        "checks": [
+          {
+            "id": "structure",
+            "criterion": "Q1",
+            "label": "Full consultation (≥4 paragraphs, ≥250 words)",
+            "passed": true,
+            "detail": "8 paragraphs, 453 words"
+          },
+          {
+            "id": "dasha",
+            "criterion": "Q2",
+            "label": "Names the active Mahadasha and Antardasha",
+            "passed": true,
+            "detail": "Mahadasha Rahu: yes; Antardasha Jupiter: yes"
+          },
+          {
+            "id": "multi-factor",
+            "criterion": "Q2",
+            "label": "Uses ≥3 of the domain's natal factors",
+            "passed": false,
+            "detail": "found 2/5: ascendant, Moon"
+          },
+          {
+            "id": "transit",
+            "criterion": "Q2",
+            "label": "Explains a current transit by planet",
+            "passed": true,
+            "detail": "\"Right now, the transiting Moon, Jupiter, and Ketu are moving through your first house in L\""
+          },
+          {
+            "id": "mitigation",
+            "criterion": "Q3",
+            "label": "Names a contradicting or protective chart factor",
+            "passed": true,
+            "detail": "\"While Rahu can introduce a bit of background friction and unpredictable sensitivities, Jup\""
+          },
+          {
+            "id": "timing",
+            "criterion": "Q4",
+            "label": "Timing tied to dasha/transits, no arbitrary durations",
+            "passed": true,
+            "detail": "no ungrounded durations"
+          },
+          {
+            "id": "confidence",
+            "criterion": "Q5",
+            "label": "States qualitative evidence strength",
+            "passed": true,
+            "detail": "\"The astrological evidence for this health picture is strong.\""
+          },
+          {
+            "id": "no-percent",
+            "criterion": "R1",
+            "label": "No numeric probabilities",
+            "passed": true,
+            "detail": "none"
+          },
+          {
+            "id": "medical-safety",
+            "criterion": "R2",
+            "label": "Says astrology doesn't replace medical care",
+            "passed": true,
+            "detail": "present"
+          },
+          {
+            "id": "integrity",
+            "criterion": "R3",
+            "label": "No wrong lordships/placements or certainty claims",
+            "passed": true,
+            "detail": "clean"
+          }
+        ]
+      },
+      "draftErrors": [],
+      "safetyAddedByServer": false,
+      "answer": "Health  ★★★★☆\nMild Sensitivity\n\nGood News: Digestion looks strong this week\nPrimary Watch Area: nasal passages, skin, eyes\nEvidence Strength: Strong\nSensitivity: Very mild\nTiming: Rahu–Jupiter period until Apr 2028\n\nThere's a mild sensitivity around your nasal passages and skin — nothing serious, but worth being a little careful. Your overall constitutional energy remains grounded, so any minor discomfort that crops up is simply a temporary reaction rather than a deep health concern. \n\nYou are currently walking through a Rahu major dasha period with Jupiter running as your sub-period lord until April 2028. While Rahu can introduce a bit of background friction and unpredictable sensitivities, Jupiter's supportive presence provides strong protection over your physical baseline and helps keep your recovery capacity high.\n\nLooking at your core chart structure, you are a Leo Ascendant with your Sun sitting proudly in its own sign in your first house alongside Jupiter. This placement endows you with solid constitutional vitality and physical resilience. What's worth noting is how strong your digestion and immunity are in your chart right now, giving your body fantastic underlying defense against anything major.\n\nRight now, the transiting Moon, Jupiter, and Ketu are moving through your first house in Leo, while the Sun transits your third house. Because the Moon governs fluid balance, cold sensitivity, and subtle emotional shifts, its interaction with your first house brings temporary sensitivity to your airways, throat, eyes, and skin. You might notice mild nasal congestion, slight throat irritation, or minor skin sensitivities when exposed to dust or harsh synthetic fabrics.\n\nYour energy levels are steady during the morning, but you can anticipate a mild dip in stamina during the mid-afternoon. Planning your most demanding physical tasks before 2pm will help you stay ahead of that natural slump. While Rahu's broader influence adds occasional strain, the active Adhiyoga in your chart—formed by benefic planets supporting key houses—acts as a natural shield, ensuring that minor ailments pass quickly without developing into anything chronic.\n\nThe underlying strength of your Sun and Jupiter ensures that your body bounced back quickly if any minor discomfort arises. Serious illness is very unlikely during this phase. The subtle sensitivities you feel now are linked to these active planetary movements across your main physical houses and will naturally ease as the transits shift.\n\nFor daily care, focus on staying well-hydrated, avoiding heavy exertion when your energy dips, and reducing exposure to obvious allergens like dust, pollen, or strong synthetic fragrances. Wearing breathable cotton clothing today will keep your skin comfortable. To harmonize fluid balance and calm planetary sensitivities, quiet repetition of the mantra Om Chandraya Namah is an excellent supportive practice.\n\nThe astrological evidence for this health picture is strong. Keep in mind that planetary movements highlight baseline physical tendencies and natural rhythms, but astrology is not a replacement for medical diagnosis. Always consult a qualified medical professional for any persistent symptoms or health concerns.\n\nThe astrological basis: You are in Rahu Mahadasha with Jupiter Antardasha, running until April 2028. In your Leo Ascendant chart, the 6th house of health and illness is ruled by Saturn, placed in your 7th house in Aquarius; the 1st house of body and vitality is ruled by Sun, placed in your 1st house in Leo. Currently transiting: Saturn in your 8th house (Pisces) and Jupiter in your 1st house (Leo). Today's Moon is in Leo, your 1st house.\n\nOverall Summary\nOverall Health:  (Stable with Mild Sensitivity)\nPrimary Watch Area: Nasal passages and skin\nSecondary Watch Area: Upper respiratory tract\nEnergy Levels: Good morning stamina with a mid-afternoon dip\nRecovery Potential: Strong\nRisk of Major Illness: Low\nBest Approach: Avoid dust and allergens, stay hydrated, and wear natural cotton"
+    },
+    {
+      "chart": "chart001-transit-today",
+      "question": "How's my health today?",
+      "depth": "daily",
+      "score": {
+        "version": "1.0",
+        "domain": "health",
+        "score": 0.8,
+        "passed": 8,
+        "total": 10,
+        "checks": [
+          {
+            "id": "structure",
+            "criterion": "Q1",
+            "label": "Full consultation (≥4 paragraphs, ≥250 words)",
+            "passed": true,
+            "detail": "7 paragraphs, 403 words"
+          },
+          {
+            "id": "dasha",
+            "criterion": "Q2",
+            "label": "Names the active Mahadasha and Antardasha",
+            "passed": false,
+            "detail": "Mahadasha Rahu: no; Antardasha Jupiter: yes"
+          },
+          {
+            "id": "multi-factor",
+            "criterion": "Q2",
+            "label": "Uses ≥3 of the domain's natal factors",
+            "passed": false,
+            "detail": "found 2/5: ascendant, Moon"
+          },
+          {
+            "id": "transit",
+            "criterion": "Q2",
+            "label": "Explains a current transit by planet",
+            "passed": true,
+            "detail": "\"The transiting Moon is moving through your first house in Leo today, and since the Moon go\""
+          },
+          {
+            "id": "mitigation",
+            "criterion": "Q3",
+            "label": "Names a contradicting or protective chart factor",
+            "passed": true,
+            "detail": "\"Your main planetary period under Rahu can sometimes introduce unpredictable physical frict\""
+          },
+          {
+            "id": "timing",
+            "criterion": "Q4",
+            "label": "Timing tied to dasha/transits, no arbitrary durations",
+            "passed": true,
+            "detail": "no ungrounded durations"
+          },
+          {
+            "id": "confidence",
+            "criterion": "Q5",
+            "label": "States qualitative evidence strength",
+            "passed": true,
+            "detail": "\"The planetary evidence behind this reading is strong, pointing to brief, mild sensitivitie\""
+          },
+          {
+            "id": "no-percent",
+            "criterion": "R1",
+            "label": "No numeric probabilities",
+            "passed": true,
+            "detail": "none"
+          },
+          {
+            "id": "medical-safety",
+            "criterion": "R2",
+            "label": "Says astrology doesn't replace medical care",
+            "passed": true,
+            "detail": "present"
+          },
+          {
+            "id": "integrity",
+            "criterion": "R3",
+            "label": "No wrong lordships/placements or certainty claims",
+            "passed": true,
+            "detail": "clean"
+          }
+        ]
+      },
+      "draftErrors": [],
+      "safetyAddedByServer": true,
+      "answer": "Health Today  ★★★★☆\nMild Sensitivity\n\nGood News: Digestion looks strong this week\nPrimary Watch Area: nasal passages, skin, eyes\nEvidence Strength: Strong\nSensitivity: Very mild\nTiming: Rahu–Jupiter period until Apr 2028\n\nThere's a mild sensitivity around your nasal passages and skin — nothing serious, but worth being a little careful. Today brings a light physical reaction to environmental factors like dust or pollen, along with a bit of dryness or itching on the skin and around the eyes. You might also notice slight irritation in your throat or minor nasal congestion as the day unfolds, but your general stamina remains well-supported.\n\nYour main planetary period under Rahu can sometimes introduce unpredictable physical friction, but your sub-period of Jupiter is actively counteracting that with strong protective energy. Your Lagna lord, the Sun, sits comfortably in its own sign of Leo in your first house, giving you a strong constitutional foundation. At the same time, Jupiter positioned in your first house shields your physical vitality and enhances your natural ability to bounce back quickly from minor discomforts.\n\nWhat's worth noting is how strong your digestion and immunity are in your chart right now, which keeps your core physical systems running smoothly despite minor surface reactions. The transiting Moon is moving through your first house in Leo today, and since the Moon governs fluid balance, emotional resilience, and cold sensitivity, its movement here brings these surface-level allergies into focus. You may also feel a slight mental fatigue or a mild drop in energy during the mid-afternoon, so finishing your most demanding physical tasks before two in the afternoon will keep you feeling steady.\n\nTo keep yourself comfortable today, focus on simple protective measures like staying well-hydrated, avoiding heavy dust, pollen, or strong perfumes, and wearing soft cotton fabrics. A calm mind also helps settle physical sensitivity, so quietly chanting Om Chandraya Namah can help harmonize the Moon's influence over your body's fluid balance and physical reactions.\n\nThe planetary evidence behind this reading is strong, pointing to brief, mild sensitivities rather than any lasting ailment. Keep in mind that astrology highlights temporary physical trends and cannot replace a proper medical diagnosis, so please reach out to a healthcare professional if you ever feel unwell or if symptoms persist.\n\nOverall Health:  (Stable)\nPrimary Watch Area: Nasal passages and skin\nSecondary Watch Area: Upper respiratory tract\nEnergy Levels: Moderate with afternoon dip\nRecovery Potential: Fast\nRisk of Major Illness: Low\nBest Approach: Hydration and allergen avoidance\n\nAstrology can point to tendencies, but it is not a medical diagnosis. Please see a doctor for any symptom that persists or worries you.\n\nThe astrological basis: You are in Rahu Mahadasha with Jupiter Antardasha, running until April 2028. In your Leo Ascendant chart, the 6th house of health and illness is ruled by Saturn, placed in your 7th house in Aquarius; the 1st house of body and vitality is ruled by Sun, placed in your 1st house in Leo. Currently transiting: Saturn in your 8th house (Pisces) and Jupiter in your 1st house (Leo). Today's Moon is in Leo, your 1st house."
+    },
+    {
+      "chart": "chart001-transit-tomorrow",
+      "question": "How's my health?",
+      "depth": "consultation",
+      "score": {
+        "version": "1.0",
+        "domain": "health",
+        "score": 1,
+        "passed": 10,
+        "total": 10,
+        "checks": [
+          {
+            "id": "structure",
+            "criterion": "Q1",
+            "label": "Full consultation (≥4 paragraphs, ≥250 words)",
+            "passed": true,
+            "detail": "7 paragraphs, 459 words"
+          },
+          {
+            "id": "dasha",
+            "criterion": "Q2",
+            "label": "Names the active Mahadasha and Antardasha",
+            "passed": true,
+            "detail": "Mahadasha Rahu: yes; Antardasha Jupiter: yes"
+          },
+          {
+            "id": "multi-factor",
+            "criterion": "Q2",
+            "label": "Uses ≥3 of the domain's natal factors",
+            "passed": true,
+            "detail": "found 3/5: ascendant, 8th house, Moon"
+          },
+          {
+            "id": "transit",
+            "criterion": "Q2",
+            "label": "Explains a current transit by planet",
+            "passed": true,
+            "detail": "\"Looking at transits, the Moon moves through your first house while the Sun travels through\""
+          },
+          {
+            "id": "mitigation",
+            "criterion": "Q3",
+            "label": "Names a contradicting or protective chart factor",
+            "passed": true,
+            "detail": "\"While Rahu as the major period ruler can introduce background friction or sudden minor sen\""
+          },
+          {
+            "id": "timing",
+            "criterion": "Q4",
+            "label": "Timing tied to dasha/transits, no arbitrary durations",
+            "passed": true,
+            "detail": "no ungrounded durations"
+          },
+          {
+            "id": "confidence",
+            "criterion": "Q5",
+            "label": "States qualitative evidence strength",
+            "passed": true,
+            "detail": "\"The astrological evidence for this profile is strong, based on the high dignity of your pr\""
+          },
+          {
+            "id": "no-percent",
+            "criterion": "R1",
+            "label": "No numeric probabilities",
+            "passed": true,
+            "detail": "none"
+          },
+          {
+            "id": "medical-safety",
+            "criterion": "R2",
+            "label": "Says astrology doesn't replace medical care",
+            "passed": true,
+            "detail": "present"
+          },
+          {
+            "id": "integrity",
+            "criterion": "R3",
+            "label": "No wrong lordships/placements or certainty claims",
+            "passed": true,
+            "detail": "clean"
+          }
+        ]
+      },
+      "draftErrors": [],
+      "safetyAddedByServer": false,
+      "answer": "Health  ★★★★☆\nMild Sensitivity\n\nGood News: Digestion looks strong this week\nPrimary Watch Area: nasal passages, skin, eyes\nEvidence Strength: Strong\nSensitivity: Very mild\nTiming: Rahu–Jupiter period until Apr 2028\n\nThere's a mild sensitivity around your nasal passages and skin — nothing serious, but worth being a little careful. Your overall vitality remains solid, but your body is dropping subtle signals to slow down slightly and protect your skin and airways from dust, pollen, or harsh environmental triggers.\n\nRight now, you are running the Rahu Mahadasha alongside the Jupiter Antardasha, a timing period that runs through April 2028. While Rahu as the major period ruler can introduce background friction or sudden minor sensitivities, Jupiter taking over the sub-period brings protective, restorative energy. As a Leo Ascendant, your Lagna lord, the Sun, sits comfortably in its own sign in the first house alongside Jupiter. This endows you with robust constitutional vitality, meaning your physical foundation is strong and your body naturally rebounds well from daily fatigue.\n\nLooking at transits, the Moon moves through your first house while the Sun travels through your third house. The Moon governs fluid balance, cold sensitivity, and emotional resilience in your chart, and today its influence is stronger than usual. This explains why mild dryness in the eyes, slight throat irritation, or skin sensitivity might surface, alongside a mild energy dip in the mid-afternoon. What's worth noting is how strong your digestion and immunity are in your chart right now. Even if you feel a touch of nasal congestion or tiredness toward the end of the day, your gut health and physical recovery capacity remain completely unbothered.\n\nThe active Adhiyoga in your natal alignment adds another layer of natural health protection, ensuring long-term stamina even during stressful phases. While Saturn transiting your eighth house and Rahu in your seventh demand clean daily habits, Jupiter sitting in your first house shields your physical body from serious harm. The primary friction is simply pacing yourself so that physical fatigue does not turn into mental stress.\n\nThis sensitive phase is connected to current short-term transits operating within your broader Rahu and Jupiter period. It represents a temporary physical sensitivity rather than any chronic structural issue, and it will settle as planetary movements progress.\n\nStay well-hydrated, avoid overexertion after two in the afternoon, and stick to a calming evening routine. It is wise to stay clear of known allergic triggers like heavy dust, pollen, or strong synthetic fragrances, and choosing soft cotton clothing will keep skin irritation away. Reciting the simple mantra Om Chandraya Namah can help soothe fluid balance, quiet the mind, and ease bodily sensitivities.\n\nThe astrological evidence for this profile is strong, based on the high dignity of your primary chart rulers and supportive dasha timing. Please remember that astrology outlines energetic timing and bodily tendencies; it does not replace medical advice, and any persistent or troubling symptom should always be evaluated by a healthcare professional.\n\nThe astrological basis: You are in Rahu Mahadasha with Jupiter Antardasha, running until April 2028. In your Leo Ascendant chart, the 6th house of health and illness is ruled by Saturn, placed in your 7th house in Aquarius; the 1st house of body and vitality is ruled by Sun, placed in your 1st house in Leo. Currently transiting: Saturn in your 8th house (Pisces) and Jupiter in your 1st house (Leo). Today's Moon is in Leo, your 1st house.\n\nOverall Summary\nOverall Health:  (Stable with Mild Sensitivity)\nPrimary Watch Area: Nasal passages and skin\nSecondary Watch Area: Throat and airways\nEnergy Levels: Good morning stamina with a mid-afternoon dip\nRecovery Potential: Strong\nRisk of Major Illness: Low\nBest Approach: Avoid dust triggers, wear natural fabrics, and rest in the late afternoon"
+    },
+    {
+      "chart": "chart001-transit-tomorrow",
+      "question": "How's my health today?",
+      "depth": "daily",
+      "score": {
+        "version": "1.0",
+        "domain": "health",
+        "score": 0.8,
+        "passed": 8,
+        "total": 10,
+        "checks": [
+          {
+            "id": "structure",
+            "criterion": "Q1",
+            "label": "Full consultation (≥4 paragraphs, ≥250 words)",
+            "passed": true,
+            "detail": "7 paragraphs, 355 words"
+          },
+          {
+            "id": "dasha",
+            "criterion": "Q2",
+            "label": "Names the active Mahadasha and Antardasha",
+            "passed": false,
+            "detail": "Mahadasha Rahu: no; Antardasha Jupiter: yes"
+          },
+          {
+            "id": "multi-factor",
+            "criterion": "Q2",
+            "label": "Uses ≥3 of the domain's natal factors",
+            "passed": false,
+            "detail": "found 2/5: 12th house, Moon"
+          },
+          {
+            "id": "transit",
+            "criterion": "Q2",
+            "label": "Explains a current transit by planet",
+            "passed": true,
+            "detail": "\"Today, the transiting Moon moves through your first house while ruling your twelfth house \""
+          },
+          {
+            "id": "mitigation",
+            "criterion": "Q3",
+            "label": "Names a contradicting or protective chart factor",
+            "passed": true,
+            "detail": "\"While your major Rahu period brings a bit of background friction to overall health, your c\""
+          },
+          {
+            "id": "timing",
+            "criterion": "Q4",
+            "label": "Timing tied to dasha/transits, no arbitrary durations",
+            "passed": true,
+            "detail": "no ungrounded durations"
+          },
+          {
+            "id": "confidence",
+            "criterion": "Q5",
+            "label": "States qualitative evidence strength",
+            "passed": true,
+            "detail": "\"The evidence supporting this timing is strong based on your natal placements and current t\""
+          },
+          {
+            "id": "no-percent",
+            "criterion": "R1",
+            "label": "No numeric probabilities",
+            "passed": true,
+            "detail": "none"
+          },
+          {
+            "id": "medical-safety",
+            "criterion": "R2",
+            "label": "Says astrology doesn't replace medical care",
+            "passed": true,
+            "detail": "present"
+          },
+          {
+            "id": "integrity",
+            "criterion": "R3",
+            "label": "No wrong lordships/placements or certainty claims",
+            "passed": true,
+            "detail": "clean"
+          }
+        ]
+      },
+      "draftErrors": [],
+      "safetyAddedByServer": true,
+      "answer": "Health Today  ★★★★☆\nMild Sensitivity\n\nGood News: Digestion looks strong this week\nPrimary Watch Area: nasal passages, skin, eyes\nEvidence Strength: Strong\nSensitivity: Very mild\nTiming: Rahu–Jupiter period until Apr 2028\n\nThere's a mild sensitivity around your nasal passages and skin — nothing serious, but worth being a little careful. While your major Rahu period brings a bit of background friction to overall health, your current sub-period of Jupiter acts as a strong protective shield. This balance keeps your foundation secure while temporary sensitivities pass through.\n\nYour vitality remains naturally strong because your first lord, the Sun, sits in its home sign of Leo alongside Jupiter in your first house. This placement provides robust physical resilience and quick recovery capacity. Today, the transiting Moon moves through your first house while ruling your twelfth house of rest and fluid balance, which temporarily heightens reactivity to dust, pollen, or fabric textures, while bringing mild sensitivity around your throat and airways.\n\nWhat actually caught my attention is how strong your digestion and immunity are in your chart right now. Even with minor irritation in your nasal passages and a brief energy dip likely around mid-afternoon, your body is handling baseline stress remarkably well. You may feel a bit of mental fatigue later in the day, but your core stamina holds steady.\n\nTo keep things smooth today, try to complete your most demanding tasks before early afternoon. Avoid known environmental triggers, stick to comfortable cotton clothing, and drink plenty of warm liquids. A helpful quiet practice today is chanting Om Chandraya Namah, which naturally harmonizes the Moon's governance over body fluids and emotional calm.\n\nThe evidence supporting this timing is strong based on your natal placements and current transits. Keep in mind that astrological observations point to general energy patterns and are never a substitute for medical evaluation, so always reach out to a health professional if a symptom persists or causes concern.\n\nOverall Health:  (Mild Sensitivity)\nPrimary Watch Area: Nasal passages and skin\nSecondary Watch Area: Throat and airways\nEnergy Levels: Good morning strength, mild mid-afternoon dip\nRecovery Potential: Fast\nRisk of Major Illness: Low\nBest Approach: Avoid allergens, wear soft cotton, rest early afternoon\n\nAstrology can point to tendencies, but it is not a medical diagnosis. Please see a doctor for any symptom that persists or worries you.\n\nThe astrological basis: You are in Rahu Mahadasha with Jupiter Antardasha, running until April 2028. In your Leo Ascendant chart, the 6th house of health and illness is ruled by Saturn, placed in your 7th house in Aquarius; the 1st house of body and vitality is ruled by Sun, placed in your 1st house in Leo. Currently transiting: Saturn in your 8th house (Pisces) and Jupiter in your 1st house (Leo). Today's Moon is in Leo, your 1st house."
+    }
+  ]
+}

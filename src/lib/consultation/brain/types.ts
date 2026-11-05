@@ -243,6 +243,10 @@ export interface HealthBrief {
   energyNote:         string;
   mentalNote:         string | null;  // "Stress is a greater risk than illness today"
   surpriseObservation: string | null; // the one thing that's unexpected — mandatory if non-null
+  // ── Gold Standard v1.0 (set when chart facts are supplied; see goldStandard/) ──
+  goldStandard?:      boolean;
+  evidenceStrength?:  "Strong" | "Moderate" | "Weak" | "Insufficient";
+  timing?:            string | null;  // from the dasha period, e.g. "Rahu–Jupiter period until Apr 2028"
 }
 
 export interface CareerAspect {
@@ -335,6 +339,7 @@ export interface PunditBrainContext {
   answerPlan:        AnswerPlan;        // L8 depth/section decisions
   consultationBrief: ConsultationBrief; // DIE — what the LLM actually narrates
   sessionNote:       string | null;     // session-level dedup: observations already said twice get suppressed
+  goldEvidence?:     string | null;     // Gold Standard chart evidence block (health); null = classic prompt
 }
 
 // ── Brain Output ──────────────────────────────────────────────────────────────

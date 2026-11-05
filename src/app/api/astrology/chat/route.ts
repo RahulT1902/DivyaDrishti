@@ -383,12 +383,22 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         // Layers 1–9 run here; Layer 10 (LLM) is generatePunditAnswer below.
         // The symbolic pipeline output (symbolicCtx) feeds Layer 4 (Diagnostic Engine).
         // The brain returns a fully structured systemPrompt so the LLM only narrates.
+        // Authoritative chart facts — used by the integrity gate and, for health,
+        // the Gold Standard v1.0 evidence block (docs/CHATPUNDIT_GOLD_STANDARD_v1.md).
+        const ascSign = (chart.lagna.sign ?? 3) as Sign;
+        const chartFacts = buildChartFacts(
+          ascSign,
+          chart.planets.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign, house: (((p.sign - ascSign + 12) % 12) + 1) })),
+          currentTransits.positions.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign }))
+        );
         const chartData: ChartData = {
           bodyRiskProfile:  targetDomain === "health" ? bodyRiskProfile : null,
           healthFindings:   targetDomain === "health" ? healthFindings  : null,
           natalPromise:     domainPromise ?? null,
           domainActivation: domainActivation ?? null,
           manifestations:   targetDomain !== "health" ? manifestations  : null,
+          chartFacts,
+          pratyantar:       temporal?.stack?.pratyantar ?? null,
         };
         const brain = await assemblePunditBrain(
           question,
@@ -412,12 +422,6 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
         } else {
           // Narration, integrity gate, basis paragraph and summary card —
           // shared with the Gold Standard benchmark (scripts/pundit-benchmark.ts).
-          const ascSign = (chart.lagna.sign ?? 3) as Sign;
-          const chartFacts = buildChartFacts(
-            ascSign,
-            chart.planets.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign, house: (((p.sign - ascSign + 12) % 12) + 1) })),
-            currentTransits.positions.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign }))
-          );
           const answer = await generatePunditAnswer({
             brain,
             history,

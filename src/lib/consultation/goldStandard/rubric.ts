@@ -20,6 +20,9 @@ import {
 
 export const GOLD_STANDARD_VERSION = "1.0";
 
+/** §10: wording that tells the reader astrology does not replace medical care. */
+export const MEDICAL_SAFETY_RE = /\b(?:doctors?|physicians?|medical (?:advice|care|professionals?|attention|diagnosis|treatment)|not a (?:medical )?diagnosis|health ?care (?:providers?|professionals?)|consult a)\b/i;
+
 export interface RubricCheck {
   id: string;
   /** Which acceptance question (Q1–Q5) or hard rule (R1–R3) this belongs to. */
@@ -83,7 +86,17 @@ export function scoreConsultation(opts: {
   });
 
   // Q2 — which planetary combinations support it? Dasha, natal, transits.
-  const mdNamed = new RegExp(`\\b${dasha.mahadasha}\\b[^.]*\\b(?:maha)?dasha\\b|\\b(?:maha)?dasha\\b[^.]*\\b${dasha.mahadasha}\\b`, "i").test(text);
+  // Each phrasing ties the planet directly to the period: "Rahu Mahadasha",
+  // "Rahu's major period", "the major Rahu period", "the Mahadasha of Rahu",
+  // "the main planetary period under Rahu".
+  const md = dasha.mahadasha;
+  const mdNamed = [
+    `\\b${md}(?:'s)? (?:maha)?dasha\\b`,
+    `\\b${md}(?:'s)? (?:major|main) period\\b`,
+    `\\b(?:major|main|planetary) ${md} period\\b`,
+    `\\b(?:maha)?dasha (?:of|under|ruled by) ${md}\\b`,
+    `\\b(?:major|main|planetary) period (?:of|under|ruled by) ${md}\\b`,
+  ].some(p => new RegExp(p, "i").test(text));
   const adNamed = new RegExp(`\\b${dasha.antardasha}\\b`, "i").test(text) && /\b(?:antar|sub-?period|bhukti)/i.test(text);
   add({
     id: "dasha", criterion: "Q2", label: "Names the active Mahadasha and Antardasha",
@@ -142,7 +155,7 @@ export function scoreConsultation(opts: {
 
   // R2 — medical safety (§10).
   if (domain === "health") {
-    const safety = /\b(?:doctor|physician|medical (?:advice|care|professional|attention)|not a (?:medical )?diagnosis|healthcare provider|consult a)\b/i.test(text);
+    const safety = MEDICAL_SAFETY_RE.test(text);
     add({
       id: "medical-safety", criterion: "R2", label: "Says astrology doesn't replace medical care",
       passed: safety, detail: safety ? "present" : "missing",

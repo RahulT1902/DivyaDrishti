@@ -20,6 +20,7 @@ import type { BodyRiskProfile } from "../../intelligence/health/bodyRiskProfile"
 import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
 import type { PromiseResult, DomainActivation } from "../../intelligence/lifeInsights/services";
 import type { InvestigationReport } from "./CIE_investigationEngine";
+import type { ChartFacts } from "../../core/astrology/chartFacts";
 import { renderInvestigationReport } from "./CIE_investigationEngine";
 
 // ── Chart-specific data bundle (passed from route.ts into the brain) ──────────
@@ -46,6 +47,9 @@ export interface ChartData {
   domainActivation?:  DomainActivation | null;
   manifestations?:    Array<{ title: string; probability: number }> | null;
   investigationReport?: InvestigationReport;
+  // Gold Standard v1.0 inputs — when present, health answers use the Gold Standard prompt.
+  chartFacts?:        ChartFacts;
+  pratyantar?:        string | null;
 }
 
 // ── Body parts per health system ──────────────────────────────────────────────
@@ -1070,12 +1074,17 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
       lines.push(`RED FLAGS (only mention if relevant):`);
       db.redFlags.forEach(r => lines.push(`  • ${r}`));
     }
-    // Translate probability to feeling language — never expose the raw % to the LLM
-    const probLabel = db.illnessProbability >= 70 ? "real chance of feeling off if you push"
-      : db.illnessProbability >= 55 ? "possible if you're not careful"
-      : db.illnessProbability >= 40 ? "low — worth being mindful"
-      : "unlikely — looking clear";
-    lines.push(`ILLNESS LIKELIHOOD: ${probLabel}  ← speak this way, NEVER quote a percentage`);
+    if (db.goldStandard) {
+      // Gold Standard §7: qualitative evidence strength, not an illness probability.
+      lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
+    } else {
+      // Translate probability to feeling language — never expose the raw % to the LLM
+      const probLabel = db.illnessProbability >= 70 ? "real chance of feeling off if you push"
+        : db.illnessProbability >= 55 ? "possible if you're not careful"
+        : db.illnessProbability >= 40 ? "low — worth being mindful"
+        : "unlikely — looking clear";
+      lines.push(`ILLNESS LIKELIHOOD: ${probLabel}  ← speak this way, NEVER quote a percentage`);
+    }
     if (db.severity) {
       const sevPhrase: Record<string, string> = {
         Significant: "worth taking seriously — don't dismiss",
@@ -1085,8 +1094,14 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
       lines.push(`CONCERN LEVEL: ${sevPhrase[db.severity] ?? db.severity} — temporary if anything develops`);
     }
     lines.push(`SERIOUS ILLNESS RISK: ${db.seriousRisk}  ← DO NOT CONTRADICT THIS`);
-    lines.push(`TIMELINE: ${db.timeline ?? "No illness expected — nothing to time"}  ← DO NOT INVENT A DIFFERENT TIMELINE`);
-    if (db.recovery) lines.push(`RECOVERY: ${db.recovery}`);
+    if (db.goldStandard) {
+      // Gold Standard §8: timing only from dasha and transits, never day counts.
+      lines.push(`TIMING: ${db.timing ?? "dasha period not available"}  ← anchor timing ONLY to this period and the transits in HEALTH CHART EVIDENCE; never give a number of days or weeks`);
+      if (db.recovery) lines.push(`RECOVERY CAPACITY: ${db.recovery.split(" — ")[0]}`);
+    } else {
+      lines.push(`TIMELINE: ${db.timeline ?? "No illness expected — nothing to time"}  ← DO NOT INVENT A DIFFERENT TIMELINE`);
+      if (db.recovery) lines.push(`RECOVERY: ${db.recovery}`);
+    }
     lines.push(`ENERGY: ${db.energyNote}`);
     if (db.mentalNote) lines.push(`MENTAL NOTE: ${db.mentalNote}`);
   }

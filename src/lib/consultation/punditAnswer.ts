@@ -5,6 +5,7 @@ import {
   type ChartFacts,
 } from "@/lib/core/astrology/chartFacts";
 import { buildAstrologicalBasis, insertAstrologicalBasis } from "@/lib/consultation/astrologicalBasis";
+import { MEDICAL_SAFETY_RE } from "@/lib/consultation/goldStandard/rubric";
 import type { assemblePunditBrain } from "@/lib/consultation/brain";
 
 type PunditBrain = Awaited<ReturnType<typeof assemblePunditBrain>>;
@@ -18,19 +19,22 @@ export interface PunditAnswer {
   draftErrors: string[];
   /** Errors still present after the rewrite; their sentences were dropped. */
   remainingErrors: string[];
+  /** True when the model left out the medical-safety line and the server added it. */
+  safetyAdded: boolean;
 }
 
 // Token budget — match the brain's depth decision to the expected word count.
 const DEPTH_TOKENS: Record<string, number> = {
   quick:        400,   // 80–120 words
-  daily:        600,   // 150–180 words
-  consultation: 1200,  // 300–400 words
+  daily:        900,   // 150–180 words (300–400 for Gold Standard health)
+  consultation: 1500,  // 300–400 words (450–600 for Gold Standard health)
   year_outlook: 1800,  // 450–550 words
 };
 
-// Strip emoji and collapse stray blank lines
+// Strip emoji and collapse stray blank lines. ★/☆ (U+2605/U+2606) sit inside
+// the symbol range but are the summary's rating, so they are kept.
 const clean = (t: string) => t
-  .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
+  .replace(/(?![★☆])[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
   .replace(/\n{3,}/g, "\n\n")
   .trim();
 
@@ -123,6 +127,17 @@ export async function generatePunditAnswer(opts: {
     validatedText = "I couldn't put together a reliable written reading for this question just now. The summary above is drawn from your chart; please ask again in a moment.";
   }
 
+  // Gold Standard §10: a health answer always says astrology is not a medical
+  // diagnosis. The prompt asks for it in the model's own words; this is the
+  // guarantee when the model leaves it out.
+  const safetyAdded = domain === "health" && !MEDICAL_SAFETY_RE.test(validatedText);
+  if (safetyAdded) {
+    validatedText = insertAstrologicalBasis(
+      validatedText,
+      "Astrology can point to tendencies, but it is not a medical diagnosis. Please see a doctor for any symptom that persists or worries you.",
+    );
+  }
+
   const narrative = validatedText;
 
   // Deterministic "why" paragraph from computed chart facts (first
@@ -136,5 +151,5 @@ export async function generatePunditAnswer(opts: {
     ? `${brain.renderedSummaryCard}\n\n${validatedText}`
     : validatedText;
 
-  return { text: fullText, narrative, draftErrors, remainingErrors: errors };
+  return { text: fullText, narrative, draftErrors, remainingErrors: errors, safetyAdded };
 }

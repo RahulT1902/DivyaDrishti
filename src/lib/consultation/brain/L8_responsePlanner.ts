@@ -51,7 +51,15 @@ function selectDepth(intent: IntentAnalysis, userState: UserState): ResponseDept
   return "consultation";
 }
 
-function depthToLength(depth: ResponseDepth): string {
+function depthToLength(depth: ResponseDepth, goldStandard = false): string {
+  // Gold Standard v1.0 health answers need room for the A–J structure.
+  if (goldStandard) {
+    switch (depth) {
+      case "year_outlook": return "9–11 paragraphs, 550–700 words, following A–J at year scope (dasha and slow transits).";
+      case "consultation": return "7–9 paragraphs, 450–600 words, following A–J.";
+      default:             return "5–7 paragraphs, 300–400 words, following A–J condensed. Even for today, ground it in at least three natal health factors (Ascendant lord, 6th/8th/12th lords, Moon) before the transits; today's timing comes from the Moon and short-term transits.";
+    }
+  }
   switch (depth) {
     case "quick":        return "2–3 short paragraphs, ~80–120 words. Answer only the specific sub-question they asked.";
     case "daily":        return "3–4 paragraphs, ~150–180 words. Direct answer + key observation + recommendation + mini summary stats.";
@@ -400,7 +408,14 @@ function buildSummaryCard(
     const likelihoodVal = isSecondaryClose && secondary
       ? `${shortName(h.primarySystem)}: ${likelihoodText(h.illnessProbability)}  ·  ${shortName(secondary.name)}: ${likelihoodText(secondary.illnessProbability)}`
       : likelihoodText(h.illnessProbability);
-    stats.push({ label: "Likelihood", value: likelihoodVal });
+    // Gold Standard v1.0 (§7, §8): qualitative evidence strength instead of a
+    // likelihood derived from an invented probability, and timing from the
+    // dasha period instead of a fixed day count.
+    if (h.goldStandard) {
+      stats.push({ label: "Evidence Strength", value: h.evidenceStrength ?? "Insufficient" });
+    } else {
+      stats.push({ label: "Likelihood", value: likelihoodVal });
+    }
 
     if (h.severity) {
       const sevMap: Record<string, string> = {
@@ -410,8 +425,11 @@ function buildSummaryCard(
       };
       stats.push({ label: "Sensitivity", value: sevMap[h.severity] ?? h.severity });
     }
-    if (h.timeline)
+    if (h.goldStandard) {
+      if (h.timing) stats.push({ label: "Timing", value: h.timing });
+    } else if (h.timeline) {
       stats.push({ label: "Timeline", value: h.timeline });
+    }
 
     return { title, ratingOf5: stars, phase, stats };
   }
@@ -549,7 +567,10 @@ export function planResponse(
 
   return {
     depth,
-    targetLength:     depthToLength(depth),
+    targetLength:     depthToLength(
+      depth,
+      consultationBrief?.domainBrief.type === "health" && !!consultationBrief.domainBrief.goldStandard,
+    ),
     directAnswer:     buildDirectAnswer(intent, diagnosis),
     summaryCard,
     includeSections,

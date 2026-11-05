@@ -102,6 +102,8 @@ async function main() {
       natalPromise: promises.find(p => p.domain === "Health") ?? null,
       domainActivation: activations.find(a => a.domain === "Health") ?? null,
       manifestations: null,
+      chartFacts,
+      pratyantar: null,
     };
 
     for (const question of QUESTIONS) {
@@ -118,7 +120,7 @@ async function main() {
         total += score.score; count++;
         const failed = score.checks.filter(c => !c.passed).map(c => c.id).join(", ") || "—";
         console.log(`  ${dir.padEnd(28)} ${question.padEnd(24)} ${score.passed}/${score.total}  ${((Date.now() - t0) / 1000).toFixed(0)}s  failed: ${failed}`);
-        results.push({ chart: dir, question, depth: brain.metadata.depth, score, draftErrors: answer.draftErrors, answer: answer.text });
+        results.push({ chart: dir, question, depth: brain.metadata.depth, score, draftErrors: answer.draftErrors, safetyAddedByServer: answer.safetyAdded, answer: answer.text });
       } catch (e: any) {
         console.log(`  ${dir.padEnd(28)} ${question.padEnd(24)} ERROR ${String(e?.message ?? e).slice(0, 120)}`);
         results.push({ chart: dir, question, error: String(e?.message ?? e) });
