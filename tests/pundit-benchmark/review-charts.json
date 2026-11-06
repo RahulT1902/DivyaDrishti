@@ -1,0 +1,285 @@
+{
+  "note": "Synthetic births (not real people), chosen to cover all 12 Ascendants and varied Mahadashas. Dasha taken at generation time (2026-11-05).",
+  "charts": [
+    {
+      "id": "review-01",
+      "date": "1977-08-03",
+      "time": "23:37",
+      "place": "Dubai",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "timezone": "Asia/Dubai",
+      "expected": {
+        "ascendant": "Aries",
+        "mahadasha": "Sun",
+        "antardasha": "Moon"
+      }
+    },
+    {
+      "id": "review-02",
+      "date": "2000-02-27",
+      "time": "09:34",
+      "place": "London",
+      "latitude": 51.5074,
+      "longitude": -0.1278,
+      "timezone": "Europe/London",
+      "expected": {
+        "ascendant": "Taurus",
+        "mahadasha": "Venus",
+        "antardasha": "Venus"
+      }
+    },
+    {
+      "id": "review-03",
+      "date": "1966-08-17",
+      "time": "02:14",
+      "place": "New York",
+      "latitude": 40.7128,
+      "longitude": -74.006,
+      "timezone": "America/New_York",
+      "expected": {
+        "ascendant": "Gemini",
+        "mahadasha": "Rahu",
+        "antardasha": "Moon"
+      }
+    },
+    {
+      "id": "review-04",
+      "date": "1986-12-14",
+      "time": "21:44",
+      "place": "Chennai",
+      "latitude": 13.0827,
+      "longitude": 80.2707,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Cancer",
+        "mahadasha": "Jupiter",
+        "antardasha": "Mercury"
+      }
+    },
+    {
+      "id": "review-05",
+      "date": "1972-01-12",
+      "time": "22:02",
+      "place": "Nagpur",
+      "latitude": 21.1458,
+      "longitude": 79.0882,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Leo",
+        "mahadasha": "Moon",
+        "antardasha": "Moon"
+      }
+    },
+    {
+      "id": "review-06",
+      "date": "1978-08-28",
+      "time": "10:26",
+      "place": "New York",
+      "latitude": 40.7128,
+      "longitude": -74.006,
+      "timezone": "America/New_York",
+      "expected": {
+        "ascendant": "Virgo",
+        "mahadasha": "Mercury",
+        "antardasha": "Moon"
+      }
+    },
+    {
+      "id": "review-07",
+      "date": "1982-01-09",
+      "time": "02:41",
+      "place": "Mumbai",
+      "latitude": 19.076,
+      "longitude": 72.8777,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Libra",
+        "mahadasha": "Saturn",
+        "antardasha": "Jupiter"
+      }
+    },
+    {
+      "id": "review-08",
+      "date": "2002-04-22",
+      "time": "21:00",
+      "place": "Mumbai",
+      "latitude": 19.076,
+      "longitude": 72.8777,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Scorpio",
+        "mahadasha": "Sun",
+        "antardasha": "Moon"
+      }
+    },
+    {
+      "id": "review-09",
+      "date": "1970-12-14",
+      "time": "08:11",
+      "place": "New York",
+      "latitude": 40.7128,
+      "longitude": -74.006,
+      "timezone": "America/New_York",
+      "expected": {
+        "ascendant": "Sagittarius",
+        "mahadasha": "Ketu",
+        "antardasha": "Moon"
+      }
+    },
+    {
+      "id": "review-10",
+      "date": "1986-02-23",
+      "time": "05:29",
+      "place": "Dubai",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "timezone": "Asia/Dubai",
+      "expected": {
+        "ascendant": "Capricorn",
+        "mahadasha": "Sun",
+        "antardasha": "Jupiter"
+      }
+    },
+    {
+      "id": "review-11",
+      "date": "1990-07-24",
+      "time": "21:40",
+      "place": "Nagpur",
+      "latitude": 21.1458,
+      "longitude": 79.0882,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Aquarius",
+        "mahadasha": "Moon",
+        "antardasha": "Venus"
+      }
+    },
+    {
+      "id": "review-12",
+      "date": "1994-05-19",
+      "time": "11:35",
+      "place": "London",
+      "latitude": 51.5074,
+      "longitude": -0.1278,
+      "timezone": "Europe/London",
+      "expected": {
+        "ascendant": "Cancer",
+        "mahadasha": "Mars",
+        "antardasha": "Rahu"
+      }
+    },
+    {
+      "id": "review-13",
+      "date": "1960-02-19",
+      "time": "20:19",
+      "place": "Nagpur",
+      "latitude": 21.1458,
+      "longitude": 79.0882,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Virgo",
+        "mahadasha": "Sun",
+        "antardasha": "Rahu"
+      }
+    },
+    {
+      "id": "review-14",
+      "date": "1991-12-12",
+      "time": "07:25",
+      "place": "Kolkata",
+      "latitude": 22.5726,
+      "longitude": 88.3639,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Sagittarius",
+        "mahadasha": "Jupiter",
+        "antardasha": "Mars"
+      }
+    },
+    {
+      "id": "review-15",
+      "date": "1974-08-28",
+      "time": "11:24",
+      "place": "London",
+      "latitude": 51.5074,
+      "longitude": -0.1278,
+      "timezone": "Europe/London",
+      "expected": {
+        "ascendant": "Libra",
+        "mahadasha": "Jupiter",
+        "antardasha": "Mercury"
+      }
+    },
+    {
+      "id": "review-16",
+      "date": "1970-03-14",
+      "time": "17:34",
+      "place": "Chennai",
+      "latitude": 13.0827,
+      "longitude": 80.2707,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Leo",
+        "mahadasha": "Saturn",
+        "antardasha": "Jupiter"
+      }
+    },
+    {
+      "id": "review-17",
+      "date": "1960-04-22",
+      "time": "13:47",
+      "place": "Dubai",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "timezone": "Asia/Dubai",
+      "expected": {
+        "ascendant": "Leo",
+        "mahadasha": "Venus",
+        "antardasha": "Mercury"
+      }
+    },
+    {
+      "id": "review-18",
+      "date": "1983-03-10",
+      "time": "06:10",
+      "place": "Kolkata",
+      "latitude": 22.5726,
+      "longitude": 88.3639,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Pisces",
+        "mahadasha": "Jupiter",
+        "antardasha": "Mercury"
+      }
+    },
+    {
+      "id": "review-19",
+      "date": "1985-08-15",
+      "time": "16:12",
+      "place": "Mumbai",
+      "latitude": 19.076,
+      "longitude": 72.8777,
+      "timezone": "Asia/Kolkata",
+      "expected": {
+        "ascendant": "Sagittarius",
+        "mahadasha": "Venus",
+        "antardasha": "Mercury"
+      }
+    },
+    {
+      "id": "review-20",
+      "date": "1971-01-28",
+      "time": "13:37",
+      "place": "Dubai",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "timezone": "Asia/Dubai",
+      "expected": {
+        "ascendant": "Taurus",
+        "mahadasha": "Mercury",
+        "antardasha": "Mercury"
+      }
+    }
+  ]
+}

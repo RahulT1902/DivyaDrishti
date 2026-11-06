@@ -76,8 +76,13 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `    Secondary Watch Area: [or "None" if only one system active]\n` +
     `    Energy Levels: [plain-language description]\n` +
     `    Recovery Potential: [Strong / Moderate / Slow]\n` +
-    `    Risk of Major Illness: [Low / Moderate / High]\n` +
+    (gold
+      ? `    Serious Strain Indication: [None strong / Some / Notable — see a doctor]\n`
+      : `    Risk of Major Illness: [Low / Moderate / High]\n`) +
     `    Best Approach: [1 specific practical phrase]\n` +
+    // Career-only blocks below are left out in Gold Standard (health) mode to
+    // keep the prompt under the Groq free tier's 8,000 tokens-per-minute limit.
+    (gold ? `` :
     `  CAREER format (monthly):\n` +
     `    Overall Career: ★★★★☆ (Around X%) — use the PROBABILITY from INVESTIGATION TRAIL\n` +
     `    Recognition & Visibility: [High / Strong / Moderate / Building]\n` +
@@ -91,7 +96,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `    Financial Growth: [status, with nuance if relevant]\n` +
     `    Job Change: [positive if aligned with X / not recommended / timing-dependent]\n` +
     `    Biggest Strength: [1 phrase]\n` +
-    `    Biggest Challenge: [1 phrase]\n` +
+    `    Biggest Challenge: [1 phrase]\n`) +
     `  Do NOT use ★ anywhere in the body — only in the Overall Summary header line.\n\n` +
 
     `UNIVERSAL RULES (all formats):\n` +
@@ -297,6 +302,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
         `  The narration is THEIRS — warm, human, like sitting across from someone who has known them for years.\n` +
         `  If they ask WHY → then open the curtain. Until then, just tell them what you see.\n\n`) +
 
+    (gold ? `` :
     `YEAR OUTLOOK SOUNDS LIKE (for a 2027 career question, ~450-550 words):\n` +
     `  "Overall, I see 2027 as a year of consolidation followed by meaningful growth.\n` +
     `   It may not begin with dramatic changes, but as the year progresses, your career is likely\n` +
@@ -310,7 +316,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `  "This month carries one of the stronger career energies you've experienced in recent times.\n` +
     `   What stands out isn't just the possibility of a promotion, but that your efforts are\n` +
     `   finally becoming visible to the people who matter..."\n` +
-    `  — Explore: delays (process not opposition), recognition vs salary, how to show up, momentum.\n\n` +
+    `  — Explore: delays (process not opposition), recognition vs salary, how to show up, momentum.\n\n`) +
 
     `HEALTH CONVERSATION SOUNDS LIKE (voice example only — length follows TARGET LENGTH):\n` +
     `  "Your throat's the one to watch today. Not alarming, but keep it warm and avoid cold drinks."\n` +
@@ -322,12 +328,13 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `  "D10 indicates your mahadasha aligns with career development patterns."\n` +
     `  "Based on current astrological configurations, career activation is elevated."\n\n` +
 
+    (gold ? `` :
     `THE DIFFERENCE:\n` +
     `  Pundit says "this month carries strong career energy" — not "D10 is activated"\n` +
     `  Pundit says "around 75–80%" — not "INVESTIGATION SCORE: 74"\n` +
     `  Pundit says "the delay is more process than opposition" — not "Saturn slows external approvals"\n` +
     `  Pundit says "recognition is building before salary follows" — this IS derived from the charts,\n` +
-    `  but the user hears insight, not technical language.\n\n` +
+    `  but the user hears insight, not technical language.\n\n`) +
 
     (gold
       ? `PLANET CITATION (Gold Standard): cite the combinations from HEALTH CHART EVIDENCE that\n` +
@@ -691,6 +698,7 @@ export async function assemblePunditBrain(
       tone:       personality.tone,
       depth:      responsePlan.depth,
       subIntents: intent.subIntents,
+      goldStandard: !!goldEvidence,
     },
   };
 }

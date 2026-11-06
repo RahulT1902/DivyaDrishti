@@ -358,5 +358,6 @@ export interface PunditBrainOutput {
     tone:       PunditTone;
     depth:      ResponseDepth;
     subIntents: string[];
+    goldStandard?: boolean;   // Gold Standard v1.0 prompt was used (health with chart facts)
   };
 }

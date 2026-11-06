@@ -142,7 +142,9 @@ export async function generatePunditAnswer(opts: {
 
   // Deterministic "why" paragraph from computed chart facts (first
   // answer in a thread only, so follow-ups don't repeat it).
-  if (!isFollowUp) {
+  // Skipped for Gold Standard answers: they already explain the dasha, lords
+  // and transits in the narrative, so the paragraph would only repeat them.
+  if (!isFollowUp && !brain.metadata.goldStandard) {
     validatedText = insertAstrologicalBasis(validatedText, buildAstrologicalBasis(chartFacts, domain, dasha));
   }
 

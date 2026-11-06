@@ -1025,7 +1025,12 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   const { domainBrief: db } = brief;
 
   // ── Prepend Investigation Trail when available ────────────────────────────
-  const investigationBlock = brief.investigationReport
+  // Gold Standard health answers get the same findings (and the transits) in
+  // the HEALTH CHART EVIDENCE block, so the trail and transit audit are left
+  // out there — they would duplicate it and push the prompt past the Groq
+  // free tier's 8,000 tokens-per-minute limit.
+  const goldHealth = db.type === "health" && !!db.goldStandard;
+  const investigationBlock = brief.investigationReport && !goldHealth
     ? renderInvestigationReport(brief.investigationReport, question) + "\n\n"
     : "";
 
@@ -1093,7 +1098,18 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
       };
       lines.push(`CONCERN LEVEL: ${sevPhrase[db.severity] ?? db.severity} — temporary if anything develops`);
     }
-    lines.push(`SERIOUS ILLNESS RISK: ${db.seriousRisk}  ← DO NOT CONTRADICT THIS`);
+    if (db.goldStandard) {
+      // Gold Standard §10: astrology must never exclude disease, so "risk is
+      // low/unlikely" becomes "no strong indication" of serious strain.
+      const strain: Record<HealthBrief["seriousRisk"], string> = {
+        "Very unlikely": "no strong indication of serious strain",
+        "Unlikely":      "no strong indication of serious strain; minor stress only",
+        "Possible":      "some indication of more serious strain — recommend seeing a doctor",
+      };
+      lines.push(`SERIOUS STRAIN INDICATION: ${strain[db.seriousRisk]}  ← never say a disease is ruled out or that risk is low or zero`);
+    } else {
+      lines.push(`SERIOUS ILLNESS RISK: ${db.seriousRisk}  ← DO NOT CONTRADICT THIS`);
+    }
     if (db.goldStandard) {
       // Gold Standard §8: timing only from dasha and transits, never day counts.
       lines.push(`TIMING: ${db.timing ?? "dasha period not available"}  ← anchor timing ONLY to this period and the transits in HEALTH CHART EVIDENCE; never give a number of days or weeks`);

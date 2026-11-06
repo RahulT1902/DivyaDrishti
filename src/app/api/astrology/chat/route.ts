@@ -4,10 +4,7 @@ export const maxDuration = 60;
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth/getUser";
-import { calculateLagnaChart } from "@/lib/astrology/engine";
 import { computePanchang } from "@/lib/astrology/panchang";
-import { getNakshatra, getBalanceYears, buildMahadashaTimeline, getDashaContext } from "@/lib/astrology/dasha";
-import { calculateCurrentTransits } from "@/lib/astrology/transit";
 import { generateNarrative } from "@/lib/intelligence/narrativeEngine";
 import { extractIntent } from "@/lib/intelligence/intentExtractor";
 import { buildSuccessResponse, buildErrorResponse } from "@/lib/utils/apiResponse";
@@ -19,11 +16,7 @@ import { classifyQuestion } from "@/lib/intelligence/v5/intentEngine";
 import { buildAstrologicalBrief } from "@/lib/intelligence/v5/astrologicalBriefing";
 import { buildV5Prompt } from "@/lib/intelligence/v5/promptBuilder";
 import { NatalPromiseAnalyzer, LifeDomainActivationEngine, ManifestationRankingEngine } from "@/lib/intelligence/lifeInsights/services";
-import { adaptEngineOutput, buildChartSuite } from "@/lib/core/chart-engine";
-import { AstrologyContextBuilder } from "@/lib/core/context-builder/astroContextBuilder";
-import { TransitAnalyzer, evaluateTransitRules, HEALTH_TRANSIT_RULES } from "@/lib/core/transit-engine";
-import type { DashaInfo, Sign, PlanetName } from "@/lib/core/types";
-import type { TransitSnapshot } from "@/lib/core/transit-engine/types";
+import type { Sign, PlanetName } from "@/lib/core/types";
 import { HealthEngine } from "@/lib/domains/health";
 import { CareerEngine } from "@/lib/domains/career";
 import { MarriageEngine } from "@/lib/domains/marriage";
@@ -33,6 +26,7 @@ import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
 import type { ChartData } from "@/lib/consultation/brain";
 import { buildChartFacts } from "@/lib/core/astrology/chartFacts";
 import { generatePunditAnswer } from "@/lib/consultation/punditAnswer";
+import { prepareChartContext } from "@/lib/consultation/prepareChartContext";
 
 export async function POST(req: NextRequest) {
   try {
@@ -125,82 +119,19 @@ export async function POST(req: NextRequest) {
       timeframe: targetTimeframe,
     };
 
-    // 3. Astrology Engine (Standard Setup)
+    // 3. Astrology Engine — chart, dasha, transits and the symbolic context
+    // (shared with the Gold Standard real-chart review).
     const { birthDetails } = user;
-    const chart = await calculateLagnaChart({
-      date: birthDetails.dateOfBirth.toISOString().split('T')[0],
-      time: birthDetails.timeOfBirth,
-      latitude: birthDetails.latitude,
-      longitude: birthDetails.longitude,
-      timezone: birthDetails.timezone,
-    });
-
-    const moon = chart.planets.find(p => p.name === "Moon");
-    if (!moon) throw new Error("Moon data required");
-
-    const nakshatra = getNakshatra(moon.longitude);
-    const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
-    const timeline = buildMahadashaTimeline(birthDetails.dateOfBirth, nakshatra.lord, balance);
-    const temporal = getDashaContext(timeline, new Date());
-    const currentTransits = await calculateCurrentTransits(transitDate);
-
-    // ── Symbolic Engine Build ─────────────────────────────────────────────────
-    // Build ChartSuite (the 8-layer pipeline's input) from the SwissEph raw output.
-    const { planets: sePlanets, lagna: seLagna } = adaptEngineOutput(chart.planets, chart.lagna);
-    const chartSuite = buildChartSuite(sePlanets, seLagna);
-
-    // Convert current transit positions → TransitSnapshot for the symbolic transit engine.
-    const _SIGN_NAMES = [
-      "Aries","Taurus","Gemini","Cancer","Leo","Virgo",
-      "Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces",
-    ];
-    const transitSnapshot: TransitSnapshot = {
-      date:   (transitDate ?? new Date()).toISOString().split("T")[0],
-      julDay: 0,
-      positions: currentTransits.positions.map(p => ({
-        planet:       p.name as PlanetName,
-        longitude:    p.longitude,
-        sign:         p.sign as Sign,
-        signName:     _SIGN_NAMES[p.sign - 1] ?? "Aries",
-        degreeInSign: p.longitude % 30,
-        speed:        p.speed,
-        isRetrograde: p.speed < 0 && p.name !== "Sun" && p.name !== "Moon",
-        isCombust:    false,
-      })),
-    };
-
-    // Derive transit facts (which natal house each transiting planet occupies).
-    const transitFacts = new TransitAnalyzer().analyze(
-      transitSnapshot,
-      chart.lagna.sign as Sign,
-      chartSuite.D1.planets,
+    const { chart, temporal, currentTransits, dashaInfo, symbolicCtx } = await prepareChartContext(
+      {
+        dateOfBirth: birthDetails.dateOfBirth,
+        timeOfBirth: birthDetails.timeOfBirth,
+        latitude:    birthDetails.latitude,
+        longitude:   birthDetails.longitude,
+        timezone:    birthDetails.timezone,
+      },
+      { transitDate },
     );
-    // Evaluate health transit rules (used for all domains — other domain rules will be added later).
-    const symbolicTransitEvidence = evaluateTransitRules(transitFacts, HEALTH_TRANSIT_RULES);
-
-    // Build DashaInfo from the dasha context (mahadasha + antardasha period dates).
-    const dashaInfo: DashaInfo | undefined = temporal ? {
-      mahadasha:   temporal.stack.mahadasha as PlanetName,
-      antardasha:  temporal.stack.antardasha as PlanetName,
-      periodStart: temporal.timing.startsAt.toISOString().split("T")[0],
-      periodEnd:   temporal.timing.endsAt.toISOString().split("T")[0],
-    } : undefined;
-
-    // Today's Moon nakshatra index (0–26) — primary daily health differentiator.
-    // Moon transits one nakshatra every ~24–27 hours; this makes the reading day-specific
-    // even on days when no major house-based transit rules fire.
-    const moonForNakshatra = currentTransits.positions.find(p => p.name === "Moon");
-    const moonNakshatraIndex = moonForNakshatra
-      ? Math.min(26, Math.floor((moonForNakshatra.longitude % 360) / (360 / 27)))
-      : undefined;
-
-    // Run the full 8-layer symbolic pipeline: yoga detection → activation → inference → hypothesis → graph.
-    const symbolicCtx = new AstrologyContextBuilder().build(chartSuite, {
-      dasha:              dashaInfo,
-      transit:            symbolicTransitEvidence,
-      horizon:            "daily",
-      moonNakshatraIndex,
-    });
 
     // 4. Intelligence Logic
     const narrative = generateNarrative(intent as any, targetTimeframe as any, chart, {

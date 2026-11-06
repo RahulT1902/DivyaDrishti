@@ -119,13 +119,18 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
 
   // Ordered Gemini → Groq → DeepSeek. Each provider that has a key is tried
   // until one returns non-empty text.
-  const attempts: Array<{ provider: Exclude<AIProvider, "none">; label: string; enabled: boolean; model: () => any; headroom: number }> = [
+  // headroom: null sends no output cap at all. Groq's free tier counts the
+  // reserved output against an 8,000 tokens-per-minute limit, and the Pundit
+  // prompt alone is ~7,700 tokens, so any explicit cap (plus thinking headroom)
+  // pushes the request over and it is rejected. Without a cap, Groq applies its
+  // own default; an empty reply still falls through via requireText().
+  const attempts: Array<{ provider: Exclude<AIProvider, "none">; label: string; enabled: boolean; model: () => any; headroom: number | null }> = [
     {
       provider: "gemini", label: "Gemini", enabled: hasGemini, headroom: REASONING_HEADROOM,
       model: () => createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY })("gemini-3.6-flash"),
     },
     {
-      provider: "groq", label: "Groq", enabled: hasGroq, headroom: REASONING_HEADROOM,
+      provider: "groq", label: "Groq", enabled: hasGroq, headroom: null,
       model: () => createOpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY }).chat("openai/gpt-oss-20b"),
     },
     {
@@ -146,7 +151,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
       const { text, finishReason } = await generateText({
         model: a.model(),
         system, ...turnPayload, temperature,
-        ...outputBudget(maxTokens, a.headroom),
+        ...(a.headroom === null ? {} : outputBudget(maxTokens, a.headroom)),
       } as any);
       const checked = requireText(a.label, text, finishReason);
       console.log(`[AI] ${a.label}: OK`);

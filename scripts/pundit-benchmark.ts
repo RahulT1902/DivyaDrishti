@@ -13,6 +13,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { useBenchmarkGeminiKey } from "./lib/benchmarkKey";
 
 import { runGoldChart } from "../src/lib/testing/goldChartHarness";
 import type { GoldChartSpec } from "../src/lib/testing/goldChartTypes";
@@ -73,7 +74,7 @@ function toNatalChart(spec: GoldChartSpec) {
 }
 
 async function main() {
-  const label = process.argv[2] ?? "run";
+  const [label = "run"] = useBenchmarkGeminiKey();
   const transitPositions = BENCHMARK_TRANSITS.map(t => ({
     name: t.name, sign: t.sign, longitude: (t.sign - 1) * 30 + t.degree, speed: t.speed, weight: IMPACT_WEIGHTS[t.name] ?? 2,
   }));
