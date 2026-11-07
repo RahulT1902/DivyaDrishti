@@ -22,6 +22,8 @@ import {
   Zap,
   ChevronRight,
   AlertTriangle,
+  MessageCircle,
+  Moon,
 } from 'lucide-react-native';
 import { api } from '../../services/api';
 import { Spacing } from '../../constants/theme';
@@ -145,7 +147,7 @@ export default function DashboardScreen() {
 
             <TouchableOpacity
               style={styles.hubCard}
-              onPress={() => router.push('/(tabs)/transits')}
+              onPress={() => router.push('/module/transits')}
             >
               <View style={[styles.hubIconBg, { backgroundColor: '#ECFDF5' }]}>
                 <Orbit size={22} color="#059669" />
@@ -156,7 +158,7 @@ export default function DashboardScreen() {
 
             <TouchableOpacity
               style={styles.hubCard}
-              onPress={() => router.push('/(tabs)/ritual')}
+              onPress={() => router.push('/module/remedies')}
             >
               <View style={[styles.hubIconBg, { backgroundColor: '#FAF5FF' }]}>
                 <TrendingUp size={22} color="#7C3AED" />
@@ -189,13 +191,35 @@ export default function DashboardScreen() {
 
             <TouchableOpacity
               style={styles.hubCard}
-              onPress={() => router.push('/(tabs)/transits')}
+              onPress={() => router.push('/(tabs)/ritual')}
             >
               <View style={[styles.hubIconBg, { backgroundColor: '#FFFBEB' }]}>
                 <Compass size={22} color="#B45309" />
               </View>
               <Text style={styles.hubLabel}>{isHindi ? 'पंचांग मुहूर्त' : 'Panchang Muhurat'}</Text>
               <Text style={styles.hubSub}>{isHindi ? 'शुभ मुहूर्त' : 'Auspicious Times'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.hubCard}
+              onPress={() => router.push('/(tabs)/chat')}
+            >
+              <View style={[styles.hubIconBg, { backgroundColor: '#FEF3C7' }]}>
+                <MessageCircle size={22} color="#D97706" />
+              </View>
+              <Text style={styles.hubLabel}>{isHindi ? 'पंडित चैट' : 'Chat Pundit'}</Text>
+              <Text style={styles.hubSub}>{isHindi ? 'प्रश्न पूछें' : 'Ask Any Question'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.hubCard}
+              onPress={() => router.push('/module/kundli')}
+            >
+              <View style={[styles.hubIconBg, { backgroundColor: '#F5F3FF' }]}>
+                <Moon size={22} color="#7C3AED" />
+              </View>
+              <Text style={styles.hubLabel}>{isHindi ? 'कुंडली' : 'Kundli'}</Text>
+              <Text style={styles.hubSub}>{isHindi ? 'जन्म चक्र' : 'Birth Chart'}</Text>
             </TouchableOpacity>
           </View>
         </View>

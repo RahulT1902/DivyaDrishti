@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router';
-import { LayoutDashboard, Sparkles, TrendingUp, Orbit, LogOut } from 'lucide-react-native';
+import { LayoutDashboard, Sparkles, TrendingUp, MessageCircle, Grid2x2, LogOut } from 'lucide-react-native';
 import { Platform, TouchableOpacity, Text, View, Alert } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
 import { clearSession } from '../../services/api';
@@ -71,6 +71,7 @@ function HeaderRight() {
 }
 
 export default function TabLayout() {
+  const { isHindi } = useLanguage();
   return (
     <Tabs
       screenOptions={{
@@ -110,43 +111,44 @@ export default function TabLayout() {
         options={{
           title: 'Dashboard',
           headerTitle: 'DivyaDrishti',
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <LayoutDashboard size={size} color={color} />
-          ),
+          tabBarLabel: isHindi ? 'होम' : 'Home',
+          tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="ritual"
         options={{
-          title: 'Daily Ritual',
-          headerTitle: 'Daily Restorative Ritual',
-          tabBarLabel: 'Ritual',
-          tabBarIcon: ({ color, size }) => (
-            <Sparkles size={size} color={color} />
-          ),
+          title: 'Daily',
+          headerTitle: isHindi ? 'दैनिक अनुष्ठान' : 'Daily Ritual',
+          tabBarLabel: isHindi ? 'दैनिक' : 'Daily',
+          tabBarIcon: ({ color, size }) => <Sparkles size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Pundit',
+          headerTitle: isHindi ? 'पंडित चैट' : 'Chat Pundit',
+          tabBarLabel: isHindi ? 'पंडित' : 'Pundit',
+          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="insights"
         options={{
           title: 'Insights',
-          headerTitle: 'Dasha & Life Insights',
-          tabBarLabel: 'Insights',
-          tabBarIcon: ({ color, size }) => (
-            <TrendingUp size={size} color={color} />
-          ),
+          headerTitle: isHindi ? 'जीवन अंतर्दृष्टि' : 'Dasha & Life Insights',
+          tabBarLabel: isHindi ? 'अंतर्दृष्टि' : 'Insights',
+          tabBarIcon: ({ color, size }) => <TrendingUp size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="transits"
+        name="more"
         options={{
-          title: 'Transits',
-          headerTitle: 'Planetary Transits',
-          tabBarLabel: 'Transits',
-          tabBarIcon: ({ color, size }) => (
-            <Orbit size={size} color={color} />
-          ),
+          title: 'More',
+          headerTitle: isHindi ? 'सभी मॉड्यूल' : 'All Modules',
+          tabBarLabel: isHindi ? 'और' : 'More',
+          tabBarIcon: ({ color, size }) => <Grid2x2 size={size} color={color} />,
         }}
       />
     </Tabs>

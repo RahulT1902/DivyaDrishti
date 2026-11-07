@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '../services/api';
+import { api, invalidateCache } from '../services/api';
 import BirthDetailsPicker, { BirthDetailsData } from '../components/BirthDetailsPicker';
 import { Spacing } from '../constants/theme';
 
@@ -58,6 +58,8 @@ export default function OnboardingScreen() {
 
       if (response?.success) {
         await AsyncStorage.setItem('divya:loggedIn', 'true');
+        // Cached chart/dasha responses belong to the old birth details.
+        await invalidateCache('');
         router.replace('/(tabs)/dashboard');
       } else {
         setError(response?.error || 'Failed to save birth details.');
