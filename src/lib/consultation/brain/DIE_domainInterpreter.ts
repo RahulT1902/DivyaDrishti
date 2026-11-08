@@ -21,6 +21,7 @@ import type { HealthFindings } from "../../intelligence/health/healthFindingsEng
 import type { PromiseResult, DomainActivation } from "../../intelligence/lifeInsights/services";
 import type { InvestigationReport } from "./CIE_investigationEngine";
 import type { ChartFacts } from "../../core/astrology/chartFacts";
+import type { Period } from "../../astrology/dasha";
 import { renderInvestigationReport } from "./CIE_investigationEngine";
 
 // ── Chart-specific data bundle (passed from route.ts into the brain) ──────────
@@ -50,6 +51,9 @@ export interface ChartData {
   // Gold Standard v1.0 inputs — when present, health answers use the Gold Standard prompt.
   chartFacts?:        ChartFacts;
   pratyantar?:        string | null;
+  // Shared timing engine inputs (src/lib/consultation/timing): the Mahadasha
+  // timeline, the date "now" means for this question, and the user's timezone.
+  timing?:            { timeline: Period[]; referenceDate: Date; timezone: string };
 }
 
 // ── Body parts per health system ──────────────────────────────────────────────

@@ -340,6 +340,7 @@ export interface PunditBrainContext {
   consultationBrief: ConsultationBrief; // DIE — what the LLM actually narrates
   sessionNote:       string | null;     // session-level dedup: observations already said twice get suppressed
   goldEvidence?:     string | null;     // Gold Standard chart evidence block (health); null = classic prompt
+  goldTiming?:       boolean;           // goldEvidence includes the dated TIMING EVIDENCE block
 }
 
 // ── Brain Output ──────────────────────────────────────────────────────────────
@@ -353,6 +354,7 @@ export interface PunditBrainOutput {
   renderedSummaryCard: string;   // pre-rendered markdown — prepended in route.ts
   investigationTrail?: string;   // user-facing "Why did Pundit say this?" text
   investigationReport?: any;     // InvestigationReport object
+  timingEvidence?: import("../timing/timingEngine").TimingEvidence | null; // dated dasha/transit evidence, when computed
   metadata: {
     domain:     string;
     tone:       PunditTone;

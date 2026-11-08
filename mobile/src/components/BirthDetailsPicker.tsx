@@ -68,6 +68,29 @@ const ALL_CITIES: CityOption[] = [
     .filter(c => !POPULAR_CITIES.some(p => p.lat === c.lat && p.lng === c.lng)),
 ];
 
+/** Lowercase words only: "Durg  (Chhattisgarh)" → ["durg", "chhattisgarh"]. */
+const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+
+/**
+ * Every typed word must appear in the city or state, so "Bhilai (Chhattisgarh)",
+ * "durg chhattisgarh" and "pune" all match regardless of punctuation or spacing.
+ * An exact name match comes first ("Durg" before "Durgapur"), then names
+ * starting with the first word.
+ */
+function searchCities(query: string): CityOption[] {
+  const q = words(query);
+  if (!q.length) return POPULAR_CITIES;
+  const hits = ALL_CITIES.filter(c => {
+    const w = words(c.city).join(' ');
+    return q.every(t => w.includes(t));
+  });
+  const rank = (c: CityOption) => {
+    const first = words(c.city)[0] ?? '';
+    return first === q[0] ? 0 : first.startsWith(q[0]) ? 1 : 2;
+  };
+  return hits.sort((a, b) => rank(a) - rank(b)).slice(0, 50);
+}
+
 /** Parse "YYYY-MM-DD" by its parts. new Date("YYYY-MM-DD") is read as UTC
  *  midnight, which is the previous day in timezones west of UTC. */
 const parseYMD = (s: string): { y: number; m: number; d: number } | null => {
@@ -118,9 +141,7 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
   const [showCityPicker, setShowCityPicker] = useState(false);
 
   const trimmedQuery = cityQuery.trim().toLowerCase();
-  const visibleCities = trimmedQuery
-    ? ALL_CITIES.filter(c => c.city.toLowerCase().includes(trimmedQuery)).slice(0, 50)
-    : POPULAR_CITIES;
+  const visibleCities = trimmedQuery ? searchCities(cityQuery) : POPULAR_CITIES;
 
   // ── Date calculation helpers ────────────────────────────────────────────────
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
@@ -443,8 +464,11 @@ export default function BirthDetailsPicker({ value, onChange }: BirthDetailsPick
         animationType="slide"
         onRequestClose={() => setShowCityPicker(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { maxHeight: 500 }]}>
+        {/* Pinned to the top with a fixed height: the keyboard covers the lower
+            half of the screen, and the results list needs a sized parent —
+            under a maxHeight-only card it collapsed to zero height. */}
+        <View style={[styles.modalOverlay, { justifyContent: 'flex-start', paddingTop: 48 }]}>
+          <View style={[styles.modalCard, { height: 440 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Birth City</Text>
               <TouchableOpacity onPress={() => setShowCityPicker(false)}>

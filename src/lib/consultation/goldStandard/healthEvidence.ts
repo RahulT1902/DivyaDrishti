@@ -10,6 +10,8 @@
 import type { ChartFacts } from "@/lib/core/astrology/chartFacts";
 import type { PlanetName } from "@/lib/core/types";
 import type { InvestigationReport } from "@/lib/consultation/brain/CIE_investigationEngine";
+import type { TimingEvidence } from "@/lib/consultation/timing/timingEngine";
+import { PLANETS, SPECIAL_ASPECTS, countFrom, ordinal } from "../timing/relations";
 
 export type EvidenceStrength = "Strong" | "Moderate" | "Weak" | "Insufficient";
 
@@ -19,21 +21,6 @@ const HEALTH_HOUSES: Array<{ house: number; meaning: string }> = [
   { house: 8,  meaning: "chronic conditions, sudden events and longevity" },
   { house: 12, meaning: "hospitalisation, rest, sleep and recovery" },
 ];
-
-const PLANETS: PlanetName[] = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
-
-// Vedic graha drishti: every planet aspects the 7th from itself; Mars also the
-// 4th and 8th, Jupiter the 5th and 9th, Saturn the 3rd and 10th. Nodes are
-// given only the 7th here (their special aspects are disputed).
-const SPECIAL_ASPECTS: Partial<Record<PlanetName, number[]>> = {
-  Mars: [4, 8], Jupiter: [5, 9], Saturn: [3, 10],
-};
-
-const ordinal = (n: number) =>
-  `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
-
-/** House reached by counting `nth` from `fromHouse`, inclusive (7th from 1 = 7). */
-const countFrom = (fromHouse: number, nth: number) => ((fromHouse - 1 + nth - 1) % 12) + 1;
 
 function aspectsOnHouse(facts: ChartFacts, house: number): PlanetName[] {
   return PLANETS.filter(p => {
@@ -74,7 +61,15 @@ export function healthEvidenceStrength(report?: InvestigationReport): EvidenceSt
   return "Weak";
 }
 
-export function healthTiming(dasha?: { mahadasha: string; antardasha: string; periodEnd?: string }): string | null {
+export function healthTiming(
+  dasha?: { mahadasha: string; antardasha: string; periodEnd?: string },
+  timing?: TimingEvidence | null,
+): string | null {
+  const d = timing?.dashaStart;
+  if (d) {
+    const until = d.pd.end.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    return `${d.md.planet}–${d.ad.planet}, ${d.pd.planet} sub-period until ~${until}`;
+  }
   if (!dasha) return null;
   const until = dasha.periodEnd
     ? ` until ${new Date(dasha.periodEnd).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}`
@@ -87,8 +82,10 @@ export function renderHealthEvidence(opts: {
   dasha?: { mahadasha: string; antardasha: string; periodStart?: string; periodEnd?: string };
   pratyantar?: string | null;
   report?: InvestigationReport;
+  /** Rendered TIMING EVIDENCE block; replaces the single-day transit snapshot. */
+  timing?: string;
 }): string {
-  const { facts, dasha, pratyantar, report } = opts;
+  const { facts, dasha, pratyantar, report, timing } = opts;
   const lines: string[] = [];
   lines.push(`━━━ HEALTH CHART EVIDENCE (authoritative — computed from this chart; use ONLY these facts) ━━━`);
 
@@ -129,11 +126,15 @@ export function renderHealthEvidence(opts: {
     lines.push(`DASHA ACTIVATION: not available — say the dasha cannot be assessed; do not guess one.`);
   }
 
-  // Transits (§3 step 3), counted from the Ascendant and from the Moon.
+  // Transits (§3 step 3), counted from the Ascendant and from the Moon. With the
+  // timing engine the dated windows below carry the transits, so the
+  // single-day snapshot is left out (it would also cost tokens twice).
   const transits = PLANETS
     .map(p => facts.transitPlanetPositions[p])
     .filter((t): t is NonNullable<typeof t> => !!t);
-  if (transits.length) {
+  if (timing) {
+    // covered by TIMING EVIDENCE
+  } else if (transits.length) {
     lines.push(`CURRENT TRANSITS (timing and temporary influences):`);
     for (const t of transits) {
       const fromMoon = moon ? `, ${ordinal(((t.sign - moon.sign + 12) % 12) + 1)} from the Moon` : "";
@@ -156,5 +157,6 @@ export function renderHealthEvidence(opts: {
   lines.push(...(ch.length ? ch.map(e => `  ✗ ${plain(e.finding)}`) : [`  (none found)`]));
 
   lines.push(`EVIDENCE STRENGTH: ${healthEvidenceStrength(report)}  ← state this in words; never as a percentage.`);
+  if (timing) lines.push(timing);
   return lines.join("\n");
 }

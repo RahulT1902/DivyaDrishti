@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     // 3. Astrology Engine — chart, dasha, transits and the symbolic context
     // (shared with the Gold Standard real-chart review).
     const { birthDetails } = user;
-    const { chart, temporal, currentTransits, dashaInfo, symbolicCtx } = await prepareChartContext(
+    const { chart, timeline, temporal, currentTransits, dashaInfo, symbolicCtx } = await prepareChartContext(
       {
         dateOfBirth: birthDetails.dateOfBirth,
         timeOfBirth: birthDetails.timeOfBirth,
@@ -330,6 +330,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
           manifestations:   targetDomain !== "health" ? manifestations  : null,
           chartFacts,
           pratyantar:       temporal?.stack?.pratyantar ?? null,
+          timing:           { timeline, referenceDate: new Date(), timezone: birthDetails.timezone || "Asia/Kolkata" },
         };
         const brain = await assemblePunditBrain(
           question,

@@ -6,6 +6,9 @@ import {
 } from "@/lib/core/astrology/chartFacts";
 import { buildAstrologicalBasis, insertAstrologicalBasis } from "@/lib/consultation/astrologicalBasis";
 import { MEDICAL_SAFETY_RE } from "@/lib/consultation/goldStandard/rubric";
+import { datesIn, timingCoverageErrors, validateTimingClaims } from "@/lib/consultation/timing/timingValidator";
+import { validateChartClaims } from "@/lib/consultation/timing/claimValidator";
+import { renderKeyDates } from "@/lib/consultation/timing/timingEngine";
 import type { assemblePunditBrain } from "@/lib/consultation/brain";
 
 type PunditBrain = Awaited<ReturnType<typeof assemblePunditBrain>>;
@@ -21,6 +24,12 @@ export interface PunditAnswer {
   remainingErrors: string[];
   /** True when the model left out the medical-safety line and the server added it. */
   safetyAdded: boolean;
+  /** Sentences removed by the gate, with the reasons — kept so lost predictions are visible. */
+  droppedSentences: Array<{ sentence: string; errors: string[] }>;
+  /** True when dated content was lost and the computed key-dates paragraph was added instead. */
+  keyDatesAdded: boolean;
+  /** Provider of the draft, then of the rewrite if there was one (e.g. ["gemini", "groq"]). */
+  providers: string[];
 }
 
 // Token budget — match the brain's depth decision to the expected word count.
@@ -63,29 +72,38 @@ export async function generatePunditAnswer(opts: {
 
   const maxTokens = DEPTH_TOKENS[brain.metadata.depth] ?? 1200;
 
-  const { text } = await callAI(
+  const { text, provider: draftProvider } = await callAI(
     chatMessages
       ? { system: brain.systemPrompt, messages: chatMessages, temperature: brain.temperature, maxTokens }
       : { system: brain.systemPrompt, prompt: brain.userPrompt, temperature: brain.temperature, maxTokens }
   );
   const cleanText = clean(text);
+  const providers: string[] = [draftProvider];
 
   // Calculation & Synthesis Integrity Validation Gate (Hard Gate)
   const synthReport = {
     conclusion: { overallScore: brain.investigationReport?.conclusion.overallScore ?? 50 },
     evidence: brain.investigationReport?.evidence,
   };
+  // With the timing engine, every date and dated event claim must match TIMING EVIDENCE.
+  const timing = brain.timingEvidence ?? null;
   const gateErrors = (t: string) => [
     ...validateInterpretationFacts(chartFacts, t).errors,
     ...validateInterpretationSynthesis(synthReport, t).errors,
+    ...(timing ? validateTimingClaims(timing, t).errors : []),
+    ...(timing ? validateChartClaims(timing, chartFacts, t).errors : []),
   ];
 
   // A failed draft is never replaced wholesale (that used to swap a
   // whole health answer for a one-line career sentence). Instead:
   // 1) one rewrite with the exact errors, 2) if that still fails, drop
   // only the offending sentences.
+  // Coverage (dasha change mentioned, Pratyantar explained) is judged on the
+  // whole answer, so it can trigger the rewrite but not sentence dropping.
+  const coverage = (t: string) => (timing ? timingCoverageErrors(timing, t) : []);
+
   let validatedText = cleanText;
-  const draftErrors = gateErrors(cleanText);
+  const draftErrors = [...gateErrors(cleanText), ...coverage(cleanText)];
   let errors = draftErrors;
   if (errors.length > 0) {
     console.error("Calculation/Synthesis Integrity Hard Gate Triggered (draft 1):", errors);
@@ -98,30 +116,52 @@ export async function generatePunditAnswer(opts: {
           content:
             "Rewrite your full answer, keeping its length and detail, but fix these problems:\n" +
             errors.map(e => `- ${e}`).join("\n") +
-            "\nUse only the chart facts you were given and never phrase a prediction as certain or guaranteed.",
+            "\nUse only the chart facts you were given and never phrase a prediction as certain or guaranteed." +
+            (timing ? " Every date and dated event must match TIMING EVIDENCE exactly." : ""),
         },
       ];
-      const { text: retryText } = await callAI({
+      const { text: retryText, provider: retryProvider, truncated } = await callAI({
         system: brain.systemPrompt, messages: retryMessages, temperature: brain.temperature, maxTokens,
       });
-      validatedText = clean(retryText);
-      errors = gateErrors(validatedText);
+      providers.push(retryProvider);
+      // A cut-off rewrite loses most of the answer; the draft with its bad
+      // sentences dropped is better.
+      if (truncated) console.warn("Hard Gate rewrite was cut off; keeping the draft");
+      else validatedText = clean(retryText);
+      errors = [...gateErrors(validatedText), ...coverage(validatedText)];
     } catch (retryErr) {
       console.error("Hard Gate rewrite failed:", retryErr);
     }
   }
+  // Coverage gaps that survive the rewrite are logged; sentences are dropped only for false claims.
+  const uncovered = coverage(validatedText);
+  if (uncovered.length > 0) console.warn("Timing coverage still incomplete after rewrite:", uncovered);
+  errors = gateErrors(validatedText);
+  const droppedSentences: PunditAnswer["droppedSentences"] = [];
   if (errors.length > 0) {
     console.error("Calculation/Synthesis Integrity Hard Gate Triggered (after rewrite):", errors);
     validatedText = validatedText
       .split("\n")
       .map(line => line
         .split(/(?<=[.!?])\s+/)
-        .filter(sentence => gateErrors(sentence).length === 0)
+        .filter(sentence => {
+          const e = gateErrors(sentence);
+          if (e.length) droppedSentences.push({ sentence, errors: e });
+          return e.length === 0;
+        })
         .join(" "))
       .join("\n")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
+    console.warn("[Gate] Dropped sentences:", JSON.stringify(droppedSentences));
   }
+
+  // Never silently lose the timing: if a dated sentence was dropped, or the
+  // answer still skips a dasha change, add the computed key dates.
+  const lostDates = droppedSentences.some(d => datesIn(d.sentence).length > 0);
+  const keyDatesAdded = !!timing && timing.segments.length > 0 &&
+    (lostDates || timingCoverageErrors(timing, validatedText).some(e => /change around/.test(e)));
+  if (keyDatesAdded) validatedText = `${validatedText}\n\n${renderKeyDates(timing!)}`;
   // Never send a card with no answer under it, whatever path got here.
   if (!validatedText.trim()) {
     validatedText = "I couldn't put together a reliable written reading for this question just now. The summary above is drawn from your chart; please ask again in a moment.";
@@ -153,5 +193,5 @@ export async function generatePunditAnswer(opts: {
     ? `${brain.renderedSummaryCard}\n\n${validatedText}`
     : validatedText;
 
-  return { text: fullText, narrative, draftErrors, remainingErrors: errors, safetyAdded };
+  return { text: fullText, narrative, draftErrors, remainingErrors: errors, safetyAdded, droppedSentences, keyDatesAdded, providers };
 }

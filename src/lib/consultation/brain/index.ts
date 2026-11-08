@@ -26,6 +26,7 @@ import { buildConsultationBrief, renderConsultationBrief } from "./DIE_domainInt
 import type { ChartData } from "./DIE_domainInterpreter";
 import { runInvestigation, renderInvestigationTrailForUser } from "./CIE_investigationEngine";
 import { renderHealthEvidence, healthEvidenceStrength, healthTiming } from "../goldStandard/healthEvidence";
+import { buildTimingEvidence, resolveWindow, type TimingEvidence } from "../timing/timingEngine";
 
 // ── System prompt builder ─────────────────────────────────────────────────────
 // This is the LLM's entire world. It contains conclusions only — never chart data.
@@ -230,14 +231,30 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
       `STRUCTURE — plain connected paragraphs, no headers, in this order:\n` +
       `  A. Overall indication — the headline answer in the first sentence.\n` +
-      `  B. Current dasha influence — name the Mahadasha and Antardasha and what they activate.\n` +
+      (ctx.goldTiming
+        ? `  B. Current dasha influence — name the Mahadasha, Antardasha AND Pratyantar with their dates\n` +
+          `     from TIMING EVIDENCE. Then explain how the Pratyantar lord MODIFIES the Mahadasha–\n` +
+          `     Antardasha reading, using PRATYANTAR LINK: its house and lordship, its dignity, and its\n` +
+          `     relationship to each of the two lords (house distance, aspect, natural friendship).\n` +
+          `     Merely naming the Pratyantar is not enough. If DASHA CHANGES IN PERIOD lists a change,\n` +
+          `     say what shifts after that date.\n`
+        : `  B. Current dasha influence — name the Mahadasha and Antardasha and what they activate.\n`) +
       `  C. Natal combinations — the Ascendant lord and the 6th/8th/12th lords that matter here,\n` +
       `     and the Moon; explain what each means for the body. Don't list every placement.\n` +
       `  D. Current transits — the ones that touch the health houses or the Moon.\n` +
       `  E. What this means for the body — the watch areas from the DIAGNOSIS, in body language.\n` +
       `  F. Favourable influences — what protects or supports health (always include this).\n` +
       `  G. Challenging influences — what strains it.\n` +
-      `  H. Timing — ONLY from the dasha period and transits; NEVER a number of days or weeks.\n` +
+      (ctx.goldTiming
+        ? `  H. Dated timeline — walk through the WINDOWS in TIMING EVIDENCE in date order. For each\n` +
+          `     window worth mentioning give its date range, whether it is favourable, needs care or is\n` +
+          `     mixed, and the specific transit or dasha change behind it (e.g. "from 16 Nov, when the Sun\n` +
+          `     enters your 6th house…"). Where an event falls inside the period, contrast before and\n` +
+          `     after that date. Use ONLY dates that appear in TIMING EVIDENCE — never invent a date or a\n` +
+          `     number of days. Dasha dates are approximate ("around 19 December"). State each window's\n` +
+          `     confidence in words (firm / moderate / tentative) — it reflects how strongly the chart\n` +
+          `     factors agree, not a probability. If no event falls in the period, say the period is steady.\n`
+        : `  H. Timing — ONLY from the dasha period and transits; NEVER a number of days or weeks.\n`) +
       `  I. Practical guidance — specific, including what to avoid and the remedy.\n` +
       `  J. Confidence and limits — say how strong the evidence is (Strong / Moderate / Weak /\n` +
       `     Insufficient, from EVIDENCE STRENGTH) and, in your own words, that astrology shows\n` +
@@ -504,8 +521,11 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
     (gold
       ? `• NEVER use percentages or numeric probabilities.\n` +
-        `• NEVER invent a timeline. Timing comes ONLY from the TIMING line and the transits —\n` +
-        `  never a number of days or weeks.\n`
+        (ctx.goldTiming
+          ? `• NEVER invent a date or timeline. Every date you give must appear in TIMING EVIDENCE —\n` +
+            `  never a number of days or weeks.\n`
+          : `• NEVER invent a timeline. Timing comes ONLY from the TIMING line and the transits —\n` +
+            `  never a number of days or weeks.\n`)
       : `• NEVER invent percentages. Use ONLY numbers from the DIAGNOSIS block.\n` +
         `• NEVER invent a timeline. Use ONLY the TIMELINE from the DIAGNOSIS, or omit timing.\n`) +
     `• NEVER contradict the DIAGNOSIS. It is the ground truth.\n\n` +
@@ -534,7 +554,10 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     (gold
       ? `✓ Dasha, natal combinations and transits are named and explained (A–J covered)\n` +
         `✓ Supporting AND contradicting factors both present; evidence strength stated in words\n` +
-        `✓ No percentages, no day counts; says astrology is not a medical diagnosis\n`
+        `✓ No percentages, no day counts; says astrology is not a medical diagnosis\n` +
+        (ctx.goldTiming
+          ? `✓ Pratyantar's effect explained; dated windows given with their reasons; every date is in TIMING EVIDENCE\n`
+          : ``)
       : `✓ No D1/D9/D10/dasha/yoga names in the body — investigation stays yours; narration is theirs\n` +
         `✓ No raw scores quoted — translated into natural language ("around 75–80%", not "74/100")\n`) +
     `✓ Sounds like a wise elder in conversation — not a report, not a chatbot template\n` +
@@ -607,13 +630,27 @@ export async function assemblePunditBrain(
   // the dasha period instead of fixed day counts, likelihood becomes qualitative
   // evidence strength, and the LLM gets the authoritative chart evidence block.
   let goldEvidence: string | null = null;
+  let timingEvidence: TimingEvidence | null = null;
   if (domain === "health" && chartData.chartFacts && consultationBrief.domainBrief.type === "health") {
+    // Shared timing engine (Phase A): full dated dasha, dasha changes, dated
+    // transit events and windows for the period asked about. Only callers that
+    // pass the Mahadasha timeline get it; the gold benchmark charts have none.
+    if (chartData.timing) {
+      timingEvidence = await buildTimingEvidence({
+        facts:    chartData.chartFacts,
+        timeline: chartData.timing.timeline,
+        window:   resolveWindow(intent.timeframe, chartData.timing.referenceDate),
+        domain,
+        timezone: chartData.timing.timezone,
+      });
+    }
     const hb = consultationBrief.domainBrief;
     hb.goldStandard     = true;
     hb.evidenceStrength = healthEvidenceStrength(investigationReport);
-    hb.timing           = healthTiming(dashaInfo);
+    hb.timing           = healthTiming(dashaInfo, timingEvidence);
     goldEvidence = renderHealthEvidence({
       facts: chartData.chartFacts, dasha: dashaInfo, pratyantar: chartData.pratyantar, report: investigationReport,
+      timing: timingEvidence?.text,
     });
   }
 
@@ -666,6 +703,7 @@ export async function assemblePunditBrain(
     consultationBrief,
     sessionNote,
     goldEvidence,
+    goldTiming: !!timingEvidence,
   };
 
   // Layer 9: Build LLM brief (conclusions only)
@@ -693,6 +731,7 @@ export async function assemblePunditBrain(
     renderedSummaryCard,
     investigationTrail:  renderInvestigationTrailForUser(investigationReport),
     investigationReport,
+    timingEvidence,
     metadata: {
       domain,
       tone:       personality.tone,

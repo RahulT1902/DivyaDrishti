@@ -217,7 +217,8 @@ function detectTimeframe(q: string): string | null {
   if (/next year|coming year/i.test(q))   return "next year";
   if (/this year/i.test(q))               return "this year";
   // Specific month/date references like "2nd Sept", "Sept 2", "2 September", "September 2026"
-  const monthDateMatch = q.match(/\b(\d{1,2}(?:st|nd|rd|th)?\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i);
+  // (the year is kept, so "April 2028" is not read as the next April)
+  const monthDateMatch = q.match(/\b(\d{1,2}(?:st|nd|rd|th)?\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b(\s+(?:of\s+)?20\d\d\b)?/i);
   if (monthDateMatch) return monthDateMatch[0];
   // Specific year references like "in 2027", "for 2027", "career 2027"
   const yearMatch = q.match(/\b(202[5-9]|203\d)\b/);

@@ -47,7 +47,7 @@ export async function prepareChartContext(
 
   const nakshatra = getNakshatra(moon.longitude);
   const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
-  const timeline = buildMahadashaTimeline(birth.dateOfBirth, nakshatra.lord, balance);
+  const timeline = buildMahadashaTimeline(chart.birthUtc, nakshatra.lord, balance);
   const temporal = getDashaContext(timeline, dashaDate);
   const currentTransits = await calculateCurrentTransits(transitDate);
 
@@ -105,5 +105,5 @@ export async function prepareChartContext(
     moonNakshatraIndex,
   });
 
-  return { chart, temporal, currentTransits, dashaInfo, symbolicCtx };
+  return { chart, timeline, temporal, currentTransits, dashaInfo, symbolicCtx };
 }

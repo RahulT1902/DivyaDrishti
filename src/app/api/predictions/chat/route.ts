@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const moon = (chart as any).planets.find((p: any) => p.name === "Moon");
     const nakshatra = getNakshatra(moon?.longitude || 0);
     const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
-    const timeline = buildMahadashaTimeline(user.birthDetails.dateOfBirth, nakshatra.lord, balance);
+    const timeline = buildMahadashaTimeline(chart.birthUtc, nakshatra.lord, balance);
     const currentDasha = getCurrentDasha(timeline, new Date());
 
     if (!currentDasha) {

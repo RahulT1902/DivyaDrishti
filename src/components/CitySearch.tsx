@@ -25,11 +25,15 @@ export default function CitySearch({ onSelect }: CitySearchProps) {
 
   useEffect(() => {
     if (query.length > 1) {
+      // Every typed word must appear in the name or state, so "Bhilai (Chhattisgarh)"
+      // and "durg  chhattisgarh" match despite punctuation or spacing.
+      const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+      const q = words(query);
       const filtered = (cities as readonly City[])
-        .filter((city) =>
-          city.name.toLowerCase().includes(query.toLowerCase()) ||
-          city.state.toLowerCase().includes(query.toLowerCase())
-        )
+        .filter((city) => {
+          const w = words(`${city.name} ${city.state}`).join(" ");
+          return q.every((t) => w.includes(t));
+        })
         .slice(0, 8);
       setFilteredCities(filtered as City[]);
       setIsOpen(true);

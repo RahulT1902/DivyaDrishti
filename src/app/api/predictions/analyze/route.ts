@@ -234,7 +234,7 @@ export async function GET(req: NextRequest) {
 
     const nakshatra = getNakshatra(moon.longitude);
     const balance = getBalanceYears(nakshatra.lord, nakshatra.progress);
-    const timeline = buildMahadashaTimeline(user.birthDetails.dateOfBirth, nakshatra.lord, balance);
+    const timeline = buildMahadashaTimeline(chart.birthUtc, nakshatra.lord, balance);
     const now = new Date();
     const currentDasha = getCurrentDasha(timeline, now);
 

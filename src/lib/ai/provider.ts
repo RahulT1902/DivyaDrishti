@@ -87,12 +87,23 @@ interface CallAIResult {
   text: string;
   provider: AIProvider;
   usedFallback: boolean;
+  /** The reply hit the output limit; `text` was cut back to its last complete sentence. */
+  truncated: boolean;
+}
+
+/** Cut a reply that hit the output limit back to its last complete sentence. */
+function trimToSentence(text: string): string {
+  const end = Math.max(...[".", "!", "?"].map(p => text.lastIndexOf(p)));
+  return end > 0 ? text.slice(0, end + 1) : text;
 }
 
 // gpt-oss and Gemini Flash "think" before answering, and that thinking is
 // counted against the output budget. Without headroom the budget can run out
 // mid-thought and return empty text (finishReason "length").
-const REASONING_HEADROOM = 2000;
+// Gemini Flash used up to ~3,500 tokens on a Gold Standard health answer, so
+// 2,000 cut "today" answers off mid-sentence; its free tier has no
+// output-token charge, so the headroom is generous.
+const REASONING_HEADROOM = 6000;
 
 /**
  * AI SDK v6 calls the option `maxOutputTokens`; the old `maxTokens` was being
@@ -124,7 +135,11 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
   // prompt alone is ~7,700 tokens, so any explicit cap (plus thinking headroom)
   // pushes the request over and it is rejected. Without a cap, Groq applies its
   // own default; an empty reply still falls through via requireText().
-  const attempts: Array<{ provider: Exclude<AIProvider, "none">; label: string; enabled: boolean; model: () => any; headroom: number | null }> = [
+  // gpt-oss on Groq reasons at "medium" effort by default. On the free tier the
+  // reply shares the 8,000 tokens/minute budget with a ~7,000-token prompt, and
+  // medium reasoning used it all up, returning an empty answer (finish "length").
+  // At "low" it spends a few dozen reasoning tokens and the full answer fits.
+  const attempts: Array<{ provider: Exclude<AIProvider, "none">; label: string; enabled: boolean; model: () => any; headroom: number | null; providerOptions?: Record<string, unknown> }> = [
     {
       provider: "gemini", label: "Gemini", enabled: hasGemini, headroom: REASONING_HEADROOM,
       model: () => createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY })("gemini-3.6-flash"),
@@ -132,6 +147,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
     {
       provider: "groq", label: "Groq", enabled: hasGroq, headroom: null,
       model: () => createOpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY }).chat("openai/gpt-oss-20b"),
+      providerOptions: { openai: { reasoningEffort: "low" } },
     },
     {
       provider: "deepseek", label: "DeepSeek", enabled: hasDeepSeek, headroom: 0,
@@ -148,14 +164,18 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
 
   for (const [i, a] of enabled.entries()) {
     try {
-      const { text, finishReason } = await generateText({
+      const { text, finishReason, usage } = await generateText({
         model: a.model(),
         system, ...turnPayload, temperature,
         ...(a.headroom === null ? {} : outputBudget(maxTokens, a.headroom)),
+        ...(a.providerOptions ? { providerOptions: a.providerOptions } : {}),
       } as any);
       const checked = requireText(a.label, text, finishReason);
-      console.log(`[AI] ${a.label}: OK`);
-      return { text: checked, provider: a.provider, usedFallback: i > 0 };
+      // Token use per call — Groq's free tier allows 8,000 tokens/minute (input + output).
+      console.log(`[AI] ${a.label}: OK (in ${usage?.inputTokens ?? "?"} / out ${usage?.outputTokens ?? "?"} tokens)`);
+      const truncated = finishReason === "length";
+      if (truncated) console.warn(`[AI] ${a.label}: reply hit the output limit; cut to its last full sentence`);
+      return { text: truncated ? trimToSentence(checked) : checked, provider: a.provider, usedFallback: i > 0, truncated };
     } catch (e: any) {
       const msg = e?.message || "unknown";
       errors.push(`${a.label}: ${msg}`);

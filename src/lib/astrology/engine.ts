@@ -219,6 +219,8 @@ export async function calculateLagnaChart(params: ChartParams) {
   const lagnaSign = Math.floor(lagnaLong / 30) + 1;
 
   return {
+    // Birth moment in UT — the dasha clock starts here, not at midnight of the birth date.
+    birthUtc: utDate,
     metadata: {
       julDay,
       ayanamsha: eph.swe_get_ayanamsa_ut(julDay),

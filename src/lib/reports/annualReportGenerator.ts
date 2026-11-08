@@ -71,7 +71,7 @@ async function generateDomain(
 
   const nakshatra  = getNakshatra(moon.longitude);
   const balance    = getBalanceYears(nakshatra.lord, nakshatra.progress);
-  const timeline   = buildMahadashaTimeline(birthDetails.dateOfBirth, nakshatra.lord, balance);
+  const timeline   = buildMahadashaTimeline(chart.birthUtc, nakshatra.lord, balance);
   const temporal   = getDashaContext(timeline, new Date());
   const currentTransits = await calculateCurrentTransits();
 

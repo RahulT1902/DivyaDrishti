@@ -55,7 +55,7 @@ async function main() {
   console.log(`\nGold Standard real-chart review — ${charts.length} charts × ${QUESTIONS.length} questions — label: ${label}\n`);
 
   for (const rc of charts) {
-    const { chart, temporal, currentTransits, dashaInfo, symbolicCtx } = await prepareChartContext(
+    const { chart, timeline, temporal, currentTransits, dashaInfo, symbolicCtx } = await prepareChartContext(
       { dateOfBirth: new Date(rc.date), timeOfBirth: rc.time, latitude: rc.latitude, longitude: rc.longitude, timezone: rc.timezone },
       { transitDate: REVIEW_DATE, dashaDate: REVIEW_DATE },
     );
@@ -84,6 +84,7 @@ async function main() {
       manifestations: null,
       chartFacts,
       pratyantar: temporal?.stack?.pratyantar ?? null,
+      timing: { timeline, referenceDate: REVIEW_DATE, timezone: rc.timezone },
     };
 
     md.push(`## ${rc.id} — ${asc} Ascendant, ${dashaInfo?.mahadasha}/${dashaInfo?.antardasha}${chartData.pratyantar ? `/${chartData.pratyantar}` : ""}${drift}`, ``,
