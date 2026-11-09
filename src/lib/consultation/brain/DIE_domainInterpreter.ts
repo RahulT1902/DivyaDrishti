@@ -1029,12 +1029,12 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   const { domainBrief: db } = brief;
 
   // ── Prepend Investigation Trail when available ────────────────────────────
-  // Gold Standard health answers get the same findings (and the transits) in
-  // the HEALTH CHART EVIDENCE block, so the trail and transit audit are left
+  // Gold Standard health and career answers get the same findings (and the transits) in
+  // the domain CHART EVIDENCE block, so the trail and transit audit are left
   // out there — they would duplicate it and push the prompt past the Groq
   // free tier's 8,000 tokens-per-minute limit.
-  const goldHealth = db.type === "health" && !!db.goldStandard;
-  const investigationBlock = brief.investigationReport && !goldHealth
+  const goldBrief = (db.type === "health" || db.type === "career") && !!db.goldStandard;
+  const investigationBlock = brief.investigationReport && !goldBrief
     ? renderInvestigationReport(brief.investigationReport, question) + "\n\n"
     : "";
 
@@ -1126,7 +1126,19 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     if (db.mentalNote) lines.push(`MENTAL NOTE: ${db.mentalNote}`);
   }
 
-  if (db.type === "career") {
+  if (db.type === "career" && db.goldStandard) {
+    // Gold Standard §7/§8: directions in words, no engine scores; timing from the dated dasha.
+    lines.push(`PRIMARY FOCUS: ${db.primaryAspect}`);
+    lines.push(`CAREER BREAKDOWN (direction of each area — say it in words, never as a number):`);
+    db.aspects.forEach(a => {
+      const pad = " ".repeat(Math.max(1, 18 - a.name.length));
+      lines.push(`  ${a.name}:${pad}${a.direction}`);
+    });
+    lines.push(`OPPORTUNITY: ${db.opportunityNote}`);
+    if (db.frictionNote) lines.push(`FRICTION: ${db.frictionNote}`);
+    lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
+    lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in CAREER CHART EVIDENCE; never give a number of days or weeks`);
+  } else if (db.type === "career") {
     lines.push(`PRIMARY FOCUS: ${db.primaryAspect}`);
     lines.push(`CAREER BREAKDOWN (reference for direction — narrate naturally, don't list percentages mechanically):`);
     db.aspects.forEach(a => {

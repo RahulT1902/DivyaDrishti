@@ -455,7 +455,13 @@ function buildSummaryCard(
         : "Facing friction";
       stats.push({ label: "Direction", value: dirText });
     }
-    if (c.timing) stats.push({ label: "Timing", value: c.timing });
+    // Gold Standard v1.0: qualitative evidence strength, and timing from the dated dasha.
+    if (c.goldStandard) {
+      stats.push({ label: "Evidence Strength", value: c.evidenceStrength ?? "Insufficient" });
+      if (c.goldTiming) stats.push({ label: "Timing", value: c.goldTiming });
+    } else if (c.timing) {
+      stats.push({ label: "Timing", value: c.timing });
+    }
     stats.push({ label: "Risk", value: c.frictionNote ? "Present" : "Low" });
     return { title, ratingOf5: stars, phase: careerPhase, stats };
   }

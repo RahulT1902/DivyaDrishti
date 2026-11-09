@@ -265,6 +265,10 @@ export interface CareerBrief {
   overallProbability: number;
   strategyNote:       string;         // what the user should actually DO this week/period
   surpriseObservation: string | null; // the unexpected finding — what they didn't ask about
+  // ── Gold Standard v1.0 (set when chart facts are supplied; see goldStandard/) ──
+  goldStandard?:      boolean;
+  evidenceStrength?:  "Strong" | "Moderate" | "Weak" | "Insufficient";
+  goldTiming?:        string | null;  // from the dated dasha, e.g. "Rahu–Jupiter, Mercury sub-period until ~19 Dec 2026"
 }
 
 export interface FinanceArea {
@@ -341,6 +345,7 @@ export interface PunditBrainContext {
   sessionNote:       string | null;     // session-level dedup: observations already said twice get suppressed
   goldEvidence?:     string | null;     // Gold Standard chart evidence block (health); null = classic prompt
   goldTiming?:       boolean;           // goldEvidence includes the dated TIMING EVIDENCE block
+  goldDomain?:       string;            // domain whose Gold Standard prompt is used ("health", "career", …)
 }
 
 // ── Brain Output ──────────────────────────────────────────────────────────────
@@ -355,6 +360,7 @@ export interface PunditBrainOutput {
   investigationTrail?: string;   // user-facing "Why did Pundit say this?" text
   investigationReport?: any;     // InvestigationReport object
   timingEvidence?: import("../timing/timingEngine").TimingEvidence | null; // dated dasha/transit evidence, when computed
+  goldVarga?: import("../../core/types").DivisionalChart; // the domain's divisional chart, for the answer gate
   metadata: {
     domain:     string;
     tone:       PunditTone;

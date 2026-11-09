@@ -41,8 +41,8 @@ export interface RubricResult {
   checks: RubricCheck[];
 }
 
-// Chart factors the standard requires for each domain (§2). Health only for
-// now — other domains get their own factor sets when they migrate.
+// Chart factors the standard requires for each domain (§2). Each domain gets
+// its own factor set when it migrates (health, then career).
 const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
   health: [
     { id: "ascendant", pattern: /\b(?:ascendant|lagna)\b/i },
@@ -50,6 +50,13 @@ const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
     { id: "8th house", pattern: /\b(?:8th|eighth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:8th|eighth)\b/i },
     { id: "12th house", pattern: /\b(?:12th|twelfth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:12th|twelfth)\b/i },
     { id: "Moon", pattern: /\bMoon\b/ },
+  ],
+  career: [
+    { id: "10th house", pattern: /\b(?:10th|tenth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:10th|tenth)\b/i },
+    { id: "6th house", pattern: /\b(?:6th|sixth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:6th|sixth)\b/i },
+    { id: "2nd/11th house", pattern: /\b(?:2nd|second|11th|eleventh)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:2nd|second|11th|eleventh)\b/i },
+    { id: "7th house", pattern: /\b(?:7th|seventh)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:7th|seventh)\b/i },
+    { id: "Dashamsha", pattern: /\b(?:Dashamsha|Dasamsa|Dashamsa|career chart)\b/i },
   ],
 };
 
@@ -68,7 +75,7 @@ export function scoreConsultation(opts: {
   const { narrative, domain, chartFacts, dasha } = opts;
   const factors = DOMAIN_FACTORS[domain];
   if (!factors) {
-    throw new Error(`Gold Standard rubric has no factor set for domain "${domain}" yet (health migrates first).`);
+    throw new Error(`Gold Standard rubric has no factor set for domain "${domain}" yet (domains migrate one at a time).`);
   }
 
   const text = narrative.split(/\n\s*Overall Summary/i)[0];

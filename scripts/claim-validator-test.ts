@@ -32,7 +32,7 @@ const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? p
   const u = await prisma.user.findFirst({ where: { id: { startsWith: user } }, include: { birthDetails: true } });
   const b = u!.birthDetails!;
   const ref = new Date(Date.UTC(2026, 10, 8));
-  const { chart, timeline, currentTransits } = await prepareChartContext(b, { dashaDate: ref });
+  const { chart, timeline, currentTransits, symbolicCtx } = await prepareChartContext(b, { dashaDate: ref });
   const asc = chart.lagna.sign as Sign;
   const facts = buildChartFacts(asc, chart.planets.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign })),
     currentTransits.positions.map(p => ({ planet: p.name as PlanetName, sign: p.sign as Sign })));
@@ -64,6 +64,14 @@ const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? p
   for (const c of ev.dashaChanges) passes(`Around ${day(c.date)} the sub-period moves into ${c.to}'s rhythm.`, "a dasha change is not read as a sign change");
   const fav = ev.segments.find(s => s.direction === "favourable");
   if (fav) passes(`While the movement on ${day(fav.from)} is positive, the broader ${d.pd.planet} sub-period cautions against overexertion.`, "a favourable day contrasted with the sub-period");
+
+  // From the career benchmark: a "best window" spanning a firm caution window.
+  const firmCaution = ev.segments.find(s => s.direction === "caution" && s.confidence === "firm");
+  if (firmCaution && ev.segments[0] !== firmCaution) {
+    fails(`Best Window: ${day(ev.segments[0].from)} to ${day(firmCaution.to)}.`, "a 'best window' that spans a firm caution window (real Gemini summary)");
+  }
+  const favSeg = ev.segments.find(s => s.direction === "favourable");
+  if (favSeg) passes(`Best Window: ${day(favSeg.from)} to ${day(favSeg.to)}.`, "a 'best window' that is a favourable window");
 
   console.log("\nDignity");
   for (const p of ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"] as PlanetName[]) {
@@ -107,6 +115,29 @@ const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? p
   for (const c of ev.dashaChanges) passes(`From ${day(c.date)} the ${c.to} ${c.level} begins.`, `the incoming ${c.level} lord ${c.to}`);
   const notLord = (["Sun", "Moon", "Mars", "Venus", "Saturn"] as PlanetName[]).find(p => ![d.md.planet, d.ad.planet, d.pd.planet, ...ev.dashaChanges.map(c => c.to)].includes(p))!;
   fails(`The ${notLord} Pratyantar brings relief.`, `${notLord} called the Pratyantar lord`);
+
+  console.log("\nDivisional chart (Dashamsha) claims");
+  const D10 = symbolicCtx.chartSuite.D10;
+  const vGate = (t: string) => validateChartClaims(ev, facts, t, D10).errors;
+  const vFails = (t: string, msg: string) => { const e = vGate(t); check(e.length > 0, `rejects: ${msg}`, e); };
+  const vPasses = (t: string, msg: string) => { const e = vGate(t); check(e.length === 0, `accepts: ${msg}`, e); };
+  const d10 = (p: PlanetName) => D10.planets.find(x => x.planet === p)!;
+  const d10Dig = (p: PlanetName) => getDignityInfo(p, d10(p).sign as Sign).condition.signDignity;
+  const d10Lord = D10.lords.find(l => l.house === 10)!.lord;
+  vPasses(`In your career chart (Dashamsha), ${d10Lord} rules the 10th house and sits in its ${ordinal(d10(d10Lord).house)} house.`, `the Dashamsha's own 10th lord and house`);
+  vPasses(`In your Dashamsha the 10th lord is ${d10Lord}.`, "Dashamsha 10th lord (differs from the birth chart's)");
+  const notLord10 = (["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"] as PlanetName[]).find(p => p !== d10Lord && p !== facts.houseLords[10])!;
+  vFails(`In your Dashamsha the 10th lord is ${notLord10}.`, `${notLord10} as 10th lord (in neither chart)`);
+  const exD10 = (["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"] as PlanetName[]).find(p => d10Dig(p) === "exalted");
+  if (exD10) vPasses(`${facts.houseLords[10]} rules your 10th, and an exalted ${exD10} in the Dashamsha adds weight.`, "mixed sentence: birth-chart lord + Dashamsha dignity");
+  const neverDeb = (["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"] as PlanetName[]).find(p =>
+    d10Dig(p) !== "debilitated" && ![natal(p).sign, ...ev.segments.flatMap(s => s.factors).filter(f => f.planet === p).map(f => f.sign)]
+      .some(s => getDignityInfo(p, s as Sign).condition.signDignity === "debilitated"))!;
+  vFails(`In your Dashamsha, ${neverDeb} is debilitated.`, `${neverDeb} debilitated (in neither chart)`);
+  if (exD10 && D10.ascendant.sign !== facts.ascendantSign) {
+    vPasses(`With ${D10.ascendant.signName} rising, ${exD10} is exalted in its ${ordinal(d10(exD10).house)} house.`,
+      "divisional chart named only by its Ascendant (real Gemini sentence)");
+  }
 
   console.log("\nKey-dates fallback (safeguard B)");
   const kd = renderKeyDates(ev);

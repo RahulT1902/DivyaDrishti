@@ -7,7 +7,7 @@
  * one rewrite; sentences that still fail are dropped (see punditAnswer.ts).
  */
 
-import type { TimingEvidence, TransitEvent } from "./timingEngine";
+import type { TimingEvidence, TimingSegment, TransitEvent } from "./timingEngine";
 import { SIGN_NAMES } from "./relations";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -107,7 +107,7 @@ export function validateTimingClaims(ev: TimingEvidence, text: string): { errors
 }
 
 const CAUTION_RE = /\b(caution|careful|care|watch|challenging|strain|difficult|tougher|harder|irritat)/i;
-const FAVOUR_RE = /\b(favourable|favorable|supportive|support|relief|easier|easing|better|good window|recover|positive)/i;
+const FAVOUR_RE = /\b(favourable|favorable|supportive|support|relief|easier|easing|better|good window|best (?:window|period|time)|recover|positive)/i;
 
 /**
  * A sentence that labels a dated window as caution or favourable must agree
@@ -122,11 +122,27 @@ function directionErrors(ev: TimingEvidence, text: string): string[] {
     if (!dates.length) continue;
     const saysCaution = CAUTION_RE.test(sentence), saysFavour = FAVOUR_RE.test(sentence);
     if (saysCaution === saysFavour) continue; // neither, or both (a contrast) — nothing to check
-    // The window the sentence's first date falls in.
-    const seg = ev.segments.find(s => {
-      for (let t = s.from.getTime(); t < s.to.getTime(); t += DAY) if (dayKey(new Date(t), tz) === dates[0]) return true;
+    // The window the sentence's first date falls in. A date on which one window
+    // ends and the next opens ("from 24 August, when Mars enters…") belongs to
+    // the window it opens.
+    const covers = (s: TimingSegment, d: string) => {
+      for (let t = s.from.getTime(); t < s.to.getTime(); t += DAY) if (dayKey(new Date(t), tz) === d) return true;
       return false;
-    });
+    };
+    const seg = ev.segments.find(s => dayKey(s.from, tz) === dates[0]) ?? ev.segments.find(s => covers(s, dates[0]));
+    // A range called favourable ("Best Window: 1 Dec to 19 Dec") must not span a firm caution window.
+    if (saysFavour && seg && dates.length >= 2) {
+      const last = dates[dates.length - 1];
+      const i1 = ev.segments.indexOf(seg);
+      // The range's end date belongs to the window that ends (or runs) on it, not one opening that day.
+      const ends = ev.segments.findIndex(s => dayKey(s.to, tz) === last);
+      const i2 = ends >= 0 ? ends : ev.segments.findIndex(s => covers(s, last) && dayKey(s.from, tz) !== last);
+      const firm = i2 > i1 ? ev.segments.slice(i1, i2 + 1).find(s => s.direction === "caution" && s.confidence === "firm") : undefined;
+      if (firm) {
+        errors.push(`The answer treats ${dates[0]}–${last} as favourable, but it includes ${fmt(firm.from)}–${fmt(firm.to)}, which TIMING EVIDENCE marks CAUTION (firm).`);
+        continue;
+      }
+    }
     if (!seg || seg.direction === "mixed") continue;
     if (saysCaution && seg.direction === "favourable") {
       errors.push(`The answer treats ${fmt(seg.from)}–${fmt(seg.to)} as a caution period, but TIMING EVIDENCE marks it FAVOURABLE.`);
@@ -147,7 +163,11 @@ export function timingCoverageErrors(ev: TimingEvidence, text: string): string[]
   const errors: string[] = [];
   const tz = ev.timezone;
   const mentioned = new Set(datesIn(text));
+  // Pratyantars last weeks: a year answer must cover Mahadasha and Antardasha
+  // changes, not every Pratyantar change or the one running on 1 January.
+  const year = ev.window.horizon === "year";
   for (const c of ev.dashaChanges) {
+    if (year && c.level === "Pratyantar") continue;
     const near = [-1, 0, 1].some(off => mentioned.has(dayKey(new Date(c.date.getTime() + off * DAY), tz)));
     if (!near) {
       const d = c.date.toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: tz });
@@ -155,7 +175,7 @@ export function timingCoverageErrors(ev: TimingEvidence, text: string): string[]
     }
   }
   const d = ev.dashaStart;
-  if (d && d.pd.planet !== d.md.planet && d.pd.planet !== d.ad.planet) {
+  if (d && !year && d.pd.planet !== d.md.planet && d.pd.planet !== d.ad.planet) {
     const linked = text.split(/(?<=[.!?])\s+/).some(s =>
       s.includes(d.pd.planet) && (s.includes(d.md.planet) || s.includes(d.ad.planet)) && /pratyantar|sub-?period/i.test(s));
     if (!linked) {

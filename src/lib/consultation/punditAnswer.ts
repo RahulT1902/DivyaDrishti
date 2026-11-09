@@ -7,7 +7,7 @@ import {
 import { buildAstrologicalBasis, insertAstrologicalBasis } from "@/lib/consultation/astrologicalBasis";
 import { MEDICAL_SAFETY_RE } from "@/lib/consultation/goldStandard/rubric";
 import { datesIn, timingCoverageErrors, validateTimingClaims } from "@/lib/consultation/timing/timingValidator";
-import { validateChartClaims } from "@/lib/consultation/timing/claimValidator";
+import { validateChartClaims, withoutVargaSentences } from "@/lib/consultation/timing/claimValidator";
 import { renderKeyDates } from "@/lib/consultation/timing/timingEngine";
 import type { assemblePunditBrain } from "@/lib/consultation/brain";
 
@@ -87,11 +87,14 @@ export async function generatePunditAnswer(opts: {
   };
   // With the timing engine, every date and dated event claim must match TIMING EVIDENCE.
   const timing = brain.timingEvidence ?? null;
+  // Divisional-chart sentences ("the Dashamsha's 10th lord Venus…") are checked
+  // against that chart in validateChartClaims; the birth-chart lordship check skips them.
+  const varga = brain.goldVarga;
   const gateErrors = (t: string) => [
-    ...validateInterpretationFacts(chartFacts, t).errors,
+    ...validateInterpretationFacts(chartFacts, varga ? withoutVargaSentences(t, varga, chartFacts) : t).errors,
     ...validateInterpretationSynthesis(synthReport, t).errors,
     ...(timing ? validateTimingClaims(timing, t).errors : []),
-    ...(timing ? validateChartClaims(timing, chartFacts, t).errors : []),
+    ...(timing ? validateChartClaims(timing, chartFacts, t, varga).errors : []),
   ];
 
   // A failed draft is never replaced wholesale (that used to swap a

@@ -61,16 +61,27 @@ For the running Pratyantar lord, the engine states:
   acts through its sign lord);
 - which of the question's domain houses it rules or occupies.
 
-## Integration (Phase A)
+## Integration
 
-- **Health only:** wired into the Gold Standard health prompt (`brain/index.ts`),
-  and only when the caller passes `chartData.timing` (the chat route and
-  `scripts/pundit-review.ts` do). The block replaces the single-day transit
-  snapshot in HEALTH CHART EVIDENCE.
-- **Other domains:** career, finance and the rest get it in Phase B, each with
-  its own rules and gold tests.
-- **Gold charts unchanged:** they have no birth date, so their prompts are
-  byte-identical to before.
+- **Health (Phase A):** wired into the Gold Standard health prompt
+  (`brain/index.ts`), and only when the caller passes `chartData.timing` (the
+  chat route and `scripts/pundit-review.ts` do). The block replaces the
+  single-day transit snapshot in HEALTH CHART EVIDENCE.
+- **Career (Phase B):** gets the same timing plus its own evidence block,
+  CAREER CHART EVIDENCE (`goldStandard/domainEvidence.ts`):
+  - the 10th, 6th, 2nd, 11th, 7th and 9th houses with lords, occupants and aspects;
+  - the karakas Sun, Saturn, Mercury and Jupiter;
+  - what the dasha lords rule or occupy;
+  - Dashamsha (D10) corroboration of the 10th lord, the karakas and the dasha lords.
+  - A question about the job itself ("switch", "employer", "interview"…)
+    times against the job houses (2, 6, 8, 10, 11, 12) instead.
+  - Its prompt wording lives in `goldStandard/domainPrompts.ts`.
+- **Remaining domains:** finance, property, marriage, family and education
+  migrate one at a time, each with a `DomainSpec` and its own benchmark.
+- **Gold charts unchanged:** they have no birth date, so their health and
+  marriage prompts are byte-identical to before. Their career prompts now use
+  the career Gold Standard; the gold test charts have no Dashamsha, so that
+  section reads "not available" there.
 
 ## Answer gate
 
@@ -79,7 +90,13 @@ model for one rewrite; sentences that still fail are dropped.
 
 - **Natal or transit:** a claim passes if it matches the natal chart or any
   position in the period asked. Today's position counts only when there is no
-  dated evidence.
+  dated evidence. A sentence that says "transit" must match a transit position.
+- **Divisional charts:** a sentence naming the divisional chart (or its
+  Ascendant, e.g. "With Leo rising…") is checked against that chart too. Such
+  sentences often mix both charts, so a claim fails only if it is false in both.
+- **Windows:** a range called favourable or "best" must not span a firm
+  caution window. A year answer must cover Mahadasha and Antardasha changes,
+  not every Pratyantar change.
 - **Unattributable claims are skipped:** a false alarm would drop a correct
   sentence.
 - **Dropped sentences are recorded:** they come back in

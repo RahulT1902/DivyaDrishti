@@ -22,7 +22,7 @@ const HEALTH_HOUSES: Array<{ house: number; meaning: string }> = [
   { house: 12, meaning: "hospitalisation, rest, sleep and recovery" },
 ];
 
-function aspectsOnHouse(facts: ChartFacts, house: number): PlanetName[] {
+export function aspectsOnHouse(facts: ChartFacts, house: number): PlanetName[] {
   return PLANETS.filter(p => {
     const pos = facts.natalPlanetPositions[p];
     if (!pos) return false;
@@ -30,11 +30,11 @@ function aspectsOnHouse(facts: ChartFacts, house: number): PlanetName[] {
   });
 }
 
-function occupantsOf(facts: ChartFacts, house: number): PlanetName[] {
+export function occupantsOf(facts: ChartFacts, house: number): PlanetName[] {
   return PLANETS.filter(p => facts.natalPlanetPositions[p]?.house === house);
 }
 
-function describePlanet(facts: ChartFacts, p: PlanetName): string {
+export function describePlanet(facts: ChartFacts, p: PlanetName): string {
   const pos = facts.natalPlanetPositions[p];
   if (!pos) return `${p}: placement not available — do not assume one`;
   const cond = facts.planetaryConditions[p];

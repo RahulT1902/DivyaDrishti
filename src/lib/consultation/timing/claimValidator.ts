@@ -17,7 +17,7 @@
 
 import type { ChartFacts } from "../../core/astrology/chartFacts";
 import { getDignityInfo, type SignDignity } from "../../core/astrology/dignityEngine";
-import type { PlanetName } from "../../core/types";
+import type { DivisionalChart, PlanetName } from "../../core/types";
 import type { TimingEvidence } from "./timingEngine";
 import { PLANETS, SIGN_NAMES, naturalView, nthFrom, ordinal } from "./relations";
 
@@ -73,15 +73,96 @@ const DIGNITY_WORDS: Array<[RegExp, SignDignity[]]> = [
   [/\b(?:in\s+(?:its|his|her)\s+own\s+(?:sign|house)|own[- ]sign)\b/i, ["own", "moolatrikona"]],
 ];
 
-export function validateChartClaims(ev: TimingEvidence | null, facts: ChartFacts, text: string): { errors: string[] } {
+/** A sentence about a divisional chart rather than the birth chart. */
+export const VARGA_RE = /\b(?:Dashamsha|Dashamsa|Dasamsa|career chart|Navamsa|Navamsha|Hora|divisional)\b/i;
+
+const splitSentences = (text: string) => text.split(/(?<=[.!?])\s+|\n+/);
+
+/**
+ * A sentence about the divisional chart: it names it, or names its Ascendant
+ * where that differs from the birth chart's ("With Leo rising, the Sun is
+ * exalted in its 9th").
+ */
+function isVargaSentence(sentence: string, varga: DivisionalChart | undefined, facts: ChartFacts | undefined): boolean {
+  if (VARGA_RE.test(sentence)) return true;
+  return !!varga && !!facts && varga.ascendant.sign !== facts.ascendantSign &&
+    new RegExp(`\\b${varga.ascendant.signName}\\s+(?:rising|Ascendant|lagna)\\b`, "i").test(sentence);
+}
+
+/** The text without its divisional-chart sentences, for checks that know only the birth chart. */
+export function withoutVargaSentences(text: string, varga?: DivisionalChart, facts?: ChartFacts): string {
+  return splitSentences(text).filter(s => !isVargaSentence(s, varga, facts)).join(" ");
+}
+
+/** The planet a dignity word describes: "exalted Sun" (right after it), else the nearest one before it. */
+function dignitySubject(ms: Mention[], at: number, len: number): PlanetName | null {
+  return ms.find(x => x.at >= at + len && x.at - (at + len) <= 2)?.planet
+    ?? nearestBefore(ms, at)
+    ?? ms.find(x => x.at > at && x.at - at < 20)?.planet
+    ?? null;
+}
+
+/**
+ * Claims in a divisional-chart sentence ("in your Dashamsha the Sun is exalted
+ * in the 9th; its 10th lord Venus is debilitated in the 2nd"). Such sentences
+ * often mix both charts ("10th lord Jupiter in the 5th, and an exalted Sun in
+ * the Dashamsha"), so a claim fails only if it is false in the divisional
+ * chart AND in the birth chart (and transits).
+ */
+function vargaErrors(
+  sentence: string, ms: Mention[], dc: DivisionalChart, facts: ChartFacts, ev: TimingEvidence | null,
+): string[] {
+  const errors: string[] = [];
+  const pos = (p: PlanetName) => dc.planets.find(x => x.planet === p);
+  const birthSigns = (p: PlanetName) =>
+    [facts.natalPlanetPositions[p]?.sign, ...transitSigns(ev, facts, p)].filter((s): s is number => !!s);
+  for (const [re, kinds] of DIGNITY_WORDS) {
+    const m = sentence.match(re);
+    if (!m) continue;
+    if (/\b(not|n't|never|neither|nor|no longer)\s+(?:\w+\s+){0,2}$/i.test(sentence.slice(0, m.index!))) continue;
+    const p = dignitySubject(ms, m.index!, m[0].length);
+    const pl = p && pos(p);
+    if (!p || !pl) continue;
+    const dig = getDignityInfo(p, pl.sign as any).condition.signDignity;
+    const inBirth = birthSigns(p).some(s => kinds.includes(getDignityInfo(p, s as any).condition.signDignity));
+    if (!kinds.includes(dig) && !inBirth) errors.push(`The answer calls ${p} ${kinds[0]}, but it is ${dig} in the divisional chart (${pl.signName}) and not ${kinds[0]} in the birth chart either.`);
+  }
+  const placeRe = new RegExp(`\\b(?:in|into|occupies|occupying)\\s+(?:the\\s+|its\\s+|your\\s+)*(${ORD})\\b(?![- ]?(?:house\\s+)?(?:lord|ruler|from))`, "gi");
+  for (const m of sentence.matchAll(placeRe)) {
+    const p = nearestBefore(ms, m.index!);
+    const pl = p && pos(p);
+    if (!p || !pl) continue;
+    const n = ordValue(m[1]);
+    const inBirth = [facts.natalPlanetPositions[p]?.house, ...birthSigns(p).map(s => nthFrom(facts.ascendantSign, s))].includes(n);
+    if (n !== pl.house && !inBirth) errors.push(`The answer puts ${p} in the ${ordinal(n)} house, but it is in the ${ordinal(pl.house)} of the divisional chart and not the ${ordinal(n)} of the birth chart either.`);
+  }
+  const lordRe = new RegExp(`\\b(${ORD})[- ](?:house\\s+)?lord(?:\\s+is)?\\s+(${PLANETS.join("|")})\\b|\\b(${PLANETS.join("|")})\\s+(?:is|as|acts as)\\s+(?:the\\s+|its\\s+)?(${ORD})[- ](?:house\\s+)?lord\\b`, "gi");
+  for (const m of sentence.matchAll(lordRe)) {
+    const n = ordValue(m[1] ?? m[4]);
+    const p = (m[2] ?? m[3]) as PlanetName;
+    const lord = dc.lords.find(l => l.house === n)?.lord;
+    if (lord && lord !== p && facts.houseLords[n] !== p) {
+      errors.push(`The answer makes ${p} the ${ordinal(n)} lord, but that is ${lord} in the divisional chart and ${facts.houseLords[n]} in the birth chart.`);
+    }
+  }
+  return errors;
+}
+
+export function validateChartClaims(
+  ev: TimingEvidence | null, facts: ChartFacts, text: string, varga?: DivisionalChart,
+): { errors: string[] } {
   const errors: string[] = [];
   const asc = facts.ascendantSign;
   const moon = facts.natalPlanetPositions.Moon?.sign;
   const natal = (p: PlanetName) => facts.natalPlanetPositions[p];
 
-  for (const sentence of text.split(/(?<=[.!?])\s+|\n+/)) {
+  for (const sentence of splitSentences(text)) {
     const ms = subjects(sentence);
     if (!ms.length) continue;
+    if (isVargaSentence(sentence, varga, facts)) {
+      if (varga) errors.push(...vargaErrors(sentence, ms, varga, facts, ev));
+      continue;
+    }
     const claimed = new Set<number>(); // ordinal positions already checked as relations
 
     // ── Relation: "Nth (house) from X" ─────────────────────────────────────
@@ -152,8 +233,7 @@ export function validateChartClaims(ev: TimingEvidence | null, facts: ChartFacts
       if (!m) continue;
       const before = sentence.slice(0, m.index!);
       if (/\b(not|n't|never|neither|nor|no longer)\s+(?:\w+\s+){0,2}$/i.test(before)) continue;
-      let p = nearestBefore(ms, m.index!);
-      if (!p) p = ms.find(x => x.at > m.index! && x.at - m.index! < 20)?.planet ?? null; // "an exalted Rahu"
+      const p = dignitySubject(ms, m.index!, m[0].length); // "an exalted Rahu" or "Rahu … exalted"
       if (!p) continue;
       const signs = [natal(p)?.sign, ...transitSigns(ev, facts, p)].filter((s): s is number => !!s);
       const dignities = new Set(signs.map(s => getDignityInfo(p!, s as any).condition.signDignity));

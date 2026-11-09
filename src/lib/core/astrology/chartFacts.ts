@@ -150,8 +150,10 @@ export function validateInterpretationSynthesis(
   // 1. CERTAINTY Class: FORBIDDEN for any prediction regardless of score.
   // Bare "certain" is the ordinary adjective ("avoid certain foods") and was
   // rejecting normal answers, so only certainty *claims* are matched.
+  // "not guaranteed" / "rather than guaranteed outcomes" deny certainty, which
+  // the Gold Standard limits paragraph asks for, so the negated forms pass.
   const CERTAINTY_PATTERNS = [
-    /\bguaranteed\b/i,
+    /(?<!\b(?:not|never|rather than|isn't|aren't|nothing is)\s+(?:yet\s+|always\s+)?)\bguaranteed\b/i,
     /\binevitable\b/i,
     /\b(?:is|are|be|seems|looks) (?:almost |absolutely )?certain\b/i,
     /\bfor certain\b/i,

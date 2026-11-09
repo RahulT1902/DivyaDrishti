@@ -9,9 +9,9 @@
 // The MRI is not the diagnosis. The LLM never sees the MRI.
 // It only sees: what the astrologer concluded, and what to say next.
 
-import type { AstrologyContext, DashaInfo } from "../../core/types";
+import type { AstrologyContext, DashaInfo, DivisionalChart } from "../../core/types";
 import type { StoredDomainMemory } from "../sessionMemory";
-import type { PunditBrainContext, PunditBrainOutput, NotebookEntry } from "./types";
+import type { CareerBrief, PunditBrainContext, PunditBrainOutput, NotebookEntry } from "./types";
 
 import { assimilateReality, loadNotebook } from "./L0_realityAssimilation";
 import { analyzeIntent }                   from "./L1_intentEngine";
@@ -26,6 +26,8 @@ import { buildConsultationBrief, renderConsultationBrief } from "./DIE_domainInt
 import type { ChartData } from "./DIE_domainInterpreter";
 import { runInvestigation, renderInvestigationTrailForUser } from "./CIE_investigationEngine";
 import { renderHealthEvidence, healthEvidenceStrength, healthTiming } from "../goldStandard/healthEvidence";
+import { DOMAIN_SPECS, renderDomainEvidence } from "../goldStandard/domainEvidence";
+import { GOLD_PHRASES, goldProtocol } from "../goldStandard/domainPrompts";
 import { buildTimingEvidence, resolveWindow, type TimingEvidence } from "../timing/timingEngine";
 
 // ── System prompt builder ─────────────────────────────────────────────────────
@@ -39,6 +41,10 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
   // reasoning is shown, not hidden. Each narrator rule that forbids naming
   // dashas, houses or planets has a Gold Standard variant below.
   const gold = !!ctx.goldEvidence;
+  // Migrated non-health domains (Phase B) take their wording from GOLD_PHRASES;
+  // health keeps the inline text below, unchanged.
+  const phr = gold && ctx.goldDomain && ctx.goldDomain !== "health" ? GOLD_PHRASES[ctx.goldDomain] : null;
+  const evName = phr?.evidenceName ?? "HEALTH CHART EVIDENCE";
 
   const sections: string[] = [];
 
@@ -71,6 +77,9 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
     `OVERALL SUMMARY — required at the end of every consultation (not for quick daily checks):\n` +
     `  Write the summary header on its own line, then 4–8 one-line stats. No bullets.\n` +
+    // Health-only blocks are left out of other domains' Gold Standard prompts
+    // (Groq's 8,000 tokens-per-minute limit).
+    (phr ? `` :
     `  HEALTH format (weekly/monthly):\n` +
     `    Overall Health: ★★★★☆ (e.g. "Stable" / "Mild Sensitivity" / "Under Stress")\n` +
     `    Primary Watch Area: [plain-language body part or system]\n` +
@@ -80,10 +89,10 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     (gold
       ? `    Serious Strain Indication: [None strong / Some / Notable — see a doctor]\n`
       : `    Risk of Major Illness: [Low / Moderate / High]\n`) +
-    `    Best Approach: [1 specific practical phrase]\n` +
+    `    Best Approach: [1 specific practical phrase]\n`) +
     // Career-only blocks below are left out in Gold Standard (health) mode to
     // keep the prompt under the Groq free tier's 8,000 tokens-per-minute limit.
-    (gold ? `` :
+    (gold ? (phr?.summaryFormat ?? ``) :
     `  CAREER format (monthly):\n` +
     `    Overall Career: ★★★★☆ (Around X%) — use the PROBABILITY from INVESTIGATION TRAIL\n` +
     `    Recognition & Visibility: [High / Strong / Moderate / Building]\n` +
@@ -106,8 +115,8 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `• NO bold/italic markdown formatting.\n` +
     (gold
       ? `• SHOW THE ASTROLOGICAL REASONING (Gold Standard): name the dasha, the relevant\n` +
-        `  houses and lords, and the transits from HEALTH CHART EVIDENCE, and explain in plain\n` +
-        `  language what each means for the body. Never mention D1/D9/D10 by name.\n`
+        `  houses and lords, and the transits from ${evName}, and explain in plain\n` +
+        `  language what each means ${phr?.meansFor ?? "for the body"}. ${phr?.vargaRule ?? "Never mention D1/D9/D10 by name."}\n`
       : `• DO NOT name divisional charts (D1, D9, D10), dashas, or astrological machinery\n` +
         `  in the main body. The investigation is yours — the narration is theirs.\n` +
         `  ✓ "This month carries one of the stronger career energies in recent times"\n` +
@@ -135,6 +144,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `"the sensitivity is significant", "the system is", "requires attention".\n` +
     `Speak as a person who knows you, not as a system that processed your data.\n\n` +
 
+    (phr ? `` :
     `HEALTH SYSTEM → BODY LANGUAGE TRANSLATION (mandatory for health responses):\n` +
     `The DIAGNOSIS uses clinical system names and severity labels. Translate them into body language:\n` +
     `  "Respiratory System" / "Upper Respiratory Tract" → "throat", "airways", "throat and nose"\n` +
@@ -153,7 +163,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
       : `  ILLNESS PROBABILITY → don't quote the number. Translate:\n` +
         `    70%+ → "there's a real chance you'll feel under the weather if you push"\n` +
         `    50–70% → "it's possible if you're not careful"\n` +
-        `    <50% → "nothing to worry about"\n\n`) +
+        `    <50% → "nothing to worry about"\n\n`)) +
 
     `TIMEFRAME RULE:\n` +
     `Match your answer EXACTLY to the timeframe they asked about:\n` +
@@ -169,11 +179,12 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `WORD REPETITION RULE:\n` +
     `Once you name a theme (e.g. "throat"), don't repeat it — deepen it: "this area" / "there".\n\n` +
 
+    (phr ? `` :
     `DIFFERENTIAL DIAGNOSIS RULE (health questions only):\n` +
     `The DIAGNOSIS lists ALL ACTIVE BODY SYSTEMS in ranked order.\n` +
     `If 2+ systems are listed, mention BOTH in your response — not just the strongest.\n` +
     `  ✓ "Respiratory is today's main area — but digestive sensitivity is close behind."\n` +
-    `  ✗ "Your only area of concern is respiratory." — Wrong if digestive is also active.`
+    `  ✗ "Your only area of concern is respiratory." — Wrong if digestive is also active.`)
   );
 
   // ── PERMANENT CONSTITUTION — identity, purpose, philosophy ────────────────
@@ -188,7 +199,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     (gold
       ? `Speak in the language of life AND show the astrological reasoning behind it: the\n` +
         `dasha, the natal combinations and the transits, each translated into what it means for\n` +
-        `this person's body and daily life. `
+        `this person's ${phr?.lifeArea ?? "body and daily life"}. `
       : `Speak in the language of life, decisions, timing, opportunities, risks, and\n` +
         `guidance — not in the language of planets, houses, or calculations unless the user specifically\n` +
         `asks for the astrological reasoning. `) +
@@ -216,7 +227,10 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
   sections.push(renderConsultationBrief(ctx.consultationBrief, ctx.intent.stated, ctx.intent.isFollowUp));
 
   // ── GOLD STANDARD v1.0 — health reasoning protocol + authoritative evidence ─
-  if (gold) {
+  if (phr) {
+    sections.push(goldProtocol(ctx.goldDomain!, !!ctx.goldTiming));
+    sections.push(ctx.goldEvidence!);
+  } else if (gold) {
     sections.push(
       `━━━ HEALTH CONSULTATION — CHATPUNDIT GOLD STANDARD v1.0 ━━━\n\n` +
 
@@ -312,8 +326,8 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `  Think incredibly deeply. Speak effortlessly.\n` +
     (gold
       ? `  Show your reasoning the way a master astrologer explains a chart to a client: name the\n` +
-        `  combination, then say what it means for them — "Mars rules your 6th and sits in the 4th,\n` +
-        `  so strain tends to show up through home routines and digestion".\n` +
+        `  combination, then say what it means for them — ${phr?.reasoningExample ?? `"Mars rules your 6th and sits in the 4th,\n` +
+        `  so strain tends to show up through home routines and digestion".`}\n` +
         `  The narration is still THEIRS — warm, human, like someone who has known them for years.\n\n`
       : `  The investigation (planets, charts, dashas, yogas) is YOURS — the user never hears the machinery.\n` +
         `  The narration is THEIRS — warm, human, like sitting across from someone who has known them for years.\n` +
@@ -354,7 +368,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     `  but the user hears insight, not technical language.\n\n`) +
 
     (gold
-      ? `PLANET CITATION (Gold Standard): cite the combinations from HEALTH CHART EVIDENCE that\n` +
+      ? `PLANET CITATION (Gold Standard): cite the combinations from ${evName} that\n` +
         `  carry the reading, each with its meaning. Skip degrees. Don't recite every placement.\n\n`
       : `PLANET CITATION (only when helpful, optional in main body):\n` +
         `  Mention ONE planet briefly if it naturally explains the WHY in one casual sentence.\n` +
@@ -504,7 +518,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
     (gold
       ? `• PLANET CONTEXT: Use the WHY THIS PLANET MATTERS line from DIAGNOSIS together with the\n` +
-        `  houses and lords in HEALTH CHART EVIDENCE. House numbers are allowed; degrees are not.\n\n` +
+        `  houses and lords in ${evName}. House numbers are allowed; degrees are not.\n\n` +
         `• PRIORITIES: Cover A–J, giving most space to the factors that carry the reading.\n\n`
       : `• PLANET CONTEXT: Use the WHY THIS PLANET MATTERS line from DIAGNOSIS.\n` +
         `  Say it as one casual sentence: "Mercury's behind this — it governs the throat."\n` +
@@ -515,7 +529,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     (sessionNote ? `• SESSION DEDUP — ${sessionNote}\n\n` : ``) +
 
     `• NEVER introduce an astrological fact not present in the DIAGNOSIS block` +
-    (gold ? ` or HEALTH CHART EVIDENCE` : ``) + `.\n` +
+    (gold ? ` or ${evName}` : ``) + `.\n` +
     `  Every claim you make must be traceable to a line in the DIAGNOSIS${gold ? " or the evidence" : ""}.\n` +
     `  If you find yourself saying something not listed there — stop and delete it.\n\n` +
 
@@ -554,7 +568,7 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
     (gold
       ? `✓ Dasha, natal combinations and transits are named and explained (A–J covered)\n` +
         `✓ Supporting AND contradicting factors both present; evidence strength stated in words\n` +
-        `✓ No percentages, no day counts; says astrology is not a medical diagnosis\n` +
+        `✓ No percentages, no day counts; ${phr?.limitsCheck ?? "says astrology is not a medical diagnosis"}\n` +
         (ctx.goldTiming
           ? `✓ Pratyantar's effect explained; dated windows given with their reasons; every date is in TIMING EVIDENCE\n`
           : ``)
@@ -631,6 +645,7 @@ export async function assemblePunditBrain(
   // evidence strength, and the LLM gets the authoritative chart evidence block.
   let goldEvidence: string | null = null;
   let timingEvidence: TimingEvidence | null = null;
+  let goldVarga: DivisionalChart | undefined;
   if (domain === "health" && chartData.chartFacts && consultationBrief.domainBrief.type === "health") {
     // Shared timing engine (Phase A): full dated dasha, dasha changes, dated
     // transit events and windows for the period asked about. Only callers that
@@ -651,6 +666,32 @@ export async function assemblePunditBrain(
     goldEvidence = renderHealthEvidence({
       facts: chartData.chartFacts, dasha: dashaInfo, pratyantar: chartData.pratyantar, report: investigationReport,
       timing: timingEvidence?.text,
+    });
+  } else if (DOMAIN_SPECS[domain] && chartData.chartFacts && consultationBrief.domainBrief.type === domain) {
+    // Phase B: a migrated domain gets its own evidence block (houses, karakas,
+    // divisional chart) and the same dated timing as health.
+    const spec = DOMAIN_SPECS[domain];
+    if (chartData.timing) {
+      // A question about the job itself weighs the 6th/8th/12th (job houses), not business and fortune.
+      const timingDomain = domain === "career" && /\b(job|switch|resign|quit|employer|interview|lay-?off|boss|appraisal)\b/i.test(question)
+        ? "job" : domain;
+      timingEvidence = await buildTimingEvidence({
+        facts:    chartData.chartFacts,
+        timeline: chartData.timing.timeline,
+        window:   resolveWindow(intent.timeframe, chartData.timing.referenceDate),
+        domain:   timingDomain,
+        timezone: chartData.timing.timezone,
+      });
+    }
+    const db = consultationBrief.domainBrief as CareerBrief;
+    db.goldStandard     = true;
+    db.evidenceStrength = healthEvidenceStrength(investigationReport);
+    db.goldTiming       = healthTiming(dashaInfo, timingEvidence);
+    const dc = symbolicCtx?.chartSuite?.[spec.varga.key];
+    goldVarga = dc && dc.metadata.source !== "Placeholder" ? dc : undefined;
+    goldEvidence = renderDomainEvidence({
+      spec, facts: chartData.chartFacts, varga: goldVarga,
+      dasha: dashaInfo, pratyantar: chartData.pratyantar, report: investigationReport, timing: timingEvidence?.text,
     });
   }
 
@@ -704,6 +745,7 @@ export async function assemblePunditBrain(
     sessionNote,
     goldEvidence,
     goldTiming: !!timingEvidence,
+    goldDomain: goldEvidence ? domain : undefined,
   };
 
   // Layer 9: Build LLM brief (conclusions only)
@@ -732,6 +774,7 @@ export async function assemblePunditBrain(
     investigationTrail:  renderInvestigationTrailForUser(investigationReport),
     investigationReport,
     timingEvidence,
+    goldVarga,
     metadata: {
       domain,
       tone:       personality.tone,
