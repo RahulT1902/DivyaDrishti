@@ -25,7 +25,9 @@ export interface DomainSpec {
   houses: Array<{ house: number; meaning: string }>;
   karakas: Array<{ planet: PlanetName; meaning: string }>;
   // D24 (education) is not in the chart suite yet; add it there before education migrates.
-  varga: { key: keyof ChartSuite; name: string; primaryHouse: number };
+  // mode "hora": the D2 puts every planet in Leo (Sun's hora) or Cancer (Moon's
+  // hora), so it is read by which hora a planet falls in, not by houses.
+  varga: { key: keyof ChartSuite; name: string; primaryHouse: number; mode?: "houses" | "hora" };
 }
 
 export const CAREER_SPEC: DomainSpec = {
@@ -48,8 +50,29 @@ export const CAREER_SPEC: DomainSpec = {
   varga: { key: "D10", name: "Dashamsha (career chart)", primaryHouse: 10 },
 };
 
+export const FINANCE_SPEC: DomainSpec = {
+  domain: "finance",
+  title: "FINANCE",
+  houses: [
+    { house: 2,  meaning: "accumulated wealth, savings and family money" },
+    { house: 11, meaning: "income, gains and returns" },
+    { house: 5,  meaning: "investments and speculation" },
+    { house: 9,  meaning: "fortune and windfalls" },
+    { house: 10, meaning: "earnings from work and status" },
+    { house: 12, meaning: "expenses, losses and outflows" },
+  ],
+  karakas: [
+    { planet: "Jupiter", meaning: "wealth, expansion and wise investment" },
+    { planet: "Venus",   meaning: "comforts, luxuries and money flow" },
+    { planet: "Mercury", meaning: "trade, commerce and calculation" },
+    { planet: "Moon",    meaning: "liquidity, cash flow and the mind's relationship with money" },
+  ],
+  varga: { key: "D2", name: "Hora (wealth chart)", primaryHouse: 2, mode: "hora" },
+};
+
 export const DOMAIN_SPECS: Record<string, DomainSpec> = {
   career: CAREER_SPEC,
+  finance: FINANCE_SPEC,
 };
 
 /** A planet's house, sign and dignity in a divisional chart. */
@@ -67,6 +90,20 @@ function renderVarga(spec: DomainSpec, facts: ChartFacts, dc: DivisionalChart | 
     return [`${name.toUpperCase()}: not available — say the ${name} cannot be assessed; rely on the birth chart.`];
   }
   const L: string[] = [`${name.toUpperCase()} — corroborates the birth chart, never overrides it:`];
+  if (spec.varga.mode === "hora") {
+    // Each planet sits in the Sun's hora (Leo) or the Moon's hora (Cancer).
+    const key = [...new Set([
+      ...spec.houses.slice(0, 2).map(h => facts.houseLords[h.house]),
+      ...spec.karakas.map(k => k.planet),
+      ...dashaLords.filter(p => PLANETS.includes(p as PlanetName)) as PlanetName[],
+    ])];
+    const inHora = (sign: number) => key.filter(p => dc.planets.find(x => x.planet === p)?.sign === sign);
+    const sun = inHora(5), moon = inHora(4);
+    L.push(`  Sun's hora (Leo) — wealth through one's own effort, authority and enterprise: ${sun.length ? sun.join(", ") : "none of the key planets"}.`);
+    L.push(`  Moon's hora (Cancer) — wealth through stability, family, saving and steady accumulation: ${moon.length ? moon.join(", ") : "none of the key planets"}.`);
+    L.push(`  (Key planets: the 2nd and 11th lords, the karakas and the dasha lords. The hora shows HOW wealth tends to come, not how much.)`);
+    return L;
+  }
   const occ = dc.planets.filter(x => x.house === primaryHouse).map(x => x.planet);
   const lord = dc.lords.find(l => l.house === primaryHouse);
   L.push(`  Its Ascendant: ${dc.ascendant.signName}. Its ${ordinal(primaryHouse)} house: ` +
@@ -141,7 +178,7 @@ export function renderDomainEvidence(opts: {
     .replace(/\bD10\b/g, "Dashamsha").replace(/\bD9\b/g, "Navamsa").replace(/\bD2\b/g, "Hora")
     .replace(/\b(\d+)th\b/g, (_, n) => ordinal(Number(n)))
     .trim();
-  const ev = report?.evidence ?? [];
+  const ev = vargaFiltered(spec, report)?.evidence ?? [];
   const sup = ev.filter(e => e.direction === "supporting").slice(0, 5);
   const ch = ev.filter(e => e.direction === "challenging").slice(0, 5);
   lines.push(`SUPPORTING FACTORS:`);
@@ -149,7 +186,17 @@ export function renderDomainEvidence(opts: {
   lines.push(`CHALLENGING FACTORS:`);
   lines.push(...(ch.length ? ch.map(e => `  ✗ ${plain(e.finding)}`) : [`  (none found)`]));
 
-  lines.push(`EVIDENCE STRENGTH: ${healthEvidenceStrength(report)}  ← state this in words; never as a percentage.`);
+  lines.push(`EVIDENCE STRENGTH: ${healthEvidenceStrength(vargaFiltered(spec, report))}  ← state this in words; never as a percentage.`);
   if (timing) lines.push(timing);
   return lines.join("\n");
+}
+
+/**
+ * The CIE reads every divisional chart by houses ("Hora 2nd lord in house 12").
+ * A hora chart has only two signs, so those findings are left out — of the
+ * evidence list and of the strength computed from it.
+ */
+export function vargaFiltered(spec: DomainSpec, report?: InvestigationReport): InvestigationReport | undefined {
+  if (!report || spec.varga.mode !== "hora") return report;
+  return { ...report, evidence: report.evidence.filter(e => e.source !== spec.varga.key) };
 }

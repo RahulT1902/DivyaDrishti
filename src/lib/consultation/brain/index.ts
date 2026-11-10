@@ -11,7 +11,7 @@
 
 import type { AstrologyContext, DashaInfo, DivisionalChart } from "../../core/types";
 import type { StoredDomainMemory } from "../sessionMemory";
-import type { CareerBrief, PunditBrainContext, PunditBrainOutput, NotebookEntry } from "./types";
+import type { GoldBriefFields, PunditBrainContext, PunditBrainOutput, NotebookEntry } from "./types";
 
 import { assimilateReality, loadNotebook } from "./L0_realityAssimilation";
 import { analyzeIntent }                   from "./L1_intentEngine";
@@ -26,7 +26,7 @@ import { buildConsultationBrief, renderConsultationBrief } from "./DIE_domainInt
 import type { ChartData } from "./DIE_domainInterpreter";
 import { runInvestigation, renderInvestigationTrailForUser } from "./CIE_investigationEngine";
 import { renderHealthEvidence, healthEvidenceStrength, healthTiming } from "../goldStandard/healthEvidence";
-import { DOMAIN_SPECS, renderDomainEvidence } from "../goldStandard/domainEvidence";
+import { DOMAIN_SPECS, renderDomainEvidence, vargaFiltered } from "../goldStandard/domainEvidence";
 import { GOLD_PHRASES, goldProtocol } from "../goldStandard/domainPrompts";
 import { buildTimingEvidence, resolveWindow, type TimingEvidence } from "../timing/timingEngine";
 
@@ -683,9 +683,9 @@ export async function assemblePunditBrain(
         timezone: chartData.timing.timezone,
       });
     }
-    const db = consultationBrief.domainBrief as CareerBrief;
+    const db = consultationBrief.domainBrief as GoldBriefFields;
     db.goldStandard     = true;
-    db.evidenceStrength = healthEvidenceStrength(investigationReport);
+    db.evidenceStrength = healthEvidenceStrength(vargaFiltered(spec, investigationReport));
     db.goldTiming       = healthTiming(dashaInfo, timingEvidence);
     const dc = symbolicCtx?.chartSuite?.[spec.varga.key];
     goldVarga = dc && dc.metadata.source !== "Placeholder" ? dc : undefined;

@@ -1029,11 +1029,11 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   const { domainBrief: db } = brief;
 
   // ── Prepend Investigation Trail when available ────────────────────────────
-  // Gold Standard health and career answers get the same findings (and the transits) in
+  // Gold Standard health, career and finance answers get the same findings (and the transits) in
   // the domain CHART EVIDENCE block, so the trail and transit audit are left
   // out there — they would duplicate it and push the prompt past the Groq
   // free tier's 8,000 tokens-per-minute limit.
-  const goldBrief = (db.type === "health" || db.type === "career") && !!db.goldStandard;
+  const goldBrief = (db.type === "health" || db.type === "career" || db.type === "finance") && !!db.goldStandard;
   const investigationBlock = brief.investigationReport && !goldBrief
     ? renderInvestigationReport(brief.investigationReport, question) + "\n\n"
     : "";
@@ -1161,6 +1161,11 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     lines.push(`PRIMARY SOURCE: ${db.primarySource}`);
     if (db.opportunity) lines.push(`OPPORTUNITY: ${db.opportunity}`);
     if (db.risk) lines.push(`RISK: ${db.risk}`);
+    if (db.goldStandard) {
+      // Gold Standard §7/§8: evidence strength in words; timing from the dated dasha.
+      lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
+      lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in FINANCE CHART EVIDENCE; never give a number of days or weeks`);
+    }
   }
 
   if (db.type === "relationship") {

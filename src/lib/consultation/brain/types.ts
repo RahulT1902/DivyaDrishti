@@ -255,7 +255,7 @@ export interface CareerAspect {
   probability: number;
 }
 
-export interface CareerBrief {
+export interface CareerBrief extends GoldBriefFields {
   type:               "career";
   primaryAspect:      string;         // "Promotion" | "Recognition" | "Job Change"
   aspects:            CareerAspect[];
@@ -265,7 +265,10 @@ export interface CareerBrief {
   overallProbability: number;
   strategyNote:       string;         // what the user should actually DO this week/period
   surpriseObservation: string | null; // the unexpected finding — what they didn't ask about
-  // ── Gold Standard v1.0 (set when chart facts are supplied; see goldStandard/) ──
+}
+
+/** Gold Standard v1.0 fields of a migrated non-health brief (set when chart facts are supplied; see goldStandard/). */
+export interface GoldBriefFields {
   goldStandard?:      boolean;
   evidenceStrength?:  "Strong" | "Moderate" | "Weak" | "Insufficient";
   goldTiming?:        string | null;  // from the dated dasha, e.g. "Rahu–Jupiter, Mercury sub-period until ~19 Dec 2026"
@@ -276,7 +279,7 @@ export interface FinanceArea {
   status: "Strong" | "Stable" | "Cautious" | "Risky";
 }
 
-export interface FinanceBrief {
+export interface FinanceBrief extends GoldBriefFields {
   type:          "finance";
   areas:         FinanceArea[];
   primaryFlow:   "Growing" | "Stable" | "Under Pressure" | "Volatile";

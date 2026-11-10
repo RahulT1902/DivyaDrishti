@@ -466,6 +466,19 @@ function buildSummaryCard(
     return { title, ratingOf5: stars, phase: careerPhase, stats };
   }
 
+  // ── Finance (Gold Standard): money flow, source, evidence strength, dated timing ──
+  if (domain === "finance" && consultationBrief?.domainBrief.type === "finance" && consultationBrief.domainBrief.goldStandard) {
+    const f = consultationBrief.domainBrief;
+    const stats: SummaryCard["stats"] = [
+      { label: "Money Flow", value: f.primaryFlow },
+      { label: "Main Source", value: f.primarySource },
+      { label: "Evidence Strength", value: f.evidenceStrength ?? "Insufficient" },
+      ...(f.goldTiming ? [{ label: "Timing", value: f.goldTiming }] : []),
+      { label: "Risk", value: f.risk ? "Present" : "Low" },
+    ];
+    return { title, ratingOf5: stars, phase: f.primaryFlow, stats };
+  }
+
   // ── Other domains ─────────────────────────────────────────────────────────
   const rawPhase = lifeStory?.currentStage ?? diagnosis.overallState;
   const FRIENDLY_PHASE: Record<string, string> = {

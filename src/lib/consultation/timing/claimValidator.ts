@@ -19,7 +19,7 @@ import type { ChartFacts } from "../../core/astrology/chartFacts";
 import { getDignityInfo, type SignDignity } from "../../core/astrology/dignityEngine";
 import type { DivisionalChart, PlanetName } from "../../core/types";
 import type { TimingEvidence } from "./timingEngine";
-import { PLANETS, SIGN_NAMES, naturalView, nthFrom, ordinal } from "./relations";
+import { PLANETS, SIGN_NAMES, aspectsFrom, naturalView, nthFrom, ordinal } from "./relations";
 
 const WORD_ORD = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth"];
 const ORD = `(?:1[0-2]|[1-9])(?:st|nd|rd|th)|${WORD_ORD.join("|")}`;
@@ -74,7 +74,7 @@ const DIGNITY_WORDS: Array<[RegExp, SignDignity[]]> = [
 ];
 
 /** A sentence about a divisional chart rather than the birth chart. */
-export const VARGA_RE = /\b(?:Dashamsha|Dashamsa|Dasamsa|career chart|Navamsa|Navamsha|Hora|divisional)\b/i;
+export const VARGA_RE = /\b(?:Dashamsha|Dashamsa|Dasamsa|career chart|Navamsa|Navamsha|Hora|wealth chart|divisional)\b/i;
 
 const splitSentences = (text: string) => text.split(/(?<=[.!?])\s+|\n+/);
 
@@ -186,19 +186,47 @@ export function validateChartClaims(
 
     // ── Placement: "in / into / through (the|your) Nth (house)" ────────────
     const placeRe = new RegExp(`\\b(?:in|into|through|occupies|occupying|transits?|transiting)\\s+(?:the\\s+|your\\s+|its\\s+|his\\s+|her\\s+|natal\\s+)*(${ORD})\\b(?![- ]?(?:house\\s+)?(?:lord|ruler|from))`, "gi");
+    // A sentence that says "transit" means the moving planet, not the birth chart.
+    const transitOnly = ev && TRANSIT_WORD.test(sentence) && !NATAL_WORD.test(sentence);
+    const checkHouse = (p: PlanetName, n: number) => {
+      const transitHouses = transitSigns(ev, facts, p).map(s => nthFrom(asc, s));
+      const houses = new Set([...(transitOnly ? [] : [natal(p)?.house]), ...transitHouses].filter(Boolean));
+      if (!houses.has(n)) {
+        errors.push(`The answer puts ${p} in the ${ordinal(n)} house, but ${p} is in your ${[...houses].map(h => ordinal(h as number)).join(" or ")} house ` +
+          `(${transitOnly ? "by transit in this period" : "natal or during this period"}).`);
+      }
+    };
     for (const m of sentence.matchAll(placeRe)) {
       const ordAt = m.index! + m[0].length - m[1].length;
       if (claimed.has(ordAt)) continue;
       const p = nearestBefore(ms, m.index!);
       if (!p) continue;
       const n = ordValue(m[1]);
-      // A sentence that says "transit" means the moving planet, not the birth chart.
-      const transitOnly = ev && TRANSIT_WORD.test(sentence) && !NATAL_WORD.test(sentence);
-      const transitHouses = transitSigns(ev, facts, p).map(s => nthFrom(asc, s));
-      const houses = new Set([...(transitOnly ? [] : [natal(p)?.house]), ...transitHouses].filter(Boolean));
-      if (!houses.has(n)) {
-        errors.push(`The answer puts ${p} in the ${ordinal(n)} house, but ${p} is in your ${[...houses].map(h => ordinal(h as number)).join(" or ")} house ` +
-          `(${transitOnly ? "by transit in this period" : "natal or during this period"}).`);
+      // Paired lists read in order: "Rahu and Ketu transiting the 8th and 2nd houses",
+      // "the Rahu–Ketu axis in the 8th/2nd houses" → Rahu 8th, Ketu 2nd.
+      const second = sentence.slice(m.index! + m[0].length).match(new RegExp(`^\\s*(?:and|/|&)\\s*(?:the\\s+|your\\s+)?(${ORD})\\b`, "i"));
+      const before = ms.filter(x => x.at < m.index!);
+      const [a, b] = before.slice(-2);
+      if (second && a && b && /^\s*(?:and|-|–|—|\/|&)\s*$/.test(sentence.slice(a.at + a.planet.length, b.at))) {
+        checkHouse(a.planet, n);
+        checkHouse(b.planet, ordValue(second[1]));
+        continue;
+      }
+      checkHouse(p, n);
+    }
+
+    // ── Aspects: "Saturn … aspecting your 5th, 9th and 12th houses" ────────
+    // Each house must be one the planet aspects from its natal or a transit sign
+    // (graha drishti: the 7th, plus Mars 4/8, Jupiter 5/9, Saturn 3/10).
+    const aspRe = new RegExp(`\\baspect(?:s|ing)?\\s+(?:your\\s+|the\\s+)?((?:${ORD})(?:\\s*(?:,|and|&)\\s*(?:your\\s+|the\\s+)?(?:${ORD}))*)\\b(?![- ]?(?:house\\s+)?(?:lord|from))`, "gi");
+    for (const m of sentence.matchAll(aspRe)) {
+      const p = nearestBefore(ms, m.index!);
+      if (!p) continue;
+      const signs = [...(transitOnly ? [] : [natal(p)?.sign]), ...transitSigns(ev, facts, p)].filter((s): s is number => !!s);
+      const reach = new Set(signs.flatMap(s => aspectsFrom(p, s).map(x => nthFrom(asc, x))));
+      for (const o of m[1].match(new RegExp(ORD, "gi")) ?? []) {
+        const n = ordValue(o);
+        if (!reach.has(n)) errors.push(`The answer has ${p} aspecting your ${ordinal(n)} house, but from its positions it aspects only your ${[...reach].sort((x, y) => x - y).map(ordinal).join(", ")}.`);
       }
     }
 

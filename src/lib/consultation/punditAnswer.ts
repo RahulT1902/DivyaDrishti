@@ -5,7 +5,7 @@ import {
   type ChartFacts,
 } from "@/lib/core/astrology/chartFacts";
 import { buildAstrologicalBasis, insertAstrologicalBasis } from "@/lib/consultation/astrologicalBasis";
-import { MEDICAL_SAFETY_RE } from "@/lib/consultation/goldStandard/rubric";
+import { FINANCIAL_SAFETY_RE, MEDICAL_SAFETY_RE } from "@/lib/consultation/goldStandard/rubric";
 import { datesIn, timingCoverageErrors, validateTimingClaims } from "@/lib/consultation/timing/timingValidator";
 import { validateChartClaims, withoutVargaSentences } from "@/lib/consultation/timing/claimValidator";
 import { renderKeyDates } from "@/lib/consultation/timing/timingEngine";
@@ -22,7 +22,7 @@ export interface PunditAnswer {
   draftErrors: string[];
   /** Errors still present after the rewrite; their sentences were dropped. */
   remainingErrors: string[];
-  /** True when the model left out the medical-safety line and the server added it. */
+  /** True when the model left out the safety line (medical for health, financial for finance) and the server added it. */
   safetyAdded: boolean;
   /** Sentences removed by the gate, with the reasons — kept so lost predictions are visible. */
   droppedSentences: Array<{ sentence: string; errors: string[] }>;
@@ -173,13 +173,19 @@ export async function generatePunditAnswer(opts: {
   // Gold Standard §10: a health answer always says astrology is not a medical
   // diagnosis. The prompt asks for it in the model's own words; this is the
   // guarantee when the model leaves it out.
-  const safetyAdded = domain === "health" && !MEDICAL_SAFETY_RE.test(validatedText);
-  if (safetyAdded) {
-    validatedText = insertAstrologicalBasis(
-      validatedText,
-      "Astrology can point to tendencies, but it is not a medical diagnosis. Please see a doctor for any symptom that persists or worries you.",
-    );
-  }
+  // A finance answer likewise always says it is not financial advice.
+  const safety: Record<string, { re: RegExp; line: string }> = {
+    health: {
+      re: MEDICAL_SAFETY_RE,
+      line: "Astrology can point to tendencies, but it is not a medical diagnosis. Please see a doctor for any symptom that persists or worries you.",
+    },
+    finance: {
+      re: FINANCIAL_SAFETY_RE,
+      line: "Astrology can point to tendencies and timing, but this is not financial or investment advice. Please speak to a qualified financial adviser before any major money decision.",
+    },
+  };
+  const safetyAdded = !!safety[domain] && !safety[domain].re.test(validatedText);
+  if (safetyAdded) validatedText = insertAstrologicalBasis(validatedText, safety[domain].line);
 
   const narrative = validatedText;
 

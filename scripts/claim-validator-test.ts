@@ -16,7 +16,7 @@ import { analyzeIntent } from "../src/lib/consultation/brain/L1_intentEngine";
 import { buildTimingEvidence, renderKeyDates, resolveWindow } from "../src/lib/consultation/timing/timingEngine";
 import { validateTimingClaims } from "../src/lib/consultation/timing/timingValidator";
 import { validateChartClaims } from "../src/lib/consultation/timing/claimValidator";
-import { naturalView, nthFrom, ordinal, SIGN_NAMES } from "../src/lib/consultation/timing/relations";
+import { aspectsFrom, naturalView, nthFrom, ordinal, SIGN_NAMES } from "../src/lib/consultation/timing/relations";
 import type { PlanetName, Sign } from "../src/lib/core/types";
 
 let pass = 0, fail = 0;
@@ -98,6 +98,21 @@ const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? p
     fails(`Saturn transits your ${ordinal(satN)} house this month.`, "a natal house given as a transit (real Gemini slip)");
     passes(`Saturn in your ${ordinal(satN)} house at birth steadies you.`, "the same house, stated as natal");
   }
+
+  // From the finance benchmark: paired lists read in order.
+  const nodeH = (p: PlanetName) => ev.segments[ev.segments.length - 1].factors.find(f => f.planet === p)?.houseFromAsc
+    ?? ev.backdrop.find(f => f.planet === p)!.houseFromAsc;
+  const rH = nodeH("Rahu"), kH = nodeH("Ketu");
+  passes(`Main Risk: Rahu and Ketu transiting ${ordinal(rH)} and ${ordinal(kH)} houses.`, "a paired list read in order (real Gemini summary)");
+  passes(`The Rahu-Ketu axis in the ${ordinal(rH)}/${ordinal(kH)} houses adds pressure.`, "an axis written with a slash");
+  fails(`Rahu and Ketu transit the ${ordinal(kH)} and ${ordinal(rH)} houses.`, "a paired list in the wrong order");
+
+  // From the finance benchmark: "Saturn … aspecting your 5th, 9th and 12th houses" (9th is wrong).
+  const satSigns = [natal("Saturn").sign, ...ev.segments.flatMap(s => s.factors).concat(ev.backdrop).filter(f => f.planet === "Saturn").map(f => f.sign)];
+  const satReach = new Set(satSigns.flatMap(s => aspectsFrom("Saturn", s).map(x => nthFrom(facts.ascendantSign, x))));
+  const inReach = [...satReach].slice(0, 2), outReach = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].find(h => !satReach.has(h))!;
+  passes(`Saturn, as your 9th lord, keeps aspecting your ${ordinal(inReach[0])} and ${ordinal(inReach[1])} houses.`, "aspects Saturn really casts");
+  fails(`Saturn moves on, aspecting your ${ordinal(inReach[0])}, ${ordinal(outReach)} and ${ordinal(inReach[1])} houses.`, `an aspect Saturn cannot cast (the ${ordinal(outReach)})`);
 
   console.log("\nRelationships");
   const pd = d.pd.planet as PlanetName, ad = d.ad.planet as PlanetName;

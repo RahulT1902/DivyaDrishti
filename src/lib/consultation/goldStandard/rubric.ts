@@ -23,6 +23,9 @@ export const GOLD_STANDARD_VERSION = "1.0";
 /** §10: wording that tells the reader astrology does not replace medical care. */
 export const MEDICAL_SAFETY_RE = /\b(?:doctors?|physicians?|medical (?:advice|care|professionals?|attention|diagnosis|treatment)|not a (?:medical )?diagnosis|health ?care (?:providers?|professionals?)|consult a)\b/i;
 
+/** Finance: wording that says this is not financial or investment advice. */
+export const FINANCIAL_SAFETY_RE = /\b(?:(?:financial|investment) advice|(?:qualified|certified|professional|financial|investment)\s+(?:professional\s+|financial\s+)?(?:advis[eo]rs?|planners?)|consult (?:a|an) (?:qualified |certified )?(?:financial|investment))\b/i;
+
 export interface RubricCheck {
   id: string;
   /** Which acceptance question (Q1–Q5) or hard rule (R1–R3) this belongs to. */
@@ -42,7 +45,7 @@ export interface RubricResult {
 }
 
 // Chart factors the standard requires for each domain (§2). Each domain gets
-// its own factor set when it migrates (health, then career).
+// its own factor set when it migrates (health, career, finance).
 const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
   health: [
     { id: "ascendant", pattern: /\b(?:ascendant|lagna)\b/i },
@@ -57,6 +60,13 @@ const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
     { id: "2nd/11th house", pattern: /\b(?:2nd|second|11th|eleventh)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:2nd|second|11th|eleventh)\b/i },
     { id: "7th house", pattern: /\b(?:7th|seventh)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:7th|seventh)\b/i },
     { id: "Dashamsha", pattern: /\b(?:Dashamsha|Dasamsa|Dashamsa|career chart)\b/i },
+  ],
+  finance: [
+    { id: "2nd house", pattern: /\b(?:2nd|second)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:2nd|second)\b/i },
+    { id: "11th house", pattern: /\b(?:11th|eleventh)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:11th|eleventh)\b/i },
+    { id: "5th/9th house", pattern: /\b(?:5th|fifth|9th|ninth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:5th|fifth|9th|ninth)\b/i },
+    { id: "12th house", pattern: /\b(?:12th|twelfth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:12th|twelfth)\b/i },
+    { id: "Hora", pattern: /\b(?:Hora|wealth chart)\b/i },
   ],
 };
 
@@ -165,6 +175,13 @@ export function scoreConsultation(opts: {
     const safety = MEDICAL_SAFETY_RE.test(text);
     add({
       id: "medical-safety", criterion: "R2", label: "Says astrology doesn't replace medical care",
+      passed: safety, detail: safety ? "present" : "missing",
+    });
+  }
+  if (domain === "finance") {
+    const safety = FINANCIAL_SAFETY_RE.test(text);
+    add({
+      id: "financial-safety", criterion: "R2", label: "Says this is not financial or investment advice",
       passed: safety, detail: safety ? "present" : "missing",
     });
   }

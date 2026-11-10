@@ -76,8 +76,18 @@ For the running Pratyantar lord, the engine states:
   - A question about the job itself ("switch", "employer", "interview"…)
     times against the job houses (2, 6, 8, 10, 11, 12) instead.
   - Its prompt wording lives in `goldStandard/domainPrompts.ts`.
-- **Remaining domains:** finance, property, marriage, family and education
-  migrate one at a time, each with a `DomainSpec` and its own benchmark.
+- **Finance (Phase B):** FINANCE CHART EVIDENCE.
+  - Houses: 2nd (savings), 11th (income), 5th (investments), 9th (fortune),
+    10th (earnings) and 12th (expenses).
+  - Karakas: Jupiter, Venus, Mercury and Moon.
+  - Hora (D2) corroboration: every planet sits in the Sun's hora (Leo) or the
+    Moon's hora (Cancer), so the block says which hora the key planets fall in.
+    It shows how wealth tends to come, not how much. CIE findings that read
+    the Hora by houses are left out.
+  - Answers never name a stock, fund, amount or return, and always say they
+    are not financial advice; the server adds that line if missing.
+- **Remaining domains:** property, marriage, family and education migrate one
+  at a time, each with a `DomainSpec` and its own benchmark.
 - **Gold charts unchanged:** they have no birth date, so their health and
   marriage prompts are byte-identical to before. Their career prompts now use
   the career Gold Standard; the gold test charts have no Dashamsha, so that
@@ -94,6 +104,8 @@ model for one rewrite; sentences that still fail are dropped.
 - **Divisional charts:** a sentence naming the divisional chart (or its
   Ascendant, e.g. "With Leo rising…") is checked against that chart too. Such
   sentences often mix both charts, so a claim fails only if it is false in both.
+- **Aspects and pairs:** claimed aspects must follow from the planet's positions
+  (graha drishti); "Rahu and Ketu in the 8th and 2nd" is read in order.
 - **Windows:** a range called favourable or "best" must not span a firm
   caution window. A year answer must cover Mahadasha and Antardasha changes,
   not every Pratyantar change.
