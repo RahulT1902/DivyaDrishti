@@ -44,5 +44,6 @@ export function buildChartSuite(
     D9:  buildDivisionalChart(planets, lagna, "D9"),
     D10: buildDivisionalChart(planets, lagna, "D10"),
     D12: buildDivisionalChart(planets, lagna, "D12"),
+    D24: buildDivisionalChart(planets, lagna, "D24"),
   };
 }

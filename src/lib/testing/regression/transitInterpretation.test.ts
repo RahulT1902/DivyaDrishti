@@ -50,6 +50,7 @@ function createChartSuiteFromMock(chartData: any): ChartSuite {
     D9: emptyChart("D9"),
     D10: emptyChart("D10"),
     D12: emptyChart("D12"),
+    D24: emptyChart("D24"),
   };
 }
 

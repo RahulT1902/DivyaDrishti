@@ -209,6 +209,7 @@ export function runGoldChart(spec: GoldChartSpec): AstrologyContext {
     D9:  d9,
     D10: d10,
     D12: emptyChart("D12", 12, "Parents",  asc),
+    D24: emptyChart("D24", 24, "Education", asc),
   };
 
   const dashaInfo: DashaInfo | undefined = spec.dasha

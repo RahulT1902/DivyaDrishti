@@ -49,7 +49,7 @@ export interface RubricResult {
 }
 
 // Chart factors the standard requires for each domain (§2). Each domain gets
-// its own factor set when it migrates (health, career, finance, property, relationship, family).
+// its own factor set when it migrates (health, career, finance, property, relationship, family, education).
 const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
   health: [
     { id: "ascendant", pattern: /\b(?:ascendant|lagna)\b/i },
@@ -92,6 +92,13 @@ const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
     { id: "2nd/5th house", pattern: /\b(?:2nd|second|5th|fifth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:2nd|second|5th|fifth)\b/i },
     { id: "Moon/Sun", pattern: /\b(?:Moon|Sun)\b/ },
     { id: "Dwadashamsha", pattern: /\b(?:Dwadashamsha|Dwadasamsa|parents chart)\b/i },
+  ],
+  education: [
+    { id: "4th/5th house", pattern: /\b(?:4th|fourth|5th|fifth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:4th|fourth|5th|fifth)\b/i },
+    { id: "9th house", pattern: /\b(?:9th|ninth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:9th|ninth)\b/i },
+    { id: "2nd/11th/6th house", pattern: /\b(?:2nd|second|11th|eleventh|6th|sixth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:2nd|second|11th|eleventh|6th|sixth)\b/i },
+    { id: "Mercury/Jupiter", pattern: /\b(?:Mercury|Jupiter)\b/ },
+    { id: "Siddhamsha", pattern: /\b(?:Siddhamsh?a|education chart)\b/i },
   ],
 };
 

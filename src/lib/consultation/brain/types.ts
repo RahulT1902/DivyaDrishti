@@ -299,6 +299,14 @@ export interface PropertyBrief extends GoldBriefFields {
   risk:          string | null;
 }
 
+export interface EducationBrief extends GoldBriefFields {
+  type:        "education";
+  focus:       string;        // "Exams" | "Admission" | "Higher Studies" | "Study Abroad" | "Competitive Exams" | "Focus & Learning"
+  direction:   "Favourable" | "Steady" | "Effortful" | "Difficult";
+  opportunity: string | null;
+  attention:   string | null;
+}
+
 export interface FamilyBrief extends GoldBriefFields {
   type:        "family";
   focus:       string;        // "Parents" | "Mother" | "Father" | "Siblings" | "Children" | "Home Harmony"
@@ -333,7 +341,7 @@ export interface SpiritualityBrief {
   secondaryPlanet:    string | null; // secondary planet worth noting
 }
 
-export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | PropertyBrief | FamilyBrief | RelationshipBrief | SpiritualityBrief;
+export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | PropertyBrief | FamilyBrief | EducationBrief | RelationshipBrief | SpiritualityBrief;
 
 export interface ConsultationBrief {
   domain:                string;

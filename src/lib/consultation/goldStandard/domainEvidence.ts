@@ -24,7 +24,6 @@ export interface DomainSpec {
   /** The question's primary house first; its lord is followed into the divisional chart. */
   houses: Array<{ house: number; meaning: string }>;
   karakas: Array<{ planet: PlanetName; meaning: string }>;
-  // D24 (education) is not in the chart suite yet; add it there before education migrates.
   // mode "hora": the D2 puts every planet in Leo (Sun's hora) or Cancer (Moon's
   // hora), so it is read by which hora a planet falls in, not by houses.
   varga: { key: keyof ChartSuite; name: string; primaryHouse: number; mode?: "houses" | "hora" };
@@ -130,12 +129,33 @@ export const FAMILY_SPEC: DomainSpec = {
   varga: { key: "D12", name: "Dwadashamsha (parents chart)", primaryHouse: 4 },
 };
 
+export const EDUCATION_SPEC: DomainSpec = {
+  domain: "education",
+  title: "EDUCATION",
+  houses: [
+    { house: 4,  meaning: "schooling, foundation of learning and peace to study" },
+    { house: 5,  meaning: "intelligence, understanding and exams" },
+    { house: 9,  meaning: "higher education, university, teachers and study abroad" },
+    { house: 2,  meaning: "early learning, memory and expression" },
+    { house: 11, meaning: "results, success and recognition for effort" },
+    { house: 6,  meaning: "competitive exams and beating rivals" },
+  ],
+  karakas: [
+    { planet: "Mercury", meaning: "intellect, analysis and exams" },
+    { planet: "Jupiter", meaning: "higher learning, wisdom and teachers" },
+    { planet: "Moon",    meaning: "memory, concentration and calm" },
+    { planet: "Saturn",  meaning: "discipline and sustained study" },
+  ],
+  varga: { key: "D24", name: "Siddhamsha (education chart)", primaryHouse: 4 },
+};
+
 export const DOMAIN_SPECS: Record<string, DomainSpec> = {
   career: CAREER_SPEC,
   finance: FINANCE_SPEC,
   property: PROPERTY_SPEC,
   relationship: RELATIONSHIP_SPEC,
   family: FAMILY_SPEC,
+  education: EDUCATION_SPEC,
 };
 
 /** A planet's house, sign and dignity in a divisional chart. */
@@ -238,7 +258,7 @@ export function renderDomainEvidence(opts: {
     .replace(/\s*\([+-]?\d+ shift[^)]*\)/g, "")
     .replace(/\s*with strength \d+\/100/g, "")
     .replace(/\bD1\b/g, "birth-chart")
-    .replace(/\bD10\b/g, "Dashamsha").replace(/\bD9\b/g, "Navamsa").replace(/\bD2\b/g, "Hora").replace(/\bD4\b/g, "Chaturthamsha").replace(/\bD12\b/g, "Dwadashamsha")
+    .replace(/\bD10\b/g, "Dashamsha").replace(/\bD9\b/g, "Navamsa").replace(/\bD2\b/g, "Hora").replace(/\bD4\b/g, "Chaturthamsha").replace(/\bD12\b/g, "Dwadashamsha").replace(/\bD24\b/g, "Siddhamsha")
     .replace(/\b(\d+)th\b/g, (_, n) => ordinal(Number(n)))
     .trim();
   const ev = vargaFiltered(spec, report)?.evidence ?? [];

@@ -587,5 +587,6 @@ export interface ChartSuite {
   D9: DivisionalChart;
   D10: DivisionalChart;
   D12: DivisionalChart;
-  // Phase 5 additions (D6, D20, D24, D30, D60) added as engine matures
+  D24: DivisionalChart;   // education and learning (Siddhamsha)
+  // Phase 5 additions (D6, D20, D30, D60) added as engine matures
 }

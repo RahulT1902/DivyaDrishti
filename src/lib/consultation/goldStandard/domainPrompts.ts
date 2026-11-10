@@ -276,6 +276,53 @@ PARTS.family = {
   ],
 };
 
+GOLD_PHRASES.education = {
+  evidenceName: "EDUCATION CHART EVIDENCE",
+  meansFor: "for their studies",
+  lifeArea: "studies, exams and learning",
+  reasoningExample:
+    `"Mercury rules your 5th and sits in the 9th,\n` +
+    `  so understanding deepens through teachers and structured courses".`,
+  vargaRule: `Call the D24 "your education chart (Siddhamsha)"; never write D1/D24.`,
+  limitsCheck: "says astrology shows tendencies and that results depend on preparation",
+  summaryFormat:
+    `  EDUCATION format (Gold Standard):\n` +
+    `    Overall Studies: ★★★★☆ (Favourable / Steady / Effortful / Difficult)\n` +
+    `    Focus: [exams / admission / higher studies / study abroad / competitive exams / focus]\n` +
+    `    Supporting Factor: [1 phrase naming the chart factor]\n` +
+    `    Needs Attention: [1 phrase naming the chart factor]\n` +
+    `    Best Window: [a FAVOURABLE or MIXED date range from TIMING EVIDENCE; if every window is CAUTION, "None this period"]\n` +
+    `    Evidence Strength: [Strong / Moderate / Weak / Insufficient]\n` +
+    `    Best Approach: [1 specific practical phrase]\n`,
+};
+
+PARTS.education = {
+  title: "EDUCATION",
+  natalFramework:
+    `the 4th (foundation) and 5th (intelligence, exams) houses and their lords,\n` +
+    `     then the houses that fit THIS question: 9th (higher education, study abroad), 2nd (memory),\n` +
+    `     11th (results), 6th (competitive exams); and the karakas Mercury, Jupiter, Moon and Saturn.`,
+  varga: `Education chart (Siddhamsha) — confirms or qualifies the birth-chart promise; never overrides it.`,
+  evidenceName: "EDUCATION CHART EVIDENCE",
+  answerTopics: `(exams, admission,\n     higher studies, study abroad, a course, concentration)`,
+  natalPromise:
+    `the 4th and 5th lords and the houses that matter for this question, and\n` +
+    `     the karakas; explain what each means for their studies. Don't list every placement.`,
+  vargaStep: `Education chart (Siddhamsha) — say whether it confirms or qualifies the birth-chart promise.`,
+  transitHouses: "the 4th, 5th and 9th houses",
+  favourable: "what supports learning, focus and results (always include this)",
+  challenging: "what distracts or delays it",
+  exampleEvent: `"from 12 Nov, when Mercury\n     turns direct…"`,
+  guidance: "specific: how to prepare, what to avoid, when to sit exams or apply",
+  limits:
+    `tendencies and favourable windows, not guaranteed results, and that results depend\n` +
+    `     on preparation; choices of course or career should also weigh aptitude and guidance`,
+  rules: [
+    `• Never promise a rank, score, admission or exam result.`,
+    `• Never discourage someone from studying; if timing is hard, say how to work with it.`,
+  ],
+};
+
 /** The reasoning protocol and A–J structure for a non-health domain. */
 export function goldProtocol(domain: string, goldTiming: boolean): string {
   const p = PARTS[domain];

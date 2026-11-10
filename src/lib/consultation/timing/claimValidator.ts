@@ -81,7 +81,7 @@ const DIGNITY_WORDS: Array<[RegExp, SignDignity[]]> = [
 
 /** A sentence about a divisional chart rather than the birth chart. */
 // Spelling varies in transliteration (Dwadashamsha / Dvadasamsa …), so each name allows the common variants.
-export const VARGA_RE = /\b(?:Dashamsh?a|Dasamsh?a|career chart|Navamsh?a|Hora|wealth chart|Chaturthamsh?a|property chart|marriage chart|D[wv]adash?amsh?a|parents['’]? chart|parental chart|divisional)\b/i;
+export const VARGA_RE = /\b(?:Dashamsh?a|Dasamsh?a|career chart|Navamsh?a|Hora|wealth chart|Chaturthamsh?a|property chart|marriage chart|D[wv]adash?amsh?a|parents['’]? chart|parental chart|Siddhamsh?a|Chaturvimshamsh?a|education chart|divisional)\b/i;
 
 const splitSentences = (text: string) => text.split(/(?<=[.!?])\s+|\n+/);
 

@@ -506,6 +506,19 @@ function buildSummaryCard(
     return { title, ratingOf5: stars, phase: harmony, stats };
   }
 
+  // ── Education: focus, direction, evidence strength, dated timing ─────────
+  if (domain === "education" && consultationBrief?.domainBrief.type === "education") {
+    const e = consultationBrief.domainBrief;
+    const stats: SummaryCard["stats"] = [
+      { label: "Focus", value: e.focus },
+      { label: "Direction", value: e.direction },
+      ...(e.goldStandard ? [{ label: "Evidence Strength", value: e.evidenceStrength ?? "Insufficient" }] : []),
+      ...(e.goldStandard && e.goldTiming ? [{ label: "Timing", value: e.goldTiming }] : []),
+      ...(e.attention ? [{ label: "Needs Attention", value: e.attention }] : []),
+    ];
+    return { title, ratingOf5: stars, phase: e.direction, stats };
+  }
+
   // ── Family: focus, harmony, evidence strength, dated timing ──────────────
   if (domain === "family" && consultationBrief?.domainBrief.type === "family") {
     const f = consultationBrief.domainBrief;

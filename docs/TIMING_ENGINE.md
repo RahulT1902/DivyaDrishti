@@ -110,7 +110,15 @@ For the running Pratyantar lord, the engine states:
   - Dwadashamsha (D12) corroboration; the CIE now reads D12 too.
   - Answers never predict a family member's illness, accident or death and
     never blame or take sides.
-- **Remaining domain:** education, after D24 is added to the chart suite.
+- **Education (Phase B):** an EducationBrief of its own (focus: exams,
+  admission, higher studies, study abroad, competitive exams, focus).
+  - EDUCATION CHART EVIDENCE: the 4th, 5th, 9th, 2nd, 11th and 6th houses.
+  - Karakas: Mercury, Jupiter, Moon and Saturn.
+  - Siddhamsha (D24) corroboration. D24 is now part of the chart suite, and
+    the CIE reads it.
+  - Answers never promise a rank, score, admission or result.
+  - In D24 the nodes always share a sign (180° × 24 is a whole number of
+    circles), so Rahu and Ketu together there is correct, not a bug.
 - **Gold charts unchanged:** they have no birth date, so their health and
   marriage prompts are byte-identical to before. Their career prompts now use
   the career Gold Standard; the gold test charts have no Dashamsha, so that

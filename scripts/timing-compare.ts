@@ -73,9 +73,15 @@ const GEMINI_QUESTIONS: Record<string, string[]> = {
     "How will my relationship with my parents be in 2027?",
     "What happens with my family in April 2028?",
   ],
+  education: [
+    "Is this a good time for me to pursue higher education or a course?",
+    "How will my studies and exams go in December 2026?",
+    "Should I take up a professional course in 2027?",
+    "What happens with my education plans in April 2028?",
+  ],
 };
 // Chat-route domain → the life-insights engine's domain key (as in the chat route).
-const VEDIC_KEY: Record<string, string> = { health: "Health", career: "Career", finance: "Wealth", property: "Property", relationship: "Marriage", family: "Marriage" };
+const VEDIC_KEY: Record<string, string> = { health: "Health", career: "Career", finance: "Wealth", property: "Property", relationship: "Marriage", family: "Marriage", education: "Education" };
 const PAUSE_MS = GEMINI ? 20_000 : 90_000;
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };

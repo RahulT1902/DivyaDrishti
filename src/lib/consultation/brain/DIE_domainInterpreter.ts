@@ -14,7 +14,7 @@
 
 import type {
   AstrologicalDiagnosis, IntentAnalysis,
-  ConsultationBrief, HealthBrief, HealthSystemScore, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, PropertyBrief, FamilyBrief, RelationshipBrief, SpiritualityBrief,
+  ConsultationBrief, HealthBrief, HealthSystemScore, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, PropertyBrief, FamilyBrief, EducationBrief, RelationshipBrief, SpiritualityBrief,
 } from "./types";
 import type { BodyRiskProfile } from "../../intelligence/health/bodyRiskProfile";
 import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
@@ -557,6 +557,34 @@ function interpretProperty(
   };
 }
 
+function interpretEducation(diagnosis: AstrologicalDiagnosis, intent: IntentAnalysis): EducationBrief {
+  const s = diagnosis.overallState;
+  const q = intent.stated.toLowerCase();
+  const focus =
+    /abroad|foreign|overseas|visa|ielts|gre|toefl/.test(q)          ? "Study Abroad"
+    : /upsc|neet|jee|cat\b|gate\b|competitive|government exam/.test(q) ? "Competitive Exams"
+    : /admission|college|university|apply|seat/.test(q)             ? "Admission"
+    : /exam|result|marks|test|board/.test(q)                        ? "Exams"
+    : /master|phd|mba|degree|course|higher|certification/.test(q)   ? "Higher Studies"
+    : "Focus & Learning";
+  const direction: EducationBrief["direction"] =
+    s === "Highly Favorable" || s === "Favorable" ? "Favourable"
+    : s === "Moderate" ? "Steady"
+    : s === "Challenging" ? "Effortful"
+    : "Difficult";
+  return {
+    type: "education",
+    focus,
+    direction,
+    opportunity: direction === "Favourable" ? "Learning and results come more easily now"
+      : direction === "Steady" ? "Steady preparation pays off; consistency beats cramming"
+      : null,
+    attention: direction === "Difficult" ? "Concentration and results need extra effort; plan revision carefully"
+      : direction === "Effortful" ? "Results come through sustained effort rather than quick wins"
+      : null,
+  };
+}
+
 function interpretFamily(diagnosis: AstrologicalDiagnosis, intent: IntentAnalysis): FamilyBrief {
   const s = diagnosis.overallState;
   const q = intent.stated.toLowerCase();
@@ -1015,6 +1043,20 @@ export function buildConsultationBrief(
       break;
     }
 
+    case "education": {
+      const e = interpretEducation(diagnosis, intent);
+      domainBrief    = e;
+      overallVerdict = e.direction;
+      mainConclusion =
+        e.direction === "Favourable" ? `Learning looks well supported — a good period for ${e.focus.toLowerCase()}.`
+        : e.direction === "Steady"   ? `Studies look steady — consistent preparation for ${e.focus.toLowerCase()} pays off.`
+        : `Studies need extra effort right now — ${(e.attention ?? "plan carefully").toLowerCase()}.`;
+      recommendation = e.attention
+        ? "Build a fixed daily study routine and leave buffer time before key dates."
+        : "Keep a steady routine and use the supportive windows for applications and exams.";
+      break;
+    }
+
     case "family": {
       const f = interpretFamily(diagnosis, intent);
       domainBrief    = f;
@@ -1266,6 +1308,17 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     if (db.goldStandard) {
       lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
       lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in PROPERTY CHART EVIDENCE; never give a number of days or weeks`);
+    }
+  }
+
+  if (db.type === "education") {
+    lines.push(`FOCUS: ${db.focus}`);
+    lines.push(`DIRECTION: ${db.direction}`);
+    if (db.opportunity) lines.push(`OPPORTUNITY: ${db.opportunity}`);
+    if (db.attention) lines.push(`NEEDS ATTENTION: ${db.attention}`);
+    if (db.goldStandard) {
+      lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
+      lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in EDUCATION CHART EVIDENCE; never give a number of days or weeks`);
     }
   }
 
