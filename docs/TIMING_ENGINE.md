@@ -95,8 +95,15 @@ For the running Pratyantar lord, the engine states:
   - Chaturthamsha (D4) corroboration; the CIE now reads D4 too.
   - Answers never name a price, amount, location or market move, and always
     say they are not financial or legal advice and to check documents.
-- **Remaining domains:** marriage, family and education migrate one at a
-  time, each with a `DomainSpec` and its own benchmark.
+- **Marriage (Phase B):** the `relationship` chat domain (clients' variants
+  such as "relationships" or "marriage" are mapped to it by `canonicalDomain`).
+  - RELATIONSHIP CHART EVIDENCE: the 7th house plus the 2nd, 5th, 8th, 11th and 12th.
+  - Karakas: Venus, Jupiter, Moon and Mars.
+  - Navamsa (D9) corroboration.
+  - Answers never predict divorce, separation, infidelity or a partner's
+    illness or death; no fear-based dosha talk; no verdicts to stay or leave.
+- **Remaining domains:** family and education migrate one at a time, each
+  with a `DomainSpec` and its own benchmark.
 - **Gold charts unchanged:** they have no birth date, so their health and
   marriage prompts are byte-identical to before. Their career prompts now use
   the career Gold Standard; the gold test charts have no Dashamsha, so that

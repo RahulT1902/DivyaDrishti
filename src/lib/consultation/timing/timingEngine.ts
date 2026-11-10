@@ -27,6 +27,7 @@ export const DOMAIN_HOUSES: Record<string, { houses: number[]; label: string }> 
   finance:       { houses: [2, 5, 9, 10, 11, 12],   label: "finance" },
   career:        { houses: [2, 6, 7, 9, 10, 11],    label: "career" },
   job:           { houses: [2, 6, 8, 10, 11, 12],   label: "job" },
+  relationship:  { houses: [2, 5, 7, 8, 11, 12],    label: "relationship" },  // the chat domain name
   relationships: { houses: [2, 5, 7, 8, 11, 12],    label: "relationship" },
   marriage:      { houses: [2, 5, 7, 8, 11, 12],    label: "marriage" },
   property:      { houses: [2, 4, 8, 10, 11, 12],   label: "property" },

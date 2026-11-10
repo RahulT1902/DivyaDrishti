@@ -299,7 +299,7 @@ export interface PropertyBrief extends GoldBriefFields {
   risk:          string | null;
 }
 
-export interface RelationshipBrief {
+export interface RelationshipBrief extends GoldBriefFields {
   type:           "relationship";
   strongAreas:    string[];
   attentionAreas: string[];

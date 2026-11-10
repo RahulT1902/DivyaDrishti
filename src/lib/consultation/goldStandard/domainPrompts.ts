@@ -180,6 +180,54 @@ PARTS.property = {
   ],
 };
 
+GOLD_PHRASES.relationship = {
+  evidenceName: "RELATIONSHIP CHART EVIDENCE",
+  meansFor: "for their relationship",
+  lifeArea: "relationship and married life",
+  reasoningExample:
+    `"Venus rules your 7th and sits in the 5th,\n` +
+    `  so affection and shared joy keep the bond warm".`,
+  vargaRule: `Call the D9 "your marriage chart (Navamsa)"; never write D1/D9.`,
+  limitsCheck: "says astrology shows tendencies and that the relationship is shaped by both people's choices",
+  summaryFormat:
+    `  RELATIONSHIP format (Gold Standard):\n` +
+    `    Overall Relationship: ★★★★☆ (Harmonious / Steady / Needs Care / Strained)\n` +
+    `    Main Dynamic: [1 phrase]\n` +
+    `    Supporting Factor: [1 phrase naming the chart factor]\n` +
+    `    Needs Attention: [1 phrase naming the chart factor]\n` +
+    `    Best Window: [a FAVOURABLE or MIXED date range from TIMING EVIDENCE; if every window is CAUTION, "None this period"]\n` +
+    `    Evidence Strength: [Strong / Moderate / Weak / Insufficient]\n` +
+    `    Best Approach: [1 specific practical phrase]\n`,
+};
+
+PARTS.relationship = {
+  title: "RELATIONSHIP",
+  natalFramework:
+    `the 7th house (spouse, marriage) and its lord, then the houses that\n` +
+    `     fit THIS question: 2nd (family life), 5th (romance), 8th (the bond, in-laws), 11th\n` +
+    `     (fulfilment), 12th (intimacy, distance); and the karakas Venus, Jupiter, Moon and Mars.`,
+  varga: `Marriage chart (Navamsa) — confirms or qualifies the birth-chart promise; never overrides it.`,
+  evidenceName: "RELATIONSHIP CHART EVIDENCE",
+  answerTopics: `(timing of marriage,\n     harmony, a proposal, a rough patch, compatibility)`,
+  natalPromise:
+    `the 7th lord and the houses that matter for this question, and the\n` +
+    `     karakas; explain what each means for the relationship. Don't list every placement.`,
+  vargaStep: `Marriage chart (Navamsa) — say whether it confirms or qualifies the birth-chart promise.`,
+  transitHouses: "the 7th house and the other relationship houses",
+  favourable: "what supports warmth, harmony and commitment (always include this)",
+  challenging: "what strains or delays it",
+  exampleEvent: `"from 22 Nov, when Venus\n     enters your 5th house…"`,
+  guidance: "specific: how to communicate, what to avoid, when to take a step — kind and practical",
+  limits:
+    `tendencies and favourable windows, not fixed fate, and that a relationship is shaped\n` +
+    `     by both people's choices; for serious conflict, counselling or trusted support helps`,
+  rules: [
+    `• Never predict divorce, separation, a partner's illness or death, or infidelity.`,
+    `• No fear-based dosha talk (e.g. Manglik); if a factor is challenging, say how to work with it.`,
+    `• Never tell them to stay in or leave a relationship; offer perspective, not verdicts.`,
+  ],
+};
+
 /** The reasoning protocol and A–J structure for a non-health domain. */
 export function goldProtocol(domain: string, goldTiming: boolean): string {
   const p = PARTS[domain];

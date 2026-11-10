@@ -492,6 +492,20 @@ function buildSummaryCard(
     return { title, ratingOf5: stars, phase: p.direction, stats };
   }
 
+  // ── Relationship (Gold Standard): harmony, dynamic, evidence strength, dated timing ──
+  if (domain === "relationship" && consultationBrief?.domainBrief.type === "relationship" && consultationBrief.domainBrief.goldStandard) {
+    const r = consultationBrief.domainBrief;
+    const harmony = r.conflictRisk === "Low" ? "Good" : r.conflictRisk === "Mild" ? "Mostly good" : r.conflictRisk === "Moderate" ? "Needs care" : "Strained";
+    const stats: SummaryCard["stats"] = [
+      { label: "Harmony", value: harmony },
+      { label: "Main Dynamic", value: r.primaryDynamic },
+      { label: "Evidence Strength", value: r.evidenceStrength ?? "Insufficient" },
+      ...(r.goldTiming ? [{ label: "Timing", value: r.goldTiming }] : []),
+      ...(r.attentionAreas.length ? [{ label: "Needs Attention", value: r.attentionAreas.slice(0, 2).join(", ") }] : []),
+    ];
+    return { title, ratingOf5: stars, phase: harmony, stats };
+  }
+
   // ── Other domains ─────────────────────────────────────────────────────────
   const rawPhase = lifeStory?.currentStage ?? diagnosis.overallState;
   const FRIENDLY_PHASE: Record<string, string> = {

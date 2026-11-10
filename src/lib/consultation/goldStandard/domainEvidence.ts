@@ -90,10 +90,31 @@ export const PROPERTY_SPEC: DomainSpec = {
   varga: { key: "D4", name: "Chaturthamsha (property chart)", primaryHouse: 4 },
 };
 
+export const RELATIONSHIP_SPEC: DomainSpec = {
+  domain: "relationship",
+  title: "RELATIONSHIP",
+  houses: [
+    { house: 7,  meaning: "spouse, marriage and committed partnership" },
+    { house: 2,  meaning: "family life after marriage and harmony at home" },
+    { house: 5,  meaning: "romance and love affairs" },
+    { house: 8,  meaning: "the marital bond, intimacy and in-laws" },
+    { house: 11, meaning: "fulfilment of desires and friendship within the bond" },
+    { house: 12, meaning: "bed pleasures, distance and separation" },
+  ],
+  karakas: [
+    { planet: "Venus",   meaning: "love, attraction and the partner" },
+    { planet: "Jupiter", meaning: "blessing of marriage, wisdom and (for women) the husband" },
+    { planet: "Moon",    meaning: "emotional bond and mutual understanding" },
+    { planet: "Mars",    meaning: "passion, desire and friction" },
+  ],
+  varga: { key: "D9", name: "Navamsa (marriage chart)", primaryHouse: 7 },
+};
+
 export const DOMAIN_SPECS: Record<string, DomainSpec> = {
   career: CAREER_SPEC,
   finance: FINANCE_SPEC,
   property: PROPERTY_SPEC,
+  relationship: RELATIONSHIP_SPEC,
 };
 
 /** A planet's house, sign and dignity in a divisional chart. */

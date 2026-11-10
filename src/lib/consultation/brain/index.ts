@@ -586,6 +586,17 @@ function buildSystemPrompt(ctx: PunditBrainContext, notebookHistory: NotebookEnt
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
+/**
+ * The brain's domain names. Clients send variants — the Predictions pages send
+ * "relationships" — and those used to fall through to a generic brief.
+ */
+const DOMAIN_ALIASES: Record<string, string> = {
+  relationships: "relationship", marriage: "relationship", love: "relationship",
+  money: "finance", wealth: "finance", job: "career", work: "career",
+  realestate: "property", "real-estate": "property", home: "property",
+};
+export const canonicalDomain = (d: string) => DOMAIN_ALIASES[d?.toLowerCase()] ?? d;
+
 export async function assemblePunditBrain(
   question:    string,
   history:     Array<{ role: string; content: string }>,
@@ -593,9 +604,10 @@ export async function assemblePunditBrain(
   memories:    StoredDomainMemory[],
   symbolicCtx: AstrologyContext,
   dashaInfo:   DashaInfo | undefined,
-  domain:      string,
+  rawDomain:   string,
   chartData:   ChartData = {},
 ): Promise<PunditBrainOutput> {
+  const domain = canonicalDomain(rawDomain);
 
   // Layer 0: Reality Assimilation — must run first
   const [realityContext, notebookHistory] = await Promise.all([

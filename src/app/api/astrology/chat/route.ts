@@ -22,7 +22,7 @@ import { CareerEngine } from "@/lib/domains/career";
 import { MarriageEngine } from "@/lib/domains/marriage";
 import { FinanceEngine } from "@/lib/domains/finance";
 import { loadUserMemories, saveConsultationMemory, extractMemoryFromResponse } from "@/lib/consultation/sessionMemory";
-import { assemblePunditBrain, saveStoryArc } from "@/lib/consultation/brain";
+import { assemblePunditBrain, canonicalDomain, saveStoryArc } from "@/lib/consultation/brain";
 import type { ChartData } from "@/lib/consultation/brain";
 import { buildChartFacts } from "@/lib/core/astrology/chartFacts";
 import { generatePunditAnswer } from "@/lib/consultation/punditAnswer";
@@ -78,7 +78,8 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    targetDomain = targetDomain || "general";
+    // "relationships" (the Predictions pages) and other variants → the brain's domain names.
+    targetDomain = canonicalDomain(targetDomain || "general");
 
     // Detect temporal shift — "tomorrow" changes which transit positions we fetch.
     // Also inherit from the most recent assistant message so follow-up questions
