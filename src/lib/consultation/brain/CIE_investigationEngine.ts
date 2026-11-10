@@ -24,7 +24,7 @@ import { getHouseLord } from "../../core/astrology/lordshipEngine";
 // Lives in CODE. Never shown to the LLM.
 
 export interface InvestigationRequirements {
-  charts:  Array<"D1" | "D9" | "D10" | "D2" | "D4">;
+  charts:  Array<"D1" | "D9" | "D10" | "D2" | "D4" | "D12">;
   houses:  number[];     // key houses in D1 to evaluate
   planets: PlanetName[]; // key planets for this domain (ordered by importance)
 }
@@ -49,6 +49,11 @@ export const CHART_INTELLIGENCE_MATRIX: Record<string, InvestigationRequirements
     charts:  ["D1", "D4"],
     houses:  [4, 2, 11, 8],     // home, land and vehicles; savings; gains; loans and inheritance
     planets: ["Mars", "Venus", "Moon", "Saturn"],
+  },
+  family: {
+    charts:  ["D1", "D12"],
+    houses:  [4, 9, 3, 2],      // mother and home; father; siblings; family unit
+    planets: ["Moon", "Sun", "Mars", "Jupiter"],
   },
   relationship: {
     charts:  ["D1", "D9"],
@@ -80,7 +85,7 @@ export interface EvidenceItem {
   finding:      string;
   weight:       number;    // 0–100; higher = more decisive
   direction:    "supporting" | "challenging" | "neutral";
-  source:       "D1" | "D9" | "D10" | "D2" | "D4" | "Dasha" | "Transit" | "Yoga" | "Inference" | "Profile";
+  source:       "D1" | "D9" | "D10" | "D2" | "D4" | "D12" | "Dasha" | "Transit" | "Yoga" | "Inference" | "Profile";
   temporalRole: "background" | "medium_term" | "short_term";
   factIds:      string[];  // Root fact IDs e.g. ["D1:houseLord:10:Jupiter", "D1:placement:Jupiter:5"]
 }
@@ -291,7 +296,7 @@ function collectD1Evidence(
 
 function collectDivisionalEvidence(
   ctx:      AstrologyContext,
-  chart:    "D9" | "D10" | "D2" | "D4",
+  chart:    "D9" | "D10" | "D2" | "D4" | "D12",
   domain:   string,
   planets:  PlanetName[],
 ): EvidenceItem[] {
@@ -300,7 +305,7 @@ function collectDivisionalEvidence(
   if (!dc || dc.metadata.source === "Placeholder") return items;
 
   // Primary house for each divisional chart's domain focus
-  const PRIMARY_HOUSE: Record<string, number> = { D10: 10, D9: 7, D2: 2, D4: 4 };
+  const PRIMARY_HOUSE: Record<string, number> = { D10: 10, D9: 7, D2: 2, D4: 4, D12: 4 };
   const primaryHouse = PRIMARY_HOUSE[chart] ?? 1;
 
   const h = dc.houses.find(h => h.number === primaryHouse);
@@ -619,6 +624,7 @@ export function runInvestigation(
     ...(req.charts.includes("D9")  ? collectDivisionalEvidence(ctx, "D9",  domain, req.planets) : []),
     ...(req.charts.includes("D2")  ? collectDivisionalEvidence(ctx, "D2",  domain, req.planets) : []),
     ...(req.charts.includes("D4")  ? collectDivisionalEvidence(ctx, "D4",  domain, req.planets) : []),
+    ...(req.charts.includes("D12") ? collectDivisionalEvidence(ctx, "D12", domain, req.planets) : []),
     ...collectPlanetStrengthEvidence(ctx, req.planets, domain),
     ...collectDashaEvidence(dashaInfo, domain),
     ...collectTransitEvidence(ctx, domain),
@@ -730,6 +736,7 @@ export function runInvestigation(
   if (req.charts.includes("D9")  && ctx.chartSuite.D9.metadata.source  !== "Placeholder") chartKeysUsed.add("D9");
   if (req.charts.includes("D2")  && ctx.chartSuite.D2.metadata.source  !== "Placeholder") chartKeysUsed.add("D2");
   if (req.charts.includes("D4")  && ctx.chartSuite.D4.metadata.source  !== "Placeholder") chartKeysUsed.add("D4");
+  if (req.charts.includes("D12") && ctx.chartSuite.D12.metadata.source !== "Placeholder") chartKeysUsed.add("D12");
 
   const reasoning = buildReasoning(domain, evidence, overallScore, dashaInfo);
 
@@ -884,7 +891,7 @@ export function renderInvestigationReport(report: InvestigationReport, question:
 export function renderInvestigationTrailForUser(report: InvestigationReport): string {
   const chartLabel: Record<string, string> = {
     D1: "Birth chart (D1)", D9: "Navamsa chart (D9)",
-    D10: "Career chart (D10)", D2: "Wealth chart (D2)", D4: "Property chart (D4)",
+    D10: "Career chart (D10)", D2: "Wealth chart (D2)", D4: "Property chart (D4)", D12: "Parents chart (D12)",
   };
   const chartNames = report.chartsExamined
     .map(c => chartLabel[c] ?? c)

@@ -299,6 +299,14 @@ export interface PropertyBrief extends GoldBriefFields {
   risk:          string | null;
 }
 
+export interface FamilyBrief extends GoldBriefFields {
+  type:        "family";
+  focus:       string;        // "Parents" | "Mother" | "Father" | "Siblings" | "Children" | "Home Harmony"
+  harmony:     "Supportive" | "Steady" | "Needs Care" | "Strained";
+  opportunity: string | null;
+  attention:   string | null;
+}
+
 export interface RelationshipBrief extends GoldBriefFields {
   type:           "relationship";
   strongAreas:    string[];
@@ -325,7 +333,7 @@ export interface SpiritualityBrief {
   secondaryPlanet:    string | null; // secondary planet worth noting
 }
 
-export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | PropertyBrief | RelationshipBrief | SpiritualityBrief;
+export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | PropertyBrief | FamilyBrief | RelationshipBrief | SpiritualityBrief;
 
 export interface ConsultationBrief {
   domain:                string;

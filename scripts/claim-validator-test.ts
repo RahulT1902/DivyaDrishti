@@ -114,6 +114,10 @@ const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? p
   passes(`Saturn, as your 9th lord, keeps aspecting your ${ordinal(inReach[0])} and ${ordinal(inReach[1])} houses.`, "aspects Saturn really casts");
   fails(`Saturn moves on, aspecting your ${ordinal(inReach[0])}, ${ordinal(outReach)} and ${ordinal(inReach[1])} houses.`, `an aspect Saturn cannot cast (the ${ordinal(outReach)})`);
 
+  // From the family benchmark: a planet right after "from" still owns the placement that follows it.
+  const jH = natal("Jupiter").house, kH7 = natal("Ketu").house;
+  passes(`Ketu sits in your ${ordinal(kH7)} house, forming a cooperative connection from Jupiter in your ${ordinal(jH)} house.`, "'from Jupiter in your Nth house' credits Jupiter");
+
   console.log("\nRelationships");
   const pd = d.pd.planet as PlanetName, ad = d.ad.planet as PlanetName;
   const rel = nthFrom(natal(pd).sign, natal(ad).sign);
@@ -152,6 +156,13 @@ const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? p
   if (exD10 && D10.ascendant.sign !== facts.ascendantSign) {
     vPasses(`With ${D10.ascendant.signName} rising, ${exD10} is exalted in its ${ordinal(d10(exD10).house)} house.`,
       "divisional chart named only by its Ascendant (real Gemini sentence)");
+  }
+  // Transliteration variants are recognised as divisional-chart sentences.
+  const D12 = symbolicCtx.chartSuite.D12;
+  const d12Lord4 = D12.lords.find(l => l.house === 4)!.lord;
+  for (const name of ["Dwadashamsha", "Dvadasamsa", "parents' chart"]) {
+    const e = validateChartClaims(ev, facts, `In your ${name}, the 4th lord ${d12Lord4} sits in its ${ordinal(D12.planets.find(x => x.planet === d12Lord4)!.house)} house.`, D12).errors;
+    check(e.length === 0, `accepts: "${name}" read as the parents chart`, e);
   }
 
   console.log("\nKey-dates fallback (safeguard B)");

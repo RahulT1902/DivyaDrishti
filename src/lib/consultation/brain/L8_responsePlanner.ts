@@ -506,6 +506,19 @@ function buildSummaryCard(
     return { title, ratingOf5: stars, phase: harmony, stats };
   }
 
+  // ── Family: focus, harmony, evidence strength, dated timing ──────────────
+  if (domain === "family" && consultationBrief?.domainBrief.type === "family") {
+    const f = consultationBrief.domainBrief;
+    const stats: SummaryCard["stats"] = [
+      { label: "Focus", value: f.focus },
+      { label: "Harmony", value: f.harmony },
+      ...(f.goldStandard ? [{ label: "Evidence Strength", value: f.evidenceStrength ?? "Insufficient" }] : []),
+      ...(f.goldStandard && f.goldTiming ? [{ label: "Timing", value: f.goldTiming }] : []),
+      ...(f.attention ? [{ label: "Needs Attention", value: f.attention }] : []),
+    ];
+    return { title, ratingOf5: stars, phase: f.harmony, stats };
+  }
+
   // ── Other domains ─────────────────────────────────────────────────────────
   const rawPhase = lifeStory?.currentStage ?? diagnosis.overallState;
   const FRIENDLY_PHASE: Record<string, string> = {

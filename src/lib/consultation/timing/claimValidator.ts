@@ -44,6 +44,12 @@ function subjects(sentence: string): Mention[] {
 
 const nearestBefore = (ms: Mention[], at: number) => [...ms].reverse().find(m => m.at < at)?.planet ?? null;
 
+/** The planet named immediately before `at` ("Jupiter in your 5th"), whatever precedes it. */
+function adjacentPlanet(sentence: string, at: number): PlanetName | null {
+  const m = sentence.slice(Math.max(0, at - 12), at).match(new RegExp(`\\b(${PLANETS.join("|")})(?:['’]s)?\\s*$`));
+  return m ? (m[1] as PlanetName) : null;
+}
+
 /**
  * Every sign the planet occupies in the period asked (natal excluded). Today's
  * position counts only without TIMING EVIDENCE: a December question must not
@@ -74,7 +80,8 @@ const DIGNITY_WORDS: Array<[RegExp, SignDignity[]]> = [
 ];
 
 /** A sentence about a divisional chart rather than the birth chart. */
-export const VARGA_RE = /\b(?:Dashamsha|Dashamsa|Dasamsa|career chart|Navamsa|Navamsha|Hora|wealth chart|Chaturthamsha|Chaturthamsa|property chart|marriage chart|divisional)\b/i;
+// Spelling varies in transliteration (Dwadashamsha / Dvadasamsa …), so each name allows the common variants.
+export const VARGA_RE = /\b(?:Dashamsh?a|Dasamsh?a|career chart|Navamsh?a|Hora|wealth chart|Chaturthamsh?a|property chart|marriage chart|D[wv]adash?amsh?a|parents['’]? chart|parental chart|divisional)\b/i;
 
 const splitSentences = (text: string) => text.split(/(?<=[.!?])\s+|\n+/);
 
@@ -199,7 +206,9 @@ export function validateChartClaims(
     for (const m of sentence.matchAll(placeRe)) {
       const ordAt = m.index! + m[0].length - m[1].length;
       if (claimed.has(ordAt)) continue;
-      const p = nearestBefore(ms, m.index!);
+      // "…a connection from Jupiter in your 5th house": a planet right before the
+      // placement owns it, even when it follows "from".
+      const p = adjacentPlanet(sentence, m.index!) ?? nearestBefore(ms, m.index!);
       if (!p) continue;
       const n = ordValue(m[1]);
       // Paired lists read in order: "Rahu and Ketu transiting the 8th and 2nd houses",

@@ -110,11 +110,32 @@ export const RELATIONSHIP_SPEC: DomainSpec = {
   varga: { key: "D9", name: "Navamsa (marriage chart)", primaryHouse: 7 },
 };
 
+export const FAMILY_SPEC: DomainSpec = {
+  domain: "family",
+  title: "FAMILY",
+  houses: [
+    { house: 4,  meaning: "mother, home and peace in the household" },
+    { house: 9,  meaning: "father, elders and family blessings" },
+    { house: 3,  meaning: "siblings and cousins" },
+    { house: 2,  meaning: "the family unit, shared values and speech at home" },
+    { house: 5,  meaning: "children" },
+    { house: 12, meaning: "distance from family and expenses on family" },
+  ],
+  karakas: [
+    { planet: "Moon",    meaning: "mother and emotional comfort at home" },
+    { planet: "Sun",     meaning: "father and authority in the family" },
+    { planet: "Mars",    meaning: "siblings, especially younger ones" },
+    { planet: "Jupiter", meaning: "children, elders and family wisdom" },
+  ],
+  varga: { key: "D12", name: "Dwadashamsha (parents chart)", primaryHouse: 4 },
+};
+
 export const DOMAIN_SPECS: Record<string, DomainSpec> = {
   career: CAREER_SPEC,
   finance: FINANCE_SPEC,
   property: PROPERTY_SPEC,
   relationship: RELATIONSHIP_SPEC,
+  family: FAMILY_SPEC,
 };
 
 /** A planet's house, sign and dignity in a divisional chart. */
@@ -217,7 +238,7 @@ export function renderDomainEvidence(opts: {
     .replace(/\s*\([+-]?\d+ shift[^)]*\)/g, "")
     .replace(/\s*with strength \d+\/100/g, "")
     .replace(/\bD1\b/g, "birth-chart")
-    .replace(/\bD10\b/g, "Dashamsha").replace(/\bD9\b/g, "Navamsa").replace(/\bD2\b/g, "Hora").replace(/\bD4\b/g, "Chaturthamsha")
+    .replace(/\bD10\b/g, "Dashamsha").replace(/\bD9\b/g, "Navamsa").replace(/\bD2\b/g, "Hora").replace(/\bD4\b/g, "Chaturthamsha").replace(/\bD12\b/g, "Dwadashamsha")
     .replace(/\b(\d+)th\b/g, (_, n) => ordinal(Number(n)))
     .trim();
   const ev = vargaFiltered(spec, report)?.evidence ?? [];

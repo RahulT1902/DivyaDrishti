@@ -14,7 +14,7 @@
 
 import type {
   AstrologicalDiagnosis, IntentAnalysis,
-  ConsultationBrief, HealthBrief, HealthSystemScore, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, PropertyBrief, RelationshipBrief, SpiritualityBrief,
+  ConsultationBrief, HealthBrief, HealthSystemScore, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, PropertyBrief, FamilyBrief, RelationshipBrief, SpiritualityBrief,
 } from "./types";
 import type { BodyRiskProfile } from "../../intelligence/health/bodyRiskProfile";
 import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
@@ -557,6 +557,34 @@ function interpretProperty(
   };
 }
 
+function interpretFamily(diagnosis: AstrologicalDiagnosis, intent: IntentAnalysis): FamilyBrief {
+  const s = diagnosis.overallState;
+  const q = intent.stated.toLowerCase();
+  const focus =
+    /\bmother|\bmom\b|\bmaa\b|mummy/.test(q)                 ? "Mother"
+    : /\bfather|\bdad\b|papa|pita/.test(q)                   ? "Father"
+    : /parent/.test(q)                                       ? "Parents"
+    : /sibling|brother|sister|bhai|behen/.test(q)            ? "Siblings"
+    : /\bchild|\bson\b|daughter|\bkids?\b|children/.test(q)  ? "Children"
+    : "Home Harmony";
+  const harmony: FamilyBrief["harmony"] =
+    s === "Highly Favorable" || s === "Favorable" ? "Supportive"
+    : s === "Moderate" ? "Steady"
+    : s === "Challenging" ? "Needs Care"
+    : "Strained";
+  return {
+    type: "family",
+    focus,
+    harmony,
+    opportunity: harmony === "Supportive" ? "A good period to reconnect and settle family matters"
+      : harmony === "Steady" ? "Small, regular gestures strengthen family ties now"
+      : null,
+    attention: harmony === "Strained" ? "Tension at home needs patience; avoid forcing decisions"
+      : harmony === "Needs Care" ? "Family responsibilities may feel heavier; share the load"
+      : null,
+  };
+}
+
 function interpretFinance(
   diagnosis:  AstrologicalDiagnosis,
   activation: DomainActivation | null,
@@ -987,6 +1015,20 @@ export function buildConsultationBrief(
       break;
     }
 
+    case "family": {
+      const f = interpretFamily(diagnosis, intent);
+      domainBrief    = f;
+      overallVerdict = f.harmony;
+      mainConclusion =
+        f.harmony === "Supportive" ? `Family life looks supportive — a good time for ${f.focus === "Home Harmony" ? "togetherness at home" : `your bond with ${f.focus.toLowerCase()}`}.`
+        : f.harmony === "Steady"   ? `Family life looks steady — small, regular care keeps things warm.`
+        : `Family matters need extra patience right now — ${(f.attention ?? "go gently").toLowerCase()}.`;
+      recommendation = f.attention
+        ? "Listen more than you advise, and leave big family decisions for a calmer window."
+        : "Make time for the people at home; small gestures carry weight now.";
+      break;
+    }
+
     case "relationship": {
       const r = interpretRelationship(diagnosis);
       domainBrief    = r;
@@ -1224,6 +1266,17 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
     if (db.goldStandard) {
       lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
       lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in PROPERTY CHART EVIDENCE; never give a number of days or weeks`);
+    }
+  }
+
+  if (db.type === "family") {
+    lines.push(`FOCUS: ${db.focus}`);
+    lines.push(`HARMONY: ${db.harmony}`);
+    if (db.opportunity) lines.push(`OPPORTUNITY: ${db.opportunity}`);
+    if (db.attention) lines.push(`NEEDS ATTENTION: ${db.attention}`);
+    if (db.goldStandard) {
+      lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
+      lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in FAMILY CHART EVIDENCE; never give a number of days or weeks`);
     }
   }
 

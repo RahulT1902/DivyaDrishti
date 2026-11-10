@@ -102,8 +102,15 @@ For the running Pratyantar lord, the engine states:
   - Navamsa (D9) corroboration.
   - Answers never predict divorce, separation, infidelity or a partner's
     illness or death; no fear-based dosha talk; no verdicts to stay or leave.
-- **Remaining domains:** family and education migrate one at a time, each
-  with a `DomainSpec` and its own benchmark.
+- **Family (Phase B):** a FamilyBrief of its own (focus: parents, mother,
+  father, siblings, children or harmony at home).
+  - FAMILY CHART EVIDENCE: the 4th (mother, home), 9th (father), 3rd
+    (siblings), 2nd (family unit), 5th (children) and 12th.
+  - Karakas: Moon, Sun, Mars and Jupiter.
+  - Dwadashamsha (D12) corroboration; the CIE now reads D12 too.
+  - Answers never predict a family member's illness, accident or death and
+    never blame or take sides.
+- **Remaining domain:** education, after D24 is added to the chart suite.
 - **Gold charts unchanged:** they have no birth date, so their health and
   marriage prompts are byte-identical to before. Their career prompts now use
   the career Gold Standard; the gold test charts have no Dashamsha, so that

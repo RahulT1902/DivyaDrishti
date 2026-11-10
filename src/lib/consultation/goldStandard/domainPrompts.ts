@@ -228,6 +228,54 @@ PARTS.relationship = {
   ],
 };
 
+GOLD_PHRASES.family = {
+  evidenceName: "FAMILY CHART EVIDENCE",
+  meansFor: "for their family",
+  lifeArea: "family and home life",
+  reasoningExample:
+    `"the Moon rules your 2nd and sits in the 7th,\n` +
+    `  so family warmth grows through the people you bring into it".`,
+  vargaRule: `Call the D12 "your parents chart (Dwadashamsha)"; never write D1/D12.`,
+  limitsCheck: "says astrology shows tendencies and that family life is shaped by everyone's choices",
+  summaryFormat:
+    `  FAMILY format (Gold Standard):\n` +
+    `    Overall Family Life: ★★★★☆ (Supportive / Steady / Needs Care / Strained)\n` +
+    `    Focus: [parents / mother / father / siblings / children / harmony at home]\n` +
+    `    Supporting Factor: [1 phrase naming the chart factor]\n` +
+    `    Needs Attention: [1 phrase naming the chart factor]\n` +
+    `    Best Window: [a FAVOURABLE or MIXED date range from TIMING EVIDENCE; if every window is CAUTION, "None this period"]\n` +
+    `    Evidence Strength: [Strong / Moderate / Weak / Insufficient]\n` +
+    `    Best Approach: [1 specific practical phrase]\n`,
+};
+
+PARTS.family = {
+  title: "FAMILY",
+  natalFramework:
+    `the 4th house (mother, home) and its lord, then the houses that fit\n` +
+    `     THIS question: 9th (father, elders), 3rd (siblings), 2nd (the family unit), 5th (children),\n` +
+    `     12th (distance from family); and the karakas Moon, Sun, Mars and Jupiter.`,
+  varga: `Parents chart (Dwadashamsha) — confirms or qualifies the birth-chart promise; never overrides it.`,
+  evidenceName: "FAMILY CHART EVIDENCE",
+  answerTopics: `(parents, siblings,\n     children, harmony at home, a family decision)`,
+  natalPromise:
+    `the lord of the house that fits the question (4th for mother and home, 9th for\n` +
+    `     father, 3rd for siblings, 5th for children) and the karakas; explain what each means for the family.`,
+  vargaStep: `Parents chart (Dwadashamsha) — say whether it confirms or qualifies the birth-chart picture.`,
+  transitHouses: "the 4th house and the other family houses",
+  favourable: "what supports warmth and understanding at home (always include this)",
+  challenging: "what strains family ties",
+  exampleEvent: `"from 16 Dec, when the Sun\n     enters your 4th house…"`,
+  guidance: "specific: how to approach the people involved, what to avoid, when to talk — kind and practical",
+  limits:
+    `tendencies and favourable windows, not fixed fate, and that family life is shaped by\n` +
+    `     everyone's choices; health or legal family matters need the right professional`,
+  rules: [
+    `• Never predict a parent's, sibling's or child's illness, accident or death.`,
+    `• Never blame a family member or take sides; offer perspective, not verdicts.`,
+    `• No fear-based dosha talk; if a factor is challenging, say how to work with it.`,
+  ],
+};
+
 /** The reasoning protocol and A–J structure for a non-health domain. */
 export function goldProtocol(domain: string, goldTiming: boolean): string {
   const p = PARTS[domain];
