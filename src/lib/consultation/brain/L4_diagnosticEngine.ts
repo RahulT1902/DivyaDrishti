@@ -29,6 +29,7 @@ const DOMAIN_MAP: Record<string, string> = {
   family:       "Marriage",
   business:     "Career",
   education:    "Education",
+  property:     "Wealth",     // no property inference rules yet; property is an asset
   general:      "Career",
 };
 

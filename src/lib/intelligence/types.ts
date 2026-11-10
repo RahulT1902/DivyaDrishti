@@ -1,6 +1,6 @@
 export type DecisionSignal = "ACT" | "WAIT" | "AVOID" | "OBSERVE";
 
-export type IntentDomain = "career" | "finance" | "relationship" | "health" | "general" | "mind" | "spirituality" | "family" | "education" | "business";
+export type IntentDomain = "career" | "finance" | "property" | "relationship" | "health" | "general" | "mind" | "spirituality" | "family" | "education" | "business";
 export type NarrativeStyle = "A" | "B" | "C" | "D" | "E";
 export type IntentType = "decision" | "problem" | "timing" | "general";
 

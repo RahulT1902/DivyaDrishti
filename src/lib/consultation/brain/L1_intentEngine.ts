@@ -15,14 +15,17 @@ import type { IntentAnalysis, EmotionalTone, Urgency } from "./types";
 const DOMAIN_PATTERNS: [string, RegExp][] = [
   ["career",       /career|job|work|profession|business|office|promotion|interview|resign|salary|hike|appraisal/i],
   ["health",       /health|sick|body|sleep|energy|pain|illness|doctor|fitness|recover|cold|fever/i],
+  ["property",     /property|\bhouse\b|\bflat\b|apartment|\bplot\b|\bland\b|real estate|home loan|construction|vastu/i],
   ["finance",      /finance|money|income|savings|invest|salary|wealth|loan|debt|expense|returns/i],
   ["relationship", /relationship|marriage|partner|spouse|love|romance|family|boyfriend|girlfriend/i],
   ["education",    /study|exam|college|education|degree|course|admission|academic/i],
 ];
 
 function detectDomain(q: string): string {
+  // "7th house" is an astrological house, not real estate.
+  const text = q.replace(/\b(?:\d{1,2}(?:st|nd|rd|th)|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth)\s+houses?\b/gi, "");
   for (const [domain, pattern] of DOMAIN_PATTERNS) {
-    if (pattern.test(q)) return domain;
+    if (pattern.test(text)) return domain;
   }
   return "general";
 }

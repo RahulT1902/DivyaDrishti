@@ -140,6 +140,7 @@ function getMirror(intent: Intent, insight: DeepInsight, timeframe: string, sign
   const mirrors: Record<IntentDomain, string> = {
     career: `You may feel an urge to move faster${timeMarker}, but situations are forcing you to slow down.`,
     finance: `You may feel ready to commit resources${timeMarker}, but the conditions favor security over movement.`,
+    property: `You may feel ready to make a property move${timeMarker}, but the details deserve more time than the decision itself.`,
     relationship: `You may notice dynamics feeling more demanding${timeMarker}, requiring steady patience.`,
     health: `You may feel an internal mismatch between your ambition and your body's need for rest${timeMarker}.`,
     general: `You may be experiencing slower results${timeMarker} despite consistent effort.`,

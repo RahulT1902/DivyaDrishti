@@ -17,6 +17,7 @@ import {
   validateInterpretationSynthesis,
   type ChartFacts,
 } from "@/lib/core/astrology/chartFacts";
+import { withoutVargaSentences } from "../timing/claimValidator";
 
 export const GOLD_STANDARD_VERSION = "1.0";
 
@@ -25,6 +26,9 @@ export const MEDICAL_SAFETY_RE = /\b(?:doctors?|physicians?|medical (?:advice|ca
 
 /** Finance: wording that says this is not financial or investment advice. */
 export const FINANCIAL_SAFETY_RE = /\b(?:(?:financial|investment) advice|(?:qualified|certified|professional|financial|investment)\s+(?:professional\s+|financial\s+)?(?:advis[eo]rs?|planners?)|consult (?:a|an) (?:qualified |certified )?(?:financial|investment))\b/i;
+
+/** Property: not financial/legal advice, or a direction to check documents and title. */
+export const PROPERTY_SAFETY_RE = /\b(?:(?:financial|legal|investment)(?: or (?:financial|legal|investment))? advice|(?:qualified|certified|professional|financial|legal)\s+(?:advis[eo]rs?|experts?|professionals?)|lawyers?|advocates?|(?:check|verify|review)(?:ing)? (?:the |all )?(?:documents|papers|paperwork|title))\b/i;
 
 export interface RubricCheck {
   id: string;
@@ -45,7 +49,7 @@ export interface RubricResult {
 }
 
 // Chart factors the standard requires for each domain (§2). Each domain gets
-// its own factor set when it migrates (health, career, finance).
+// its own factor set when it migrates (health, career, finance, property).
 const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
   health: [
     { id: "ascendant", pattern: /\b(?:ascendant|lagna)\b/i },
@@ -67,6 +71,13 @@ const DOMAIN_FACTORS: Record<string, Array<{ id: string; pattern: RegExp }>> = {
     { id: "5th/9th house", pattern: /\b(?:5th|fifth|9th|ninth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:5th|fifth|9th|ninth)\b/i },
     { id: "12th house", pattern: /\b(?:12th|twelfth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:12th|twelfth)\b/i },
     { id: "Hora", pattern: /\b(?:Hora|wealth chart)\b/i },
+  ],
+  property: [
+    { id: "4th house", pattern: /\b(?:4th|fourth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:4th|fourth)\b/i },
+    { id: "2nd/11th house", pattern: /\b(?:2nd|second|11th|eleventh)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:2nd|second|11th|eleventh)\b/i },
+    { id: "8th/12th house", pattern: /\b(?:8th|eighth|12th|twelfth)(?:[- ]house|\s+lord)\b|\blord of (?:the |your )?(?:8th|eighth|12th|twelfth)\b/i },
+    { id: "Mars/Venus", pattern: /\b(?:Mars|Venus)\b/ },
+    { id: "Chaturthamsha", pattern: /\b(?:Chaturthamsha|Chaturthamsa|property chart)\b/i },
   ],
 };
 
@@ -185,10 +196,18 @@ export function scoreConsultation(opts: {
       passed: safety, detail: safety ? "present" : "missing",
     });
   }
+  if (domain === "property") {
+    const safety = PROPERTY_SAFETY_RE.test(text);
+    add({
+      id: "property-safety", criterion: "R2", label: "Says it is not financial/legal advice or to check documents",
+      passed: safety, detail: safety ? "present" : "missing",
+    });
+  }
 
   // R3 — chart facts correct (the chat route's integrity gate).
   const gate = [
-    ...validateInterpretationFacts(chartFacts, text).errors,
+    // Divisional-chart sentences ("the property chart's 4th lord Jupiter") have their own lords; the live gate checks them separately.
+    ...validateInterpretationFacts(chartFacts, withoutVargaSentences(text)).errors,
     ...validateInterpretationSynthesis({ conclusion: { overallScore: opts.overallScore ?? 50 } }, text).errors,
   ];
   add({

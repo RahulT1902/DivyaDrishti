@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
       // Compute genuine per-user astrological facts from the natal chart.
       // These differ between users and make the LLM response chart-specific.
       const CHAT_TO_VEDIC: Record<string, string> = {
-        career: "Career", finance: "Wealth", relationship: "Marriage",
+        career: "Career", finance: "Wealth", property: "Property", relationship: "Marriage",
         family: "Marriage", health: "Health", business: "Business",
         education: "Education", spirituality: "Spirituality", general: "Career"
       };

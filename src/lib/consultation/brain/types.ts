@@ -290,6 +290,15 @@ export interface FinanceBrief extends GoldBriefFields {
   surpriseObservation: string | null;
 }
 
+export interface PropertyBrief extends GoldBriefFields {
+  type:          "property";
+  primaryFocus:  string;        // "Home Purchase" | "Sale" | "Construction" | "Home Loan" | "Moving" | "Land"
+  direction:     "Favourable" | "Steady" | "Delayed" | "Unfavourable";
+  manifestations: string[];      // the engine's ranked property themes ("Home Purchase", "Vehicle Acquisition", …)
+  opportunity:   string | null;
+  risk:          string | null;
+}
+
 export interface RelationshipBrief {
   type:           "relationship";
   strongAreas:    string[];
@@ -316,7 +325,7 @@ export interface SpiritualityBrief {
   secondaryPlanet:    string | null; // secondary planet worth noting
 }
 
-export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | RelationshipBrief | SpiritualityBrief;
+export type DomainBrief = HealthBrief | CareerBrief | FinanceBrief | PropertyBrief | RelationshipBrief | SpiritualityBrief;
 
 export interface ConsultationBrief {
   domain:                string;

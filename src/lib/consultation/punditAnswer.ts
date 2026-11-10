@@ -5,7 +5,7 @@ import {
   type ChartFacts,
 } from "@/lib/core/astrology/chartFacts";
 import { buildAstrologicalBasis, insertAstrologicalBasis } from "@/lib/consultation/astrologicalBasis";
-import { FINANCIAL_SAFETY_RE, MEDICAL_SAFETY_RE } from "@/lib/consultation/goldStandard/rubric";
+import { FINANCIAL_SAFETY_RE, MEDICAL_SAFETY_RE, PROPERTY_SAFETY_RE } from "@/lib/consultation/goldStandard/rubric";
 import { datesIn, timingCoverageErrors, validateTimingClaims } from "@/lib/consultation/timing/timingValidator";
 import { validateChartClaims, withoutVargaSentences } from "@/lib/consultation/timing/claimValidator";
 import { renderKeyDates } from "@/lib/consultation/timing/timingEngine";
@@ -173,7 +173,7 @@ export async function generatePunditAnswer(opts: {
   // Gold Standard §10: a health answer always says astrology is not a medical
   // diagnosis. The prompt asks for it in the model's own words; this is the
   // guarantee when the model leaves it out.
-  // A finance answer likewise always says it is not financial advice.
+  // Finance and property answers likewise always say they are not financial (or legal) advice.
   const safety: Record<string, { re: RegExp; line: string }> = {
     health: {
       re: MEDICAL_SAFETY_RE,
@@ -182,6 +182,10 @@ export async function generatePunditAnswer(opts: {
     finance: {
       re: FINANCIAL_SAFETY_RE,
       line: "Astrology can point to tendencies and timing, but this is not financial or investment advice. Please speak to a qualified financial adviser before any major money decision.",
+    },
+    property: {
+      re: PROPERTY_SAFETY_RE,
+      line: "Astrology can point to tendencies and timing, but this is not financial or legal advice. Please check the documents, title and finances with professionals before buying or selling property.",
     },
   };
   const safetyAdded = !!safety[domain] && !safety[domain].re.test(validatedText);

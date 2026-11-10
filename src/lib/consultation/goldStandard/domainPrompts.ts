@@ -63,6 +63,26 @@ export const GOLD_PHRASES: Record<string, GoldPhrases> = {
   },
 };
 
+GOLD_PHRASES.property = {
+  evidenceName: "PROPERTY CHART EVIDENCE",
+  meansFor: "for their home and property plans",
+  lifeArea: "home, land and property plans",
+  reasoningExample:
+    `"Mars rules your 4th and sits in the 11th,\n` +
+    `  so land or a home tends to come as the reward of sustained effort".`,
+  vargaRule: `Call the D4 "your property chart (Chaturthamsha)"; never write D1/D4.`,
+  limitsCheck: "says this is not financial or legal advice and to check documents",
+  summaryFormat:
+    `  PROPERTY format (Gold Standard):\n` +
+    `    Overall Property Outlook: ★★★★☆ (Favourable / Steady / Delayed / Unfavourable)\n` +
+    `    Focus: [purchase / sale / construction / home loan / moving / land]\n` +
+    `    Supporting Factor: [1 phrase naming the chart factor]\n` +
+    `    Main Risk: [1 phrase naming the chart factor]\n` +
+    `    Best Window: [a FAVOURABLE or MIXED date range from TIMING EVIDENCE; if every window is CAUTION, "None this period"]\n` +
+    `    Evidence Strength: [Strong / Moderate / Weak / Insufficient]\n` +
+    `    Best Approach: [1 specific practical phrase]\n`,
+};
+
 /** The parts of the reasoning protocol that differ between domains. */
 interface ProtocolParts {
   title: string;
@@ -131,6 +151,33 @@ const PARTS: Record<string, ProtocolParts> = {
       `• Never predict a market move; speak only about this person's chart and timing.`,
     ],
   },
+};
+
+PARTS.property = {
+  title: "PROPERTY",
+  natalFramework:
+    `the 4th house (home, land, vehicles) and its lord, then the houses\n` +
+    `     that fit THIS question: 2nd (savings for a purchase), 11th (gains), 8th (loans, inheritance),\n` +
+    `     12th (large outlays), 10th (means from work); and the karakas Mars, Venus, Moon and Saturn.`,
+  varga: `Property chart (Chaturthamsha) — confirms or qualifies the birth-chart promise; never overrides it.`,
+  evidenceName: "PROPERTY CHART EVIDENCE",
+  answerTopics: `(buying, selling,\n     building, a home loan, moving, land)`,
+  natalPromise:
+    `the 4th lord and the houses that matter for this question, and the\n` +
+    `     karakas; explain what each means for their property plans. Don't list every placement.`,
+  vargaStep: `Property chart (Chaturthamsha) — say whether it confirms or qualifies the birth-chart promise.`,
+  transitHouses: "the 4th house and the other property houses",
+  favourable: "what supports owning, buying or building (always include this)",
+  challenging: "what delays or complicates it",
+  exampleEvent: `"from 5 Dec, when Rahu\n     enters your 8th house…"`,
+  guidance: "specific: what to prepare, what to check, when to act — never a price or an amount",
+  limits:
+    `tendencies and favourable windows, not guaranteed outcomes, and that this is not\n` +
+    `     financial or legal advice — documents, title and finances should be checked with professionals`,
+  rules: [
+    `• Never name a price, an amount, a location to buy in, or a promised return.`,
+    `• Never predict the property market; speak only about this person's chart and timing.`,
+  ],
 };
 
 /** The reasoning protocol and A–J structure for a non-health domain. */

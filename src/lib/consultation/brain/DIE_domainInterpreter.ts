@@ -14,7 +14,7 @@
 
 import type {
   AstrologicalDiagnosis, IntentAnalysis,
-  ConsultationBrief, HealthBrief, HealthSystemScore, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, RelationshipBrief, SpiritualityBrief,
+  ConsultationBrief, HealthBrief, HealthSystemScore, CareerBrief, CareerAspect, FinanceBrief, FinanceArea, PropertyBrief, RelationshipBrief, SpiritualityBrief,
 } from "./types";
 import type { BodyRiskProfile } from "../../intelligence/health/bodyRiskProfile";
 import type { HealthFindings } from "../../intelligence/health/healthFindingsEngine";
@@ -524,6 +524,39 @@ function interpretCareer(
 
 // ── Finance interpreter ───────────────────────────────────────────────────────
 
+function interpretProperty(
+  diagnosis:      AstrologicalDiagnosis,
+  intent:         IntentAnalysis,
+  manifestations: Array<{ title: string; probability: number }> | null,
+): PropertyBrief {
+  const s = diagnosis.overallState;
+  const q = intent.stated.toLowerCase();
+  const primaryFocus =
+    /\bsell|sale\b/.test(q)                         ? "Sale"
+    : /construct|build|renovat|repair/.test(q)      ? "Construction"
+    : /home loan|\bloan\b|emi|mortgage/.test(q)     ? "Home Loan"
+    : /\bmove|moving|shift|relocat|rent/.test(q)    ? "Moving"
+    : /\bland\b|\bplot\b|farm/.test(q)              ? "Land"
+    : "Home Purchase";
+  const direction: PropertyBrief["direction"] =
+    s === "Highly Favorable" || s === "Favorable" ? "Favourable"
+    : s === "Moderate" ? "Steady"
+    : s === "Challenging" ? "Delayed"
+    : "Unfavourable";
+  return {
+    type: "property",
+    primaryFocus,
+    direction,
+    manifestations: (manifestations ?? []).slice(0, 3).map(m => m.title),
+    opportunity: direction === "Favourable" ? "Supportive period for planned property steps"
+      : direction === "Steady" ? "Groundwork — research, savings and paperwork — pays off now"
+      : null,
+    risk: direction === "Unfavourable" ? "Avoid major property commitments until timing improves"
+      : direction === "Delayed" ? "Expect delays in approvals, registration or possession"
+      : null,
+  };
+}
+
 function interpretFinance(
   diagnosis:  AstrologicalDiagnosis,
   activation: DomainActivation | null,
@@ -940,6 +973,20 @@ export function buildConsultationBrief(
       break;
     }
 
+    case "property": {
+      const p = interpretProperty(diagnosis, intent, chartData.manifestations ?? null);
+      domainBrief    = p;
+      overallVerdict = p.direction;
+      mainConclusion =
+        p.direction === "Favourable" ? `The chart supports ${p.primaryFocus.toLowerCase()} steps in this period.`
+        : p.direction === "Steady"   ? `Property matters look steady — a time to prepare ${p.primaryFocus.toLowerCase()} carefully rather than rush.`
+        : `Property decisions need patience right now — ${(p.risk ?? "timing is not yet supportive").toLowerCase()}.`;
+      recommendation = p.risk
+        ? "Hold big property commitments; use this time for research, documents and savings."
+        : "Move forward on planned property steps, with documents and finances checked first.";
+      break;
+    }
+
     case "relationship": {
       const r = interpretRelationship(diagnosis);
       domainBrief    = r;
@@ -1029,11 +1076,11 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
   const { domainBrief: db } = brief;
 
   // ── Prepend Investigation Trail when available ────────────────────────────
-  // Gold Standard health, career and finance answers get the same findings (and the transits) in
+  // Gold Standard answers (health, career, finance, property) get the same findings (and the transits) in
   // the domain CHART EVIDENCE block, so the trail and transit audit are left
   // out there — they would duplicate it and push the prompt past the Groq
   // free tier's 8,000 tokens-per-minute limit.
-  const goldBrief = (db.type === "health" || db.type === "career" || db.type === "finance") && !!db.goldStandard;
+  const goldBrief = (db.type === "health" || db.type === "career" || db.type === "finance" || db.type === "property") && !!db.goldStandard;
   const investigationBlock = brief.investigationReport && !goldBrief
     ? renderInvestigationReport(brief.investigationReport, question) + "\n\n"
     : "";
@@ -1165,6 +1212,18 @@ export function renderConsultationBrief(brief: ConsultationBrief, question: stri
       // Gold Standard §7/§8: evidence strength in words; timing from the dated dasha.
       lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
       lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in FINANCE CHART EVIDENCE; never give a number of days or weeks`);
+    }
+  }
+
+  if (db.type === "property") {
+    lines.push(`PRIMARY FOCUS: ${db.primaryFocus}`);
+    lines.push(`DIRECTION: ${db.direction}`);
+    if (db.manifestations.length) lines.push(`PROPERTY THEMES THE CHART RANKS HIGHEST: ${db.manifestations.join(" · ")}`);
+    if (db.opportunity) lines.push(`OPPORTUNITY: ${db.opportunity}`);
+    if (db.risk) lines.push(`RISK: ${db.risk}`);
+    if (db.goldStandard) {
+      lines.push(`EVIDENCE STRENGTH: ${db.evidenceStrength ?? "Insufficient"}  ← say this in words; never a percentage`);
+      lines.push(`TIMING: ${db.goldTiming ?? "dasha period not available"}  ← anchor timing ONLY to this period and the dates in PROPERTY CHART EVIDENCE; never give a number of days or weeks`);
     }
   }
 

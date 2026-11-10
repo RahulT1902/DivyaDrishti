@@ -86,8 +86,17 @@ For the running Pratyantar lord, the engine states:
     the Hora by houses are left out.
   - Answers never name a stock, fund, amount or return, and always say they
     are not financial advice; the server adds that line if missing.
-- **Remaining domains:** property, marriage, family and education migrate one
-  at a time, each with a `DomainSpec` and its own benchmark.
+- **Property (Phase B):** its own chat domain. Questions about a house, flat,
+  plot, land, home loan, construction or vastu are routed there; astrology
+  phrases like "my 7th house" are not.
+  - PROPERTY CHART EVIDENCE: the 4th house (home, land, vehicles) plus the
+    2nd, 11th, 8th, 12th and 10th.
+  - Karakas: Mars, Venus, Moon and Saturn.
+  - Chaturthamsha (D4) corroboration; the CIE now reads D4 too.
+  - Answers never name a price, amount, location or market move, and always
+    say they are not financial or legal advice and to check documents.
+- **Remaining domains:** marriage, family and education migrate one at a
+  time, each with a `DomainSpec` and its own benchmark.
 - **Gold charts unchanged:** they have no birth date, so their health and
   marriage prompts are byte-identical to before. Their career prompts now use
   the career Gold Standard; the gold test charts have no Dashamsha, so that

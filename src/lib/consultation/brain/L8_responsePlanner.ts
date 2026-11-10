@@ -479,6 +479,19 @@ function buildSummaryCard(
     return { title, ratingOf5: stars, phase: f.primaryFlow, stats };
   }
 
+  // ── Property: focus, direction, evidence strength, dated timing ──────────
+  if (domain === "property" && consultationBrief?.domainBrief.type === "property") {
+    const p = consultationBrief.domainBrief;
+    const stats: SummaryCard["stats"] = [
+      { label: "Focus", value: p.primaryFocus },
+      { label: "Direction", value: p.direction },
+      ...(p.goldStandard ? [{ label: "Evidence Strength", value: p.evidenceStrength ?? "Insufficient" }] : []),
+      ...(p.goldStandard && p.goldTiming ? [{ label: "Timing", value: p.goldTiming }] : []),
+      { label: "Risk", value: p.risk ? "Present" : "Low" },
+    ];
+    return { title, ratingOf5: stars, phase: p.direction, stats };
+  }
+
   // ── Other domains ─────────────────────────────────────────────────────────
   const rawPhase = lifeStory?.currentStage ?? diagnosis.overallState;
   const FRIENDLY_PHASE: Record<string, string> = {

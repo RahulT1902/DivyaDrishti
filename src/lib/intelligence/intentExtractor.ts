@@ -19,6 +19,9 @@ function pickNarrativeStyle(seed?: string): NarrativeStyle {
   return STYLE_ROTATION[(hash + hour) % STYLE_ROTATION.length];
 }
 
+/** "7th house", "tenth houses" — astrological houses, not real estate. */
+export const ASTRO_HOUSE_RE = /\b(?:\d{1,2}(?:st|nd|rd|th)|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth)\s+houses?\b/gi;
+
 export function extractIntent(question: string, userSeed?: string): Intent {
   const q = question.toLowerCase();
 
@@ -26,6 +29,7 @@ export function extractIntent(question: string, userSeed?: string): Intent {
   const scores: Record<string, number> = {
     career: 0,
     finance: 0,
+    property: 0,
     relationship: 0,
     health: 0,
     spirituality: 0,
@@ -42,6 +46,11 @@ export function extractIntent(question: string, userSeed?: string): Intent {
   // Finance
   if (/(money|invest|loan|debt|wealth|saving|income|cash|finance|financial)/i.test(q)) scores.finance += 1;
   if (/(buy|sell|stock|crypto|property|house|expense|budget|funds|returns)/i.test(q)) scores.finance += 0.5;
+
+  // Property — scored above finance's generic "buy"/"invest", so "invest in a flat" is a property question
+  // ("7th house" is astrology, not real estate, so house numbers are ignored here.)
+  const qp = q.replace(ASTRO_HOUSE_RE, "");
+  if (/(property|house|flat|apartment|plot|\bland\b|real estate|home loan|new home|buy a home|construction|vastu|griha pravesh|bhoomi|makaan|ghar kharid)/i.test(qp)) scores.property += 2;
 
   // Relationship
   if (/(marriage|love|relationship|partner|wife|husband|boyfriend|girlfriend)/i.test(q)) scores.relationship += 1;
