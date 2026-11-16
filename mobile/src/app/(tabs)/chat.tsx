@@ -8,6 +8,7 @@ import { api } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 import { Colors } from '../../constants/theme';
 import PunditMessage from '../../components/PunditMessage';
+import PredictionCheckIn from '../../components/PredictionCheckIn';
 
 interface Message {
   role: 'user' | 'pundit';
@@ -121,6 +122,9 @@ export default function PunditChatScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Step C: check-ins on past predictions and the measured track record */}
+      <PredictionCheckIn />
 
       <ScrollView
         ref={scrollRef}

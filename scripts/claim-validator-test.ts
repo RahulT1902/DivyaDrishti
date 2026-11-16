@@ -16,6 +16,7 @@ import { analyzeIntent } from "../src/lib/consultation/brain/L1_intentEngine";
 import { buildTimingEvidence, renderKeyDates, resolveWindow } from "../src/lib/consultation/timing/timingEngine";
 import { validateTimingClaims } from "../src/lib/consultation/timing/timingValidator";
 import { validateChartClaims } from "../src/lib/consultation/timing/claimValidator";
+import { hitRate, predictionsFrom } from "../src/lib/consultation/accountability";
 import { aspectsFrom, naturalView, nthFrom, ordinal, SIGN_NAMES } from "../src/lib/consultation/timing/relations";
 import type { PlanetName, Sign } from "../src/lib/core/types";
 
@@ -170,6 +171,20 @@ const arg = (k: string) => { const i = process.argv.indexOf(k); return i > 0 ? p
   console.log(`      ${kd}`);
   passes(kd, "the computed key-dates paragraph passes the same gate");
   check(ev.dashaChanges.every(c => kd.includes(c.to)), "it names every dasha change");
+
+  console.log("\nAccountability (Step C)");
+  const preds = predictionsFrom(ev, "career", "How will my career be in December?");
+  check(preds.length >= 1, `${preds.length} prediction(s) recorded for the period`);
+  check(preds.every((p, i) => i === 0 || p.direction !== preds[i - 1].direction || p.windowStart.getTime() !== preds[i - 1].windowEnd.getTime()),
+    "neighbouring windows with the same verdict are merged into one check-in", preds.map(p => `${p.direction} ${p.windowStart.toISOString().slice(0, 10)}→${p.windowEnd.toISOString().slice(0, 10)} (${p.confidence})`));
+  check(preds.every(p => p.windowEnd.getTime() - p.windowStart.getTime() >= 3 * 86400000), "every recorded window lasts at least 3 days");
+  check(preds.every(p => p.direction !== ("mixed" as string) && p.confidence !== ("tentative" as string)), "no mixed or tentative window is recorded");
+  check(preds.every(p => p.checkQuestion.includes("work and career matters") && /between \d+ \w+ \d{4} and \d+ \w+ \d{4}/.test(p.checkQuestion)),
+    "check-in questions name the area and the exact window", preds.slice(0, 2).map(p => p.checkQuestion));
+  check(preds.filter(p => p.direction === "caution").every(p => /harder or more strained/.test(p.checkQuestion)), "caution windows ask whether things were harder");
+  check(predictionsFrom(ev, "spirituality", "q").length === 0, "domains without accountability wording record nothing");
+  check(hitRate(["yes", "no", "somewhat"]).score === null, "hit rate withheld below 5 answers");
+  check(hitRate(["yes", "yes", "somewhat", "no", "skip", "no"]).score === 2.5 / 5, "hit rate: yes=1, somewhat=0.5, no=0, skip ignored");
 
   console.log("\nMonth with year");
   const tf = analyzeIntent("How will my health be in April 2028?", []).timeframe;

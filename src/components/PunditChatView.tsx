@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, Compass, Sparkles, Loader2, ArrowRight, FlaskConical, ChevronDown, ChevronUp, Bookmark, BookmarkCheck } from "lucide-react";
 import { authFetch } from "@/lib/auth/webFetch";
 import DashaCountdown from "@/components/DashaCountdown";
+import PredictionCheckIn from "@/components/PredictionCheckIn";
 
 interface Message {
   role: "user" | "pundit";
@@ -138,6 +139,9 @@ export default function PunditChatView() {
 
       {/* Dasha Countdown Strip */}
       <DashaCountdown onAskDasha={(q) => handleSend(q)} />
+
+      {/* Step C: check-ins on past predictions and the measured track record */}
+      <PredictionCheckIn />
 
       {/* Message Area */}
       <div

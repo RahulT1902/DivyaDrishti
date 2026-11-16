@@ -26,6 +26,7 @@ import { assemblePunditBrain, canonicalDomain, saveStoryArc } from "@/lib/consul
 import type { ChartData } from "@/lib/consultation/brain";
 import { buildChartFacts } from "@/lib/core/astrology/chartFacts";
 import { generatePunditAnswer } from "@/lib/consultation/punditAnswer";
+import { predictionsFrom, recordPredictions } from "@/lib/consultation/accountability";
 import { prepareChartContext } from "@/lib/consultation/prepareChartContext";
 
 export async function POST(req: NextRequest) {
@@ -364,6 +365,12 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             isFollowUp: richIntent.isFollowUp,
           });
           rawText = answer.text;
+
+          // Step C: the answer's firm/moderate windows become checkable predictions.
+          // Awaited — fire-and-forget work is frozen once Vercel sends the response.
+          if (brain.timingEvidence && brain.metadata.goldStandard) {
+            await recordPredictions(user.id, predictionsFrom(brain.timingEvidence, brain.metadata.domain, question));
+          }
         }
 
         // Persist domain assessment for future sessions (fire-and-forget)

@@ -2,13 +2,13 @@
   "expo": {
     "name": "DivyaDrishti",
     "slug": "divyadrishti-mobile",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "android": {
       "package": "com.rahult1902.DivyaDrishtiMobile",
-      "versionCode": 4
+      "versionCode": 5
     },
     "plugins": [
       "expo-router"

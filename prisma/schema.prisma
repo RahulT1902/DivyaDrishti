@@ -34,6 +34,7 @@ model User {
   punditNotebook     PunditNotebook[]
   savedReadings      SavedReading[]
   annualReports      AnnualReport[]
+  punditPredictions  PunditPrediction[]
 
   // Legacy/Internal (Keeping for migration safety)
   birthDetails       BirthDetails?
@@ -467,4 +468,28 @@ model LifeInsightPredictionJournal {
   updatedAt             DateTime @updatedAt
 
   @@index([userId])
+}
+
+// Step C — prediction accountability. One row per dated window that a
+// Gold Standard answer stated with firm or moderate confidence. The claim is
+// built from the computed TIMING EVIDENCE, never from the model's wording,
+// and the user later says whether it matched what happened.
+model PunditPrediction {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain        String    // "health" | "career" | "finance" | "property" | "relationship" | "family" | "education"
+  question      String    // the question that produced it
+  windowStart   DateTime
+  windowEnd     DateTime
+  direction     String    // "favourable" | "caution"
+  confidence    String    // "firm" | "moderate"
+  reason        String    // computed events behind the window, e.g. "Rahu enters Capricorn"
+  checkQuestion String    // what the user is asked once the window has passed
+  outcome       String?   // "yes" | "somewhat" | "no" | "skip"
+  answeredAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, domain, windowStart, windowEnd])
+  @@index([userId, windowEnd])
 }
