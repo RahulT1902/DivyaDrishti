@@ -1,5 +1,9 @@
 // AI calls go to Gemini first (~11-14s); keep well above it, within Vercel Hobby limits.
-export const maxDuration = 60;
+// A Gold Standard answer is one Gemini call (30–45s) plus, when the answer
+// check fails, one rewrite of the same length; 60s killed those requests.
+export const maxDuration = 120;
+/** The rewrite must finish by this point, leaving time to save and respond. */
+const ANSWER_BUDGET_MS = 105_000;
 
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -30,6 +34,7 @@ import { predictionsFrom, recordPredictions } from "@/lib/consultation/accountab
 import { prepareChartContext } from "@/lib/consultation/prepareChartContext";
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   try {
     const { question, domain: forcedDomain, timeframe: forcedTimeframe, conversationHistory } = await req.json();
     const history: Array<{ role: 'user' | 'assistant'; content: string }> = Array.isArray(conversationHistory)
@@ -363,6 +368,7 @@ INSTRUCTION: Narrate your answer from the KUNDALI-SPECIFIC READING above. These 
             domain: targetDomain,
             dasha: dashaInfo,
             isFollowUp: richIntent.isFollowUp,
+            deadline: startedAt + ANSWER_BUDGET_MS,
           });
           rawText = answer.text;
 

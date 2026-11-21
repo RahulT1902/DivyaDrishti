@@ -81,6 +81,8 @@ interface CallAIOptions {
   temperature?: number;
   maxTokens?: number;
   messages?: AIMessage[];
+  /** Aborts the call (e.g. when the request is about to hit its time limit). */
+  abortSignal?: AbortSignal;
 }
 
 interface CallAIResult {
@@ -119,7 +121,7 @@ function requireText(provider: string, text: string, finishReason: string): stri
 }
 
 export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
-  const { prompt, system, temperature = 0.7, maxTokens, messages } = options;
+  const { prompt, system, temperature = 0.7, maxTokens, messages, abortSignal } = options;
   const errors: string[] = [];
 
   // Build the payload — SDK rejects requests that define both prompt and messages.
@@ -166,7 +168,7 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
     try {
       const { text, finishReason, usage } = await generateText({
         model: a.model(),
-        system, ...turnPayload, temperature,
+        system, ...turnPayload, temperature, abortSignal,
         ...(a.headroom === null ? {} : outputBudget(maxTokens, a.headroom)),
         ...(a.providerOptions ? { providerOptions: a.providerOptions } : {}),
       } as any);
@@ -180,6 +182,8 @@ export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
       const msg = e?.message || "unknown";
       errors.push(`${a.label}: ${msg}`);
       console.warn(`[AI] ${a.label} failed:`, msg);
+      // Out of time: the next provider would be aborted too.
+      if (abortSignal?.aborted) break;
     }
   }
 

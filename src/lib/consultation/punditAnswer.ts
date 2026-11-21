@@ -51,6 +51,9 @@ const clean = (t: string) => t
  * LLM narration + integrity gate + basis paragraph + summary card, shared by
  * the chat route and the Gold Standard benchmark so both see the same output.
  */
+/** Below this, a rewrite can't finish in time, so it isn't attempted. */
+const MIN_REWRITE_MS = 20_000;
+
 export async function generatePunditAnswer(opts: {
   brain: PunditBrain;
   history: Array<{ role: string; content: string }>;
@@ -58,8 +61,10 @@ export async function generatePunditAnswer(opts: {
   domain: string;
   dasha?: { mahadasha: string; antardasha: string; periodEnd?: string };
   isFollowUp: boolean;
+  /** Epoch ms by which the answer must be ready; the rewrite is cut off before it. */
+  deadline?: number;
 }): Promise<PunditAnswer> {
-  const { brain, history, chartFacts, domain, dasha, isFollowUp } = opts;
+  const { brain, history, chartFacts, domain, dasha, isFollowUp, deadline } = opts;
 
   // Pass conversation history as messages so follow-up questions have context.
   // When messages is set, the AI SDK uses it over prompt.
@@ -108,8 +113,16 @@ export async function generatePunditAnswer(opts: {
   let validatedText = cleanText;
   const draftErrors = [...gateErrors(cleanText), ...coverage(cleanText)];
   let errors = draftErrors;
+  // A rewrite takes as long as the draft (30–45s on Gemini). Without a time
+  // budget it ran past the function limit and the user got no answer at all;
+  // the draft with its bad sentences dropped is better than nothing.
+  const rewriteMs = deadline ? deadline - Date.now() : Infinity;
   if (errors.length > 0) {
     console.error("Calculation/Synthesis Integrity Hard Gate Triggered (draft 1):", errors);
+  }
+  if (errors.length > 0 && rewriteMs < MIN_REWRITE_MS) {
+    console.warn(`Hard Gate rewrite skipped: ${Math.round(rewriteMs / 1000)}s left`);
+  } else if (errors.length > 0) {
     try {
       const retryMessages = [
         ...(chatMessages ?? [{ role: "user" as const, content: brain.userPrompt }]),
@@ -125,6 +138,7 @@ export async function generatePunditAnswer(opts: {
       ];
       const { text: retryText, provider: retryProvider, truncated } = await callAI({
         system: brain.systemPrompt, messages: retryMessages, temperature: brain.temperature, maxTokens,
+        ...(Number.isFinite(rewriteMs) ? { abortSignal: AbortSignal.timeout(rewriteMs) } : {}),
       });
       providers.push(retryProvider);
       // A cut-off rewrite loses most of the answer; the draft with its bad

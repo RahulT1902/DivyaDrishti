@@ -4,6 +4,7 @@ import {
   TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { ArrowRight, Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Clock, FlaskConical, RotateCcw, Send } from 'lucide-react-native';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { api } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 import { Colors } from '../../constants/theme';
@@ -41,6 +42,7 @@ export default function PunditChatScreen() {
   const [dasha, setDasha] = useState<{ mahadasha: string; antardasha: string; antadashaTimeLeft: string } | null>(null);
   const [openTrail, setOpenTrail] = useState<number | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     api.getCached('/api/astrology/dasha')
@@ -104,7 +106,9 @@ export default function PunditChatScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    // Android too: with edge-to-edge on, the window no longer resizes for the
+    // keyboard (adjustResize is ignored), so the input box sat under it.
+    <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={headerHeight}>
       {dasha && (
         <View style={styles.dashaStrip}>
           <Clock size={13} color="#B45309" />
